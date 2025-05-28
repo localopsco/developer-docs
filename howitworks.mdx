@@ -1,0 +1,73 @@
+---
+title: How it works
+---
+
+To deploy your code on a cloud account, LocalOps takes an environment-based approach.
+
+After you connect your cloud account, you must create a new App environment for each of your deployment environments -
+test, staging, production, etc.,
+
+LocalOps will then provision the following set of exclusive cloud resources in the target cloud account to bring the
+environment up and deploy your services inside.
+
+- Virtual private cloud (VPC)
+- Private subnets
+- Public subnets
+- Managed Kubernetes cluster (E.g., EKS in AWS)
+- Mananged Compute servers and volumes (E.g., EC2 in AWS)
+- Companion kubernetes deployments to support
+  - Monitoring
+  - Backups
+- 👉 Your code run as "Services"
+- Auto-renewing SSL certificate for the unique domain
+
+We collectively refer to the above set as “**App Environment**”.
+
+LocalOps provisions app environments using standard in-house provisioning templates and scripts such that you can create
+any number of app environments on any cloud account (AWS, Google Cloud or Azure) and any region.
+
+### Kubernetes cluster
+
+All your code is run as docker containers within the kubernetes cluster. Kubernets cluster is created, configured and
+managed by LocalOps.
+
+### Services
+
+You must create a "Service" for each component of your application - backend, frontend, worker etc., to run your code
+within the kubernetes cluster. You can configure a specific github repo and branch name for each service so that any
+commit pushed to the branch will automatically get pulled by LocalOps and built & deployed on the Kubernetes cluster.
+
+### Deployments
+
+Deployments can be triggered either by pushing your code to the connected github/gitlab repository. Or by manually
+triggering them from inside LocalOps dashboard.
+
+### Monitoring
+
+To debug issues, LocalOps provisions industry standard open source observability suite including Loki, Prometheus and
+Grafana inside each environment. LocalOps provisions, configures these tools and connects them with each other, so that
+your team can view Logs and Metrics in a single grafana dashboard, without any configuration. This suite is exclusively
+provisioned for each app environment and runs inside the Kubernetes cluster, right next to your services.
+
+### Cloud Credentials
+
+LocalOps needs to have access to your cloud account, to programmatically create all cloud resources required to get the
+app environment running. You can connect your cloud account via keyless, role-based access method from Connections
+section.
+
+### Exclusive Infrastructure
+
+Each app environment get its own exclusive set of kubernetes cluster, compute servers and other resources listed above.
+This is ideal for providing maximum Network, Data & Compute isolation between your deployments & customers.
+
+<Note>
+All cloud infrastructure to run an app environment is provisioned in the cloud account chosen while creating the app
+environment inside LocalOps. The underlying cloud account will be billed by the cloud provider (say AWS) for the
+resources running within each app environment. Cloud account's owner has to pay for these charges separately with the
+cloud provider. If the cloud account belongs to your customer, they would pay for these cloud resources.
+</Note>
+
+### Security Best Practices:
+
+Within each app environment, LocalOps turns ON all security best practices suggested by the respective cloud provider.
+In AWS for example, security groups, disk encryption etc., are all enabled by default.

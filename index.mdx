@@ -1,71 +1,37 @@
 ---
 title: Introduction
-description: "Welcome to the home of your new documentation"
 ---
 
-<img
-  className="block dark:hidden"
-  src="/images/hero-light.png"
-  alt="Hero Light"
-/>
-<img
-  className="hidden dark:block"
-  src="/images/hero-dark.png"
-  alt="Hero Dark"
-/>
+**LocalOps** lets you get Vercel-like PaaS experience on any AWS/GCP/Azure account in minutes. LocalOps provisions
+production grade app environments, sets up CI/CD, monitoring and everything else, so that you can simply connect your
+Github repo and start deploying code. No need to learn, setup or configure cloud environments yourself.
 
-## Setting up
+You can use LocalOps to launch on your cloud or your customer cloud (if you are offering "Bring your own cloud"
+capability to customers). [Talk to us](https://go.localops.co/meet).
 
-The first step to world-class documentation is setting up your editing environments.
+This guide provides user manuals, tutorials and concepts to educate your developer teams to start using LocalOps.
+
+Here are some first steps:
 
 <CardGroup cols={2}>
-  <Card
-    title="Edit Your Docs"
-    icon="pen-to-square"
-    href="https://mintlify.com/docs/quickstart"
-  >
-    Get your docs set up locally for easy development
+  <Card title="Connect your cloud account" icon="palette" href="/connect-cloud/aws.md">
+    First step is to connect your cloud account (say AWS).
   </Card>
-  <Card
-    title="Preview Changes"
-    icon="image"
-    href="https://mintlify.com/docs/development"
-  >
-    Preview your changes before you push to make sure they're perfect
+  <Card title="Connect GitHub account" icon="code" href="/connect-code/github.md">
+    Connect your github account to start deploying on every git-push.
+  </Card>
+  <Card title="Spin up new environment" icon="screwdriver-wrench" href="/app-environments/create.md">
+    Create a new environment (say test, staging, production etc.,)
+  </Card>
+  <Card title="Launch a new service" icon="stars" href="/services/create.md">
+    Launch a new service within the environment and configure a repo to start automatic deployments
   </Card>
 </CardGroup>
 
-## Make it yours
+Once everything is configured, push new commits the configured branch to see automatic deployments triggered.
+[Learn more](services/deploy.md).
 
-Update your docs to your brand and add valuable content for the best user conversion.
+### Get support
 
-<CardGroup cols={2}>
-  <Card
-    title="Customize Style"
-    icon="palette"
-    href="https://mintlify.com/docs/settings/global"
-  >
-    Customize your docs to your company's colors and brands
-  </Card>
-  <Card
-    title="Reference APIs"
-    icon="code"
-    href="https://mintlify.com/docs/api-playground/openapi"
-  >
-    Automatically generate endpoints from an OpenAPI spec
-  </Card>
-  <Card
-    title="Add Components"
-    icon="screwdriver-wrench"
-    href="https://mintlify.com/docs/content/components/accordions"
-  >
-    Build interactive features and designs to guide your users
-  </Card>
-  <Card
-    title="Get Inspiration"
-    icon="stars"
-    href="https://mintlify.com/customers"
-  >
-    Check out our showcase of our favorite documentation
-  </Card>
-</CardGroup>
+Please write to help@localops.co in case you have other queries. Or [schedule a call](https://go.localops.co/meet) with
+us. Our engineers will assist you in getting started.

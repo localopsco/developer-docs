@@ -1,0 +1,51 @@
+---
+title: "Product Updates"
+description: "New updates and improvements"
+mode: "center"
+---
+
+<Update label="Jan 27th, 2025">
+## See CloudWatch metrics/logs in one place
+
+When we provision app environment, we provision a Grafana dashboard specific to the app environment, accessible at
+monitor. `<your-app-env-domain>`. You can access metrics and logs of all nodes, pods and containers running within the
+app environment's kubernetes cluster.
+
+If you are running your app environment in AWS, you will also see a pre-configured CloudWatch data source in the
+corresponding Grafana dashboard. You can access logs and metrics that are stored in CloudWatch.
+
+This is super useful if your application is using managed AWS services that are sending metrics/logs to CloudWatch.
+
+Go to “Monitor” tab in your app environment to access the Grafana dashboard. Within Grafana, see Connections > Data
+sources to see the Cloudwatch data source. Click on “Explore” next to it to see CloudWatch logs and metrics.
+
+Let us know what you think. Email us at help@localops.co.
+
+</Update>
+
+<Update label="January 24th, 2025">
+## Standard retention policy set on all logs and metrics
+
+Every app environment comes with its own unique instance of Loki + Prometheus + Grafana stack. From now, all logs and
+metrics recorded by the monitoring stack have 30-day retention policy. Any log statement/metric data point is
+automatically deleted after 30 days.
+
+This significantly reduces the risk of unintentional data leaks when developers print sensitive information on logs by
+accident.
+
+</Update>
+
+<Update label="January 23rd, 2025">
+## Access any AWS managed service using IAM Role
+
+Your app container running inside App environment can now access any AWS service using IAM roles. You don’t have to
+configure any IAM key/credential as secrets in your application.
+
+LocalOps sets up a default IAM role when your app environment is provisioned in the target AWS account. We set things up
+in your app environment such that your application will be able to use this IAM role implicitly via AWS SDK, if you
+declare the `ServiceAccount` in your Helm deployment yaml spec as per our documentation.
+
+After the app environment is provisioned, you can manually add/remove relevant IAM policies to the app specific IAM role
+we provisioned earlier.
+
+</Update>
