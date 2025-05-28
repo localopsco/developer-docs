@@ -1,0 +1,231 @@
+---
+title: Node
+---
+
+This documentation provides a step-by-step guide to setting up a Dockerfile for a HTTP server application written using
+[ExpressJs][express] and [NodeJS][node].
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Node.js][node] (v20.15.1 at the time of writing this doc).
+- [npm] as a package manager for installing and maintaining dependencies. This usually comes bundled with Node.js.
+- A foundational knowledge of [NodeJs][node] and [ExpressJs][express].
+- [docker] to build standalone containers to serve your production app.
+
+<Note>
+  This guide assumes that you have a basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
+  speed before proceeding with this guide.
+</Note>
+
+## Scaffolding the NodeJs app
+
+Create a new folder for your Node.js project. In the following examples, we'll use the project name `node-project`.
+
+```bash
+mkdir <your project name>
+cd <your project name>
+```
+
+Use the [npm init](https://docs.npmjs.com/cli/commands/npm-init) command to create a `package.json` file for your
+application. For more information on how `package.json` works, see the specifics of
+[npm's package.json](https://docs.npmjs.com/cli/configuring-npm/package-json) handling. Run
+
+```bash
+npm init
+```
+
+and follow the prompts for various settings, such as the name (`<your project name>`) and version of your application.
+For now, you can simply hit RETURN to accept the defaults for most of them, with the following exception:
+
+```sh
+entry point: (index.js)
+```
+
+Enter `app.js`, or whatever you want the name of the main file to be. If you want it to be `index.js`, hit RETURN to
+accept the suggested default file name.
+
+### Installing Express.js
+
+At this point, you have a Node.js project ready. Let's install Express and save it in the dependency list by running
+
+```bash
+npm install express
+```
+
+<Note>At the time of writing this guide, the latest `express` version is 4.19.2.</Note>
+
+If you have more questions, check out the
+[Node.js guide](https://nodejs.org/en/learn/getting-started/introduction-to-nodejs) and
+[Express.js guide](https://expressjs.com/en/starter/installing.html) to learn more about scaffolding the app.
+
+You can also use tools like [express-generator](https://expressjs.com/en/starter/generator.html) to quickly scaffold
+your app. Note: While writing this guide, the express-generator is not very well maintained and has known issues with
+tools provided out of the box; hence, it is recommended to use a manual setup, which is also straightforward.
+
+### Hello World! example
+
+Create a file called `app.js` as mentioned earlier for the entry point and write a simple Express app that returns
+`Hello World!` when navigating to the `/` path of the URL.
+
+```js app.js
+const express = require("express"); // import the express dependency
+
+const app = express(); // create the app
+// Look for port from the environment variables.
+// or use the fallback port
+const port = process.env.PORT ?? 3500;
+
+// Create a route to handle `/` and return `Hello World!` in the response.
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+
+// Start the HTTP router on the given port.
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
+
+// Handle the exit signal and quit the process.
+process.on("SIGINT", function () {
+  process.exit();
+});
+```
+
+All of your dependencies should be installed at this point (which you can verify by checking for the existence of a
+`node_modules` folder in your project), so you can start your project by running the command:
+
+```bash
+node app.js
+```
+
+If everything is successful, you should see a similar confirmation message in your terminal:
+
+```
+Example app listening on port 3500
+```
+
+Open `http://localhost:3500` in your browser of choice. You should see the Node.js app running and printing
+`Hello World!` in the document.
+
+## Create the Docker image
+
+Dockerizing makes the app run anywhere, agnostic of the platform. As long as Docker is installed, whether it's Windows,
+Mac, or Linux, it can run with the same behavior.
+
+Before creating the Dockerfile, let's create a `.dockerignore` file and add the contents that should not be copied over
+to the Docker file system.
+
+```ignore .dockerignore
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.git
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
+
+<Note>
+Creating a `.dockerignore` file and adding folders like `node_modules` is a must since dependencies will be
+installed while building the image based on the platform preferences used. Copying those from the file system will
+overwrite the installed dependencies and might error out during deployment.
+</Note>
+
+Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile is posted for reference with steps to create the production image. Though Docker supports
+[Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/), we won't be using that here since Node.js
+needs all the `source code` and `node_modules` to be present while running the application. You can opt for multi-stage
+builds if your process fits that approach.
+
+```docker Dockerfile
+# Use nodejs v20 alpine image
+FROM node:20-alpine
+
+# Switch to the app directory,
+# This will be our app's root directory inside the container.
+WORKDIR /app
+
+# Copy the manifest and lock file to the root.
+# Note: ./ refers to /app, since we switched context in the above step.
+COPY package.json package-lock.json* ./
+
+# Set the NODE_ENV to production.
+# to configure the application to build/run under production mode
+# this also tells npm to not install devDependencies mentioned in package.json
+# as we won't be needing that to run our app
+ENV NODE_ENV=production
+
+# Install the production dependencies
+RUN npm ci
+
+# Copy all the files from our machine to the container
+COPY . .
+
+# The port you'd like to use for Nginx
+ENV PORT=3500
+
+# Expose the port the Nginx is running to the outside world
+EXPOSE ${PORT}
+
+# Start the node server
+ENTRYPOINT ["node","./app.js"]
+```
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t node-app:latest .
+```
+
+This command builds the `node-app` image for platform `linux/amd64` and tags it as `latest`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images
+
+```bash
+# only for testing on local machine
+docker build -t node-app:latest .
+```
+
+## Run the Docker image
+
+Let's run the Docker container using the image created of the Node application with the command below.
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --name node-app \
+  -e PORT=3500 \
+  -d \
+  -p 3500:3500 \
+  node-app
+```
+
+- `-it`: enables interactivity with TTY.
+- `--rm`: tells the Docker Daemon to clean up the container and remove the file system after the container exits.
+- `--name node-app`: Name of the container `node-app`.
+- `-e PORT=3500`: Sets the environment variable PORT in Docker to `3500`.
+- `-d`: Runs the container in detached (background) mode. You can skip the flag to see the logs directly in your
+  terminal window.
+- `-p 3500:3500`: Maps port 3500 on your host to port 3500 in the container.
+- `node-app` at the end is the name of the image.
+
+After running the command, visit `http://localhost:3500` to see the Node.js application running inside the Docker
+container.
+
+Hurray! Now we have created and packaged a Node app for production use.
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
+git repository and branch name to deploy this image.
+
+[node]: https://nodejs.org/en
+[npm]: https://www.npmjs.com
+[express]: https://expressjs.com

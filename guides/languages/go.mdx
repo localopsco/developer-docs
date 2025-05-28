@@ -1,0 +1,159 @@
+---
+title: Go
+---
+
+In this guide we will setup a Dockerfile for your Go Application.
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Go](https://go.dev/doc/install)
+- [Docker] to build standalone containers to serve your Go app.
+
+<Note>
+  This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is recommended to review their official documentation and tutorials to get up to speed
+  before proceeding with this guide.
+</Note>
+
+## Go Http Server
+
+1. Run the command `go mod init go-http-server` to set up your project and manage its dependencies.
+2. Now, create a file named `main.go` and add the following code to set up a basic http server using the
+   [gin](https://github.com/gin-gonic/gin) web framework.
+
+```go main.go
+package main
+
+import (
+	"log"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+func main() {
+	router := gin.Default()
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Hello, World!",
+		})
+	})
+
+  // Default port 8080
+	router.Run(":" + os.Getenv("APP_PORT"))
+}
+```
+
+3. Export the required environment variables,
+
+```shell
+export APP_PORT=8080
+```
+
+4. Run `go mod download` command to download the required dependencies.
+5. Run the command `go run main.go` to start the server.
+
+## Dockerize
+
+Dockerizing makes your app run anywhere, agnostic of the platform.
+
+#### Create [.dockerignore](https://docs.docker.com/build/building/context/#dockerignore-files)
+
+Before creating the dockerfile, let's create a `.dockerignore` file and add that contents that should not be copied over
+to the docker file system.
+
+```ignore .dockerignore
+bin/
+Dockerfile
+.dockerignore
+README.md
+.git
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files)
+
+<Info>
+Creating a `.dockerinogre` file and adding folders like `node_modules` is must, since dependencies will be
+installed while building the image based on the platform preferences used. Copying those from file system will overwrite
+the installed dependecies and might error out during deployments
+</Info>
+
+#### Create Dockerfile
+
+Now, Create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile is posted for reference with steps to create the production image. Though docker supports
+[Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/) we won't be using that here. In this example
+we will copy `source code` and build and run it inside the container. You can opt for multi stage build, if you want to
+build the go binary in build stage and run it in another stage.
+
+<Tip>
+Refer to this [doc](https://docs.docker.com/language/golang/build-images/) to know more about building docker
+images for go applications.
+</Tip>
+
+```docker Dockerfile
+# syntax=docker/dockerfile:1
+FROM golang:1.21
+
+# Set destination for COPY
+WORKDIR /app
+
+# Download Go modules
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the source code.
+COPY *.go ./
+
+# Build
+RUN GOOS=linux go build -o /go-http-server ./main.go
+
+# Optional:
+# To bind to a TCP port, runtime parameters must be supplied to the docker command.
+# But we can document in the Dockerfile what ports
+# the application is going to listen on by default.
+# https://docs.docker.com/reference/dockerfile/#expose
+EXPOSE 8080
+
+# Run
+CMD ["/go-http-server"]
+```
+
+#### Build and test docker image
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t go-http-server .
+```
+
+This command builds the `go-http-server` image for platform `linux/amd64`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images
+
+```bash
+# only for testing in local machine
+docker build -t go-http-server .
+```
+
+#### Run the docker image
+
+Let's run the Docker container using the image created of the react application with the command below.
+
+```bash
+docker run \
+  -it \
+  -p 8080:8080 \
+  --name go-http-server \
+  go-http-server
+```
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
+git repository and branch name to deploy this image.

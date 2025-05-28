@@ -1,0 +1,30 @@
+---
+title: Connect GitHub account
+---
+
+When you use LocalOps, your teams can simply push code to Github repositories to deploy them continuously on their
+respective app environments (staging, production, etc). To provide this push-to-deploy experience, you have to connect
+the github org/account and its repositories.
+
+We need `read-only` access to your github repositories.
+
+### Steps to connect Github org or account
+
+<Steps>
+  <Step title="Sign in to LocalOps" />
+  <Step title="Navigate to `Repositories` section" />
+  <Step title="Click on `+ New Git connection" />
+  <Step title="Follow the on-screen instructions from then to finish connecting your Github org" />
+</Steps>
+
+### How does this integration work?
+
+You must connect your Github organisation or account first, by following above instructions.
+
+From inside Github, either during the above integration process or after, you will give us read-only access to specific
+git repositories. So that LocalOps can listen to all pushes you make on the repository to downlaod the code and deploy.
+
+### Specific repositories
+
+While configuring repositories, you can give access to only the specific repositories that has the code you want to
+deploy. You can also restrict the level of access to `read-only`.

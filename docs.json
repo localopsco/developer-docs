@@ -17,19 +17,34 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "howitworks",
-              "development"
+              "howitworks"
             ]
           },
           {
-            "group": "Essentials",
+            "group": "Accounts",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/settings",
-              "essentials/navigation",
-              "essentials/reusable-snippets"
+              {
+                "group": "Cloud accounts",
+                "pages": [
+                  "accounts/aws",
+                  "accounts/gcp",
+                  "accounts/azure"
+                ]
+              },
+              "accounts/connect-github"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              {
+                "group": "Languages",
+                "pages": [
+                  "guides/languages/go",
+                  "guides/languages/python",
+                  "guides/languages/node"
+                ]
+              }
             ]
           }
         ]
@@ -70,20 +85,20 @@
     "links": [
       {
         "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "href": "mailto:hello@localops.co"
       }
     ],
     "primary": {
       "type": "button",
       "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+      "href": "https://console.localops.co"
     }
   },
   "footer": {
     "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
+      "x": "https://x.com/localopsco",
+      "github": "https://github.com/localopsco",
+      "linkedin": "https://linkedin.com/company/localops-inc"
     }
   }
 }

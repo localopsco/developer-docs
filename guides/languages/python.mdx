@@ -1,0 +1,389 @@
+---
+title: Python
+---
+
+This documentation provides a step-by-step guide to setting up a Python Django server and creating a Dockerfile to
+deploy it via LocalOps.
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Python](https://www.python.org/downloads) - v3.12.4 at the time of writing this doc.
+- [pip](https://packaging.python.org/en/latest/tutorials/installing-packages) as a package manager for installing and
+  maintaining dependencies. This usually comes bundled with Python > v3.4.
+- [Django](https://djangoproject.com) - v5.0.7 at the time of writing this doc.
+- [Docker] to build standalone containers to serve your Python app.
+
+<Note>
+  This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is recommended to review their official documentation and tutorials to get up to speed
+  before proceeding with this guide.
+</Note>
+
+## Example Python Django App
+
+In this tutorial we can go over a simple todo app that was created using Python Django.
+
+Source Code: https://github.com/localopsco/django-todo-example
+
+## Create Django Python app
+
+<Tip>You can also follow [Django documentation](https://docs.djangoproject.com) to create a simple Django app.</Tip>
+
+#### Use python venv (Virtual Environment)
+
+```shell
+python3 -m venv ~/.virtualenvs/djangodev
+
+source ~/.virtualenvs/djangodev/bin/activate
+```
+
+#### Install `Django` using `pip`
+
+```shell
+pip install Django
+```
+
+#### Start a Django project
+
+```shell
+django-admin startproject django_todo
+```
+
+#### Start a Django app in the project
+
+```shell
+python manage.py startapp todo
+```
+
+### Connect to your DB
+
+<Tip>
+  Please refer [this Django article](https://docs.djangoproject.com/en/5.0/ref/settings/#databases) to connect to your
+  Database.
+</Tip>
+
+In the tutorial example we will be connecting to Postgres DB.
+
+Update your project `settings.py` file to refer the database details from environment variables.
+
+```python django_todo/settings.py
+DATABASES = {
+  'default': {
+    'ENGINE': 'django.db.backends.postgresql',
+    'NAME': os.environ.get('DB_NAME'),
+    'USER': os.environ.get('DB_USER'),
+    'PASSWORD': os.environ.get('DB_PASS'),
+    'HOST': os.environ.get('DB_HOST'),
+    'PORT': os.environ.get('DB_PORT'),
+  }
+}
+```
+
+Make sure you have already created the provided database with username and password.
+
+### Create DB models
+
+<Tip>
+  You can refer [this Django model article](https://docs.djangoproject.com/en/5.0/topics/db/models) to know more on
+  creating DB models.
+</Tip>
+
+- Update the `todo/models.py` file with below content,
+
+```python todo/models.py
+from django.db import models
+import uuid
+
+class Task(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    is_completed = models.BooleanField(default=False)
+    attachment_url = models.URLField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+```
+
+#### Apply migrations
+
+```shell
+python manage.py migrate
+```
+
+### Add API endpoints
+
+<Tip>
+  You can use [Django REST Framework](https://www.django-rest-framework.org) package to quickly bootstrap REST
+  endpoints.
+</Tip>
+
+In this tutorial we will be adding REST CRUD (Create, Read, Update and Delete) endpoints for `Task` model using
+[Django REST Framework](https://www.django-rest-framework.org).
+
+Copy paste the below contents to your respective files,
+
+```python todo/views.py
+from rest_framework import viewsets
+from .models import Task
+from .serializers import TaskSerializer
+
+class TaskViewSet(viewsets.ModelViewSet):
+    queryset = Task.objects.all()
+    serializer_class = TaskSerializer
+
+    def create(self, request, *args, **kwargs):
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        return super().retrieve(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        return super().destroy(request, *args, **kwargs)
+```
+
+```python todo/urls.py
+from django.urls import path, include
+from rest_framework.routers import DefaultRouter
+from .views import TaskViewSet
+
+router = DefaultRouter()
+router.register(r'tasks', TaskViewSet, basename='task')
+
+urlpatterns = [
+    path('', include(router.urls)),
+]
+```
+
+```python django_todo/urls.py
+from django.contrib import admin
+from django.urls import path, include
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('api/v1/', include('todo.urls')),
+]
+```
+
+### Run server
+
+Export the required environment variables,
+
+```shell
+export DB_NAME=djangotodo \
+  DB_USER=localops \
+  DB_PASS=localops \
+  DB_HOST=localhost \
+  DB_PORT=5432
+```
+
+Run Django server,
+
+```shell
+  python ./manage.py runserver
+```
+
+Visit `http://localhost:8000/api/v1/tasks/` to see the list of tasks served from our Django app.
+
+**Voila! You have successfully created and run **Django Python server** with REST CRUD endpoints for Task model. 🎉**
+
+## Dockerize
+
+Dockerizing makes the app run anywhere, agnostic of the platform. As long as Docker is installed, whether it's Windows,
+Mac, or Linux, it can run with the same behavior.
+
+### Create [.dockerignore](https://docs.docker.com/build/building/context/#dockerignore-files)
+
+Before creating the dockerfile, let's create a `.dockerignore` file and add that contents that should not be copied over
+to the docker file system.
+
+```ignore .dockerignore
+__pycache__/
+Dockerfile
+.dockerignore
+README.md
+.git
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files)
+
+<Note>
+Creating a `.dockerignore` file and adding folders like `node_modules` is must, since dependencies will be
+installed while building the image based on the platform preferences used. Copying those from file system will overwrite
+the installed dependecies and might error out during deployment
+</Note>
+
+### Run DB migration inside docker image
+
+In this tutorial, to keep DB migration step simple, we will create a `entrypoint.sh` script to run DB migrations each
+time the docker image is run.
+
+```shell entrypoint.sh
+#!/bin/bash
+set -e
+
+# Apply migrations
+python manage.py migrate
+
+# Start the Django application
+exec "$@"
+```
+
+Optionally you can have a seperate image to run your DB migrations. In production setup, it is advisable to have
+seperate image to run DB migrations.
+
+### Create [Dockerfile](https://docs.docker.com/reference/dockerfile/)
+
+Now, Create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile is posted for reference with steps to create the production image. Though docker supports
+[Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/) we won't be using that here since Python needs
+all the `source code` and dependencies to be present while running the application. You can opt for multi stage build,
+if you have any build tool.
+
+```docker Dockerfile
+# Use an official Python runtime as a parent image
+FROM python:3.12-alpine
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+# Create and set the working directory
+WORKDIR /app
+
+# Copy the requirements file into the container
+COPY requirements.txt /app/
+
+# Install utils
+RUN apk update
+RUN apk upgrade
+RUN apk add bash
+RUN apk add \
+  build-base \
+  gcc \
+  libc-dev \
+  linux-headers \
+  python3-dev \
+  musl-dev \
+  libffi-dev
+
+# Use the custom entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENTRYPOINT ["/app/entrypoint.sh"]
+
+# Install the project dependencies
+RUN pip install -r requirements.txt
+
+# Copy the rest of the application code into the container
+COPY . /app/
+
+# Expose the port the app runs on
+EXPOSE 8000
+
+# Start the application
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
+
+### Build docker image
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t django-todo .
+```
+
+This command builds the `django-todo` image for platform `linux/amd64`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images
+
+```bash
+# only for testing in local machine
+docker build -t django-todo .
+```
+
+### Run the docker image
+
+Let's run the Docker container using the image created of the react application with the command below.
+
+```bash
+docker run \
+  -it \
+  -p 8000:8000 \
+  -e DB_HOST=localhost \
+  -e DB_PORT=5432 \
+  -e DB_NAME=djangotodo \
+  -e DB_USER=localops \
+  -e DB_PASS=localops \
+  --name django-todo \
+  django-todo
+```
+
+This command requires PostgresDB to be running on `localhost:54321`.
+
+### Docker Compose
+
+If you want to run PostgresDB alongside our Django image, then we can create a `docker-compose.yml` file with below
+content,
+
+```yaml docker-compose.yml
+version: "3"
+
+volumes:
+  pg_data_todo:
+
+services:
+  be:
+    build: .
+    environment:
+      DB_HOST: db
+      DB_NAME: todo_db
+      DB_USER: todo_user
+      DB_PASS: todo_pass
+      REDIS_HOST: redis
+      S3_REGION: ap-south-1
+      AWS_ACCESS_KEY_ID: XYZ
+      AWS_SECRET_ACCESS_KEY: XYZ
+      S3_BUCKET_NAME: test-bucket
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14.8-alpine3.18
+    environment:
+      POSTGRES_DB: todo_db
+      POSTGRES_USER: todo_user
+      POSTGRES_PASSWORD: todo_pass
+    volumes:
+      - pg_data_todo:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+```
+
+#### Docker compose up
+
+```shell
+docker compose up
+```
+
+After running the command, Visit `http://localhost:8000/api/v1/tasks/` to list the tasks.
+
+Hurray 🎉. Now we have created and Dockerized a Python Django app.
+
+### Deploy
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
+git repository and branch name to deploy this image.
