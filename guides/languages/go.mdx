@@ -76,9 +76,9 @@ README.md
 Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files)
 
 <Info>
-Creating a `.dockerinogre` file and adding folders like `node_modules` is must, since dependencies will be
-installed while building the image based on the platform preferences used. Copying those from file system will overwrite
-the installed dependecies and might error out during deployments
+  Creating a `.dockerinogre` file and adding folders like `node_modules` is must, since dependencies will be installed
+  while building the image based on the platform preferences used. Copying those from file system will overwrite the
+  installed dependecies and might error out during deployments
 </Info>
 
 #### Create Dockerfile
@@ -92,8 +92,8 @@ we will copy `source code` and build and run it inside the container. You can op
 build the go binary in build stage and run it in another stage.
 
 <Tip>
-Refer to this [doc](https://docs.docker.com/language/golang/build-images/) to know more about building docker
-images for go applications.
+  Refer to this [doc](https://docs.docker.com/language/golang/build-images/) to know more about building docker images
+  for go applications.
 </Tip>
 
 ```docker Dockerfile
@@ -155,5 +155,5 @@ docker run \
 
 ## Done 🎉
 
-You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
-git repository and branch name to deploy this image.
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) now to
+point at the git repository and branch name to deploy this image.

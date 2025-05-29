@@ -71,7 +71,7 @@ Create a file called `app.js` as mentioned earlier for the entry point and write
 `Hello World!` when navigating to the `/` path of the URL.
 
 ```js app.js
-const express = require("express"); // import the express dependency
+const express = require('express'); // import the express dependency
 
 const app = express(); // create the app
 // Look for port from the environment variables.
@@ -79,8 +79,8 @@ const app = express(); // create the app
 const port = process.env.PORT ?? 3500;
 
 // Create a route to handle `/` and return `Hello World!` in the response.
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+app.get('/', (req, res) => {
+  res.send('Hello World!');
 });
 
 // Start the HTTP router on the given port.
@@ -89,7 +89,7 @@ app.listen(port, () => {
 });
 
 // Handle the exit signal and quit the process.
-process.on("SIGINT", function () {
+process.on('SIGINT', function () {
   process.exit();
 });
 ```
@@ -130,9 +130,9 @@ README.md
 Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
 
 <Note>
-Creating a `.dockerignore` file and adding folders like `node_modules` is a must since dependencies will be
-installed while building the image based on the platform preferences used. Copying those from the file system will
-overwrite the installed dependencies and might error out during deployment.
+  Creating a `.dockerignore` file and adding folders like `node_modules` is a must since dependencies will be installed
+  while building the image based on the platform preferences used. Copying those from the file system will overwrite the
+  installed dependencies and might error out during deployment.
 </Note>
 
 Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
@@ -223,8 +223,8 @@ Hurray! Now we have created and packaged a Node app for production use.
 
 ## Done 🎉
 
-You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
-git repository and branch name to deploy this image.
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) now to
+point at the git repository and branch name to deploy this image.
 
 [node]: https://nodejs.org/en
 [npm]: https://www.npmjs.com

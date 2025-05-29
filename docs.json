@@ -67,7 +67,19 @@
               {
                 "group": "Services",
                 "pages": [
-                  "environment/services/create"
+                  "environment/services/create",
+                  "environment/services/deploy",
+                  {
+                    "group": "Types of services",
+                    "pages": [
+                      "environment/services/web",
+                      "environment/services/internal",
+                      "environment/services/workers",
+                      "environment/services/job",
+                      "environment/services/cronjob"
+                    ]
+                  },
+                  "environment/services/delete"
                 ]
               }
             ]

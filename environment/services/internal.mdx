@@ -1,0 +1,29 @@
+---
+title: Internal service
+---
+
+An Internal service is a lot like Web service, but it is not exposed to public internet. It is available to get used
+from within the environment by other services.
+
+#### Port
+
+When you [create a service](/environment/services/create), you must provide `port` number where your Dockerfile exposes
+the running code.
+
+#### Number of replicas
+
+For redundancy, ensure you set at least 2 as the number of replicas. This is a best practice yet you can enter 1 if it
+better suits your usecase.
+
+#### No downtime deployments
+
+All deployments are no-downtime deployments. When LocalOps deploys your code, it brings up new containers with new code
+first. If they become healthy, old containers will be stopped.
+
+#### Logs
+
+Yan can see logs of running containers via the in-built Grafana dashboard. Navigate to Monitor tab to login to Grafana
+dashboard. Within Grafana dashboard, filter to see `app-services` namespace logs.
+
+You can create any number of internal services to suit your application architecture. All of the above will be
+applicable for each of them.

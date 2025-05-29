@@ -1,0 +1,41 @@
+---
+title: Deploy
+---
+
+Deployment can be started for a service either manually from LocalOps console or by pushing new code to the configured
+service repo and branch name.
+
+### Automatic deployment
+
+This is written for a github repository. Same steps are applicable for almost all git providers.
+
+If you have a local development environment for the git repository configured for the given service, you can simply
+follow these steps to start deployment.
+
+```sh
+$ git checkout <branch-name>
+$ ..add commits
+$ git push <remote-name> <branch-name>
+```
+
+If your github org doesn't allow direct git push on the branch, you can ask your team to raise pull requests (PRs)
+targeting the configured branch name of the service. If you merge the PR, a new dpeloyment will start in LocalOps with
+the latest commit on that branch.
+
+Or if you directly edit files in Github website and make new commits on the configured branch name of the service, a new
+deployment will start.
+
+A new deployment will start in either of these cases. Navigate to "Deployments" tab within the same service section to
+see the logs.
+
+### Manual deployment
+
+1. Click on "App environments" on the left
+2. Navigate inside relevant environment
+3. Navigate to Services tab
+4. Click on the service where you want to trigger new deployment
+5. On the top right corner, click on "Deploy".
+6. Verify the commit details put on the confirmation window
+7. Click on "Confirm" to proceed.
+
+A new deployment will start. Navigate to "Deployments" tab within the same services section to see the logs.

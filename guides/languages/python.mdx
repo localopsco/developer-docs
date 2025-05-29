@@ -217,9 +217,9 @@ README.md
 Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files)
 
 <Note>
-Creating a `.dockerignore` file and adding folders like `node_modules` is must, since dependencies will be
-installed while building the image based on the platform preferences used. Copying those from file system will overwrite
-the installed dependecies and might error out during deployment
+  Creating a `.dockerignore` file and adding folders like `node_modules` is must, since dependencies will be installed
+  while building the image based on the platform preferences used. Copying those from file system will overwrite the
+  installed dependecies and might error out during deployment
 </Note>
 
 ### Run DB migration inside docker image
@@ -338,7 +338,7 @@ If you want to run PostgresDB alongside our Django image, then we can create a `
 content,
 
 ```yaml docker-compose.yml
-version: "3"
+version: '3'
 
 volumes:
   pg_data_todo:
@@ -357,7 +357,7 @@ services:
       AWS_SECRET_ACCESS_KEY: XYZ
       S3_BUCKET_NAME: test-bucket
     ports:
-      - "8000:8000"
+      - '8000:8000'
     depends_on:
       - db
 
@@ -370,7 +370,7 @@ services:
     volumes:
       - pg_data_todo:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 ```
 
 #### Docker compose up
@@ -385,5 +385,5 @@ Hurray 🎉. Now we have created and Dockerized a Python Django app.
 
 ### Deploy
 
-You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
-git repository and branch name to deploy this image.
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) now to
+point at the git repository and branch name to deploy this image.

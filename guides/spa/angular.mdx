@@ -17,9 +17,9 @@ To follow this tutorial, you will need the following:
 - [docker] to build standalone containers to serve your production app.
 
 <Note>
-This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
-familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
-speed before proceeding with this guide.
+  This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
+  speed before proceeding with this guide.
 </Note>
 
 ## Installing the Angular CLI
@@ -143,8 +143,8 @@ location /api/ {
 ```
 
 <Note>
-You might want to skip the API block if you don't have a backend yet; otherwise, nginx will throw an error for
-an invalid host on the backend URL.
+  You might want to skip the API block if you don't have a backend yet; otherwise, nginx will throw an error for an
+  invalid host on the backend URL.
 </Note>
 
 A typical non-static web application usually will have a backend, and we make AJAX requests using
@@ -177,9 +177,9 @@ README.md
 Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
 
 <Info>
-Creating a `.dockerignore` file and adding folders like `node_modules` is a must, since dependencies will
-be installed while building the image based on the platform preferences used. Copying those from the file system will
-overwrite the installed dependencies and might cause errors during deployment.
+  Creating a `.dockerignore` file and adding folders like `node_modules` is a must, since dependencies will be installed
+  while building the image based on the platform preferences used. Copying those from the file system will overwrite the
+  installed dependencies and might cause errors during deployment.
 </Info>
 
 Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
@@ -295,8 +295,8 @@ Hurray 🎉. Now we have created and packaged an Angular app for production use.
 
 ## Done 🎉
 
-You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
-git repository and branch name to deploy this image.
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) now to
+point at the git repository and branch name to deploy this image.
 
 [angular]: https://angular.dev/
 [npm]: https://docs.npmjs.com/about-npm

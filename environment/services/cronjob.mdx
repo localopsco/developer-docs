@@ -1,0 +1,21 @@
+---
+title: Cron Job
+---
+
+A Cron job service is like a Job service. It spins up the specific container on a given schedule.
+
+#### Run command
+
+When you [create a service](/environment/services/create), you must provide appropriate `Run command` if your Dockerfile
+`CMD` doesn't point at the job script.
+
+#### Cron schedule
+
+Specify a cron schedule like `5 4 * * *`. Refer to https://crontab.guru/ for the syntax to specify your schedule.
+
+#### Logs
+
+Yan can see logs of the job via the in-built Grafana dashboard. Navigate to Monitor tab to login to Grafana dashboard.
+Within Grafana dashboard, filter to see `app-services` namespace logs.
+
+You can create any number of jobs in your environment.
