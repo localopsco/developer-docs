@@ -62,7 +62,8 @@
               "environment/inside",
               "environment/create",
               "environment/customize",
-              "environment/delete"
+              "environment/delete",
+              "environment/shared-responsibilities"
             ]
           }
         ]
