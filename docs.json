@@ -84,7 +84,21 @@
                   "environment/services/delete"
                 ]
               },
-              "environment/extend-with-iac"
+              "environment/extend-with-iac",
+              {
+                "group": "Managed cloud services",
+                "pages": [
+                  {
+                    "group": "AWS",
+                    "pages": [
+                      "environment/services/aws/s3",
+                      "environment/services/aws/rds",
+                      "environment/services/aws/elasti-cache",
+                      "environment/services/aws/sns"
+                    ]
+                  }
+                ]
+              }
             ]
           }
         ]

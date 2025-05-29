@@ -1,0 +1,114 @@
+---
+title: Elasticache
+---
+
+You service(s) may want to store/access data in a Redis/Memcache instance. This guide will show you steps to create and
+access Amazon elasticache instances that offer fully managed Redis/Memcache databases.
+
+To proceed with this guide, you would need access to:
+
+1. AWS console with permissions to create RDS database
+2. LocalOps console
+
+Goal is to create a Elasticache instance (Redis, for this guide) in AWS and give your environment/service(s) access to
+it. Please follow the steps below to proceed:
+
+## Steps:
+
+### 1. Fetch the VPC and private subnet IDs
+
+To give your App environment and service(s) access to a Elasticache instance, you need to create the elasticache
+instance within the **same VPC and region** used by the environment.
+
+Navigate to LocalOps console and the environment you created. In the environment's overview section,
+
+1. Pick/copy the VPC ID and Private Subnet IDs
+2. Note down the region
+
+You will use these in the next step while creating the Elasticache instance.
+
+### 2. Create Elasticache instance
+
+Login to the same AWS account and region where you created the environment using LocalOps. And create new Elasticache
+database with appropriate engine - Postgres/MySQL.
+
+You may have to create a subnet group first before creating the Elasticache instance. While creating the subnet group,
+use the same VPC ID and private subnet IDs you copied above.
+
+<Tip>
+  For the same app, if you already have a Elasticache instance in a same or different AWS account, VPC or region, you
+  can very well use the same and skip creating a new Elasticache instance. We can connect your environment/services and
+  the database via _VPC peering_. Learn more about using an existing database below.
+</Tip>
+
+You can follow this
+[official AWS guide](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/GettingStarted.serverless-redis.step1.html)
+to create your Redis cache.
+
+Elasticache offers two deployment modes - _ElastiCache Serverless_ & _Self-designed ElastiCache clusters_. Steps to
+connect either of them to your environments managed by LocalOps, are same.
+
+Record the database endpoint, username and password.
+
+### 3. Add instance endpoint and credentials as secrets
+
+Last step is to give your service(s) access to the RDS database. In LocalOps console, navigate the Service settings
+within the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `REDIS_HOST`
+- Value: `your-instance-endpoint`
+- Key: `REDIS_USERNAME`
+- Value: `your-instance-username`
+- Key: `REDIS_PASS`
+- Value: `your-instance-password`
+```
+
+Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `REDIS_*` environment variables to connect and
+access the database.
+
+Repeat the above process for each Elasticache instance you want to create for each app environment - test, staging,
+production, etc.,
+
+That's it!
+
+## Use pre-existing Elasticache instance
+
+### 1. Setup VPC peering
+
+Your LocalOps app environment is created in its own VPC in the chosen AWS account and region. For the same application,
+if you already have a Elasticache instance running in the same/different AWS account, you can connect/access it with the
+corresponding LocalOps environment using Amazon VPC peering.
+
+VPC peering lets you connect two VPCs from same or different AWS account/region so that resources in one VPC can access
+the resources in another VPC like they belong to the same network.
+
+Ping us on slack / write to us at hello@localops.co / [book a call](https://go.localops.co/meet-engineer) with our team
+to guide you on this.
+
+### 2. Add instance endpoint and credentials as secrets
+
+Last step is to give your service(s) access to the RDS database. In LocalOps console, navigate the Service settings
+within the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `REDIS_HOST`
+- Value: `your-instance-endpoint`
+- Key: `REDIS_USERNAME`
+- Value: `your-instance-username`
+- Key: `REDIS_PASS`
+- Value: `your-instance-password`
+```
+
+Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `REDIS_*` environment variables to connect and
+access the database.
+
+That's it. 🎉

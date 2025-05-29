@@ -1,0 +1,87 @@
+---
+title: SNS
+---
+
+This guide will show you steps to create SNS topics and access them from your service running within App environments.
+
+To proceed with this guide, you would need access to:
+
+1. AWS console with permissions to access SNS console and add policies to an existing IAM role.
+2. LocalOps console
+
+## Steps:
+
+### 1. Create SNS topic
+
+Login to AWS console and create new SNS topic in the region you want, and with appopriate unique name.
+
+You can follow this [official AWS guide](https://docs.aws.amazon.com/sns/latest/dg/sns-getting-started.html) to create
+SNS topic(s).
+
+### 2. Add permission to access SNS topic
+
+LocalOps creates a new IAM role in your AWS account, for each app environment, so that your services/containers can
+access them. So that your code/containers can access any AWS resource without passing AWS_ACCESS_KEY or AWS_SECRET_KEY.
+
+Navigate to LocalOps console and the corresponding environment. In overview section, you can find the APP ROLE whose
+name ends with `app-role` and that which you can copy and search in AWS IAM console > Roles section. Once you find the
+IAM role in IAM console, next step is to add a policy to the IAM role to give permissions for the role to access the SNS
+topic(s) your created.
+
+#### Create a new IAM policy for the SNS topic:
+
+1. Navigate to Policies in AWS IAM console
+2. Create a new IAM policy and give it a specific name
+3. Add the JSON below, as policy statement:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish",
+        "sns:Subscribe",
+        "sns:Unsubscribe",
+        "sns:Receive",
+        "sns:GetTopicAttributes",
+        "sns:SetTopicAttributes",
+        "sns:ListSubscriptionsByTopic"
+      ],
+      "Resource": "<sns-topic-arn>"
+    }
+  ]
+}
+```
+
+Replace `<sns-topic-arn>` with your SNS topic's ARN.
+
+If you create more than one topic, expand the `Resource` attribute above to an array of ARN strings.
+
+4. Press save.
+
+#### Add the new IAM policy to the IAM role
+
+Navigate back to the IAM role you saw earlier. In its Permissions tab, pick the option to "Add Policy". In the policy
+picker, pick the one you created above and add it.
+
+### 3. Add topic details as secret
+
+Last step is to give service access to the new SNS topic. In LocalOps console, navigate to the Service settings within
+the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `topic-var-name`
+- Value: `topic-name`
+```
+
+Repeat this for each topic you created. Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `topic-var-name` environment variable to get the
+name of the topic you created. This can be passed to the AWS SDK used in your code to read/write data. There is no need
+to provide credentials like access key since we are having role based access control here.
+
+That's it! 🎉

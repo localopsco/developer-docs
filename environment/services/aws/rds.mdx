@@ -1,0 +1,111 @@
+---
+title: RDS
+---
+
+You service(s) may want to store/access data in Postgres/MySQL database. This guide will show you steps to create and
+access Amazon RDS databases that offer fully managed Postgres/MySQL databases.
+
+To proceed with this guide, you would need access to:
+
+1. AWS console with permissions to create RDS database
+2. LocalOps console
+
+Goal is to create a RDS database in AWS and give your environment/service(s) access to it. Please follow the steps below
+to proceed:
+
+## Steps:
+
+### 1. Fetch the VPC and private subnet IDs
+
+To give your environment and service(s) access to a RDS database, you need to create the RDS database within the same
+VPC and region used by the environment.
+
+Navigate to LocalOps console and the environment you created. In the environment's overview section,
+
+1. Pick/copy the VPC ID and Private Subnet IDs
+2. Note down the region
+
+You will use these in the next step while creating the RDS database.
+
+### 2. Create RDS database
+
+Login to the same AWS account and region where you created the environment using LocalOps. And create new RDS database
+with appropriate engine - Postgres/MySQL.
+
+You will have to create a new subnet group first before creating the RDS instance. While creating the subnet group, use
+the VPC ID and private subnet IDs you copied above.
+
+<Tip>
+  For the same app, if you already have a RDS database in a different AWS account, different VPC or in a different
+  region, you can very well use the same and skip creating a new RDS database. We can connect your environment/services
+  and the database via VPC peering. Learn more about using an existing database below.
+</Tip>
+
+For rest of the instructions, you can follow this
+[official AWS guide](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreateDBInstance.html) to create your
+database.
+
+Record the database endpoint, username and password.
+
+### 3. Add DB endpoint and credentials as secrets
+
+Last step is to give your service(s) access to the RDS database. In LocalOps console, navigate the Service settings
+within the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `DB_HOST`
+- Value: `your-db-endpoint`
+- Key: `DB_USERNAME`
+- Value: `your-db-username`
+- Key: `DB_PASS`
+- Value: `your-db-password`
+```
+
+Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `DB_*` environment variables to connect and
+access the database.
+
+Repeat the above process for each RDS instance you want to create for each app environment - test, staging, production,
+etc.,
+
+That's it!
+
+## Use pre-existing RDS database
+
+### 1. Setup VPC peering
+
+Your LocalOps app environment is created in its own VPC in the chosen AWS account and region. For the same application,
+if you already have a RDS database instance running in the same/different AWS account, you can connect/access it with
+the corresponding LocalOps environment using Amazon VPC peering.
+
+VPC peering lets you connect two VPCs from same or different AWS account/region so that resources in one VPC can access
+the resources in another VPC like they belong to the same network.
+
+Ping us on slack / write to us at hello@localops.co / [book a call](https://go.localops.co/meet-engineer) with our team
+to guide you on this.
+
+### 2. Add DB endpoint and credentials as secrets
+
+Last step is to give your service(s) access to the RDS database. In LocalOps console, navigate the Service settings
+within the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `DB_HOST`
+- Value: `your-db-endpoint`
+- Key: `DB_USERNAME`
+- Value: `your-db-username`
+- Key: `DB_PASS`
+- Value: `your-db-password`
+```
+
+Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `DB_*` environment variables to connect and
+access the database.
+
+That's it. 🎉

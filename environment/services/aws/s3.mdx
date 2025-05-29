@@ -1,0 +1,82 @@
+---
+title: S3
+---
+
+# S3
+
+You service(s) may want to store/access files in S3. This guide will show you steps to create and access s3 buckets from
+your services.
+
+To proceed with this guide, you would need access to:
+
+1. AWS console with permissions to create s3 buckets and add policies to an existing IAM role.
+2. LocalOps console
+
+## Steps:
+
+### 1. Create S3 bucket
+
+Login to AWS console and create new S3 bucket(s) in the region you want, and with appopriate unique name.
+
+You can follow this
+[official AWS guide](https://docs.aws.amazon.com/AmazonS3/latest/userguide/GetStartedWithS3.html#creating-bucket) to
+create s3 buckets.
+
+### 2. Add permission to access S3 bucket
+
+LocalOps creates a new IAM role in your AWS account for your services/containers to use. So that your code/containers
+can access any AWS resource without passing AWS_ACCESS_KEY or AWS_SECRET_KEY.
+
+Navigate to LocalOps console and the corresponding environment. In overview section, you can find the APP ROLE whose
+name ends with `app-role` and that which you can copy and search in AWS IAM console > Roles section. Once you find the
+IAM role in IAM console, next step is to add a policy to the IAM role to give permissions for the role to access the S3
+bucket your created.
+
+#### Create a new IAM policy for the S3 bucket:
+
+1. Navigate to Policies in AWS IAM console
+2. Create a new IAM policy and give it a specific name
+3. Add the JSON below, as policy statement:
+
+```
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:DeleteObject",
+    "s3:ListBucket"
+  ],
+  "Resource": [
+    "arn:aws:s3:::your-bucket-name",
+    "arn:aws:s3:::your-bucket-name/*"
+  ]
+}
+```
+
+Replace `your-bucket-name` with your bucket name. 4. Press save.
+
+#### Add the new IAM policy to the IAM role
+
+Navigate back to the IAM role you saw earlier. In its Permissions tab, pick the option to "Add Policy". In the policy
+picker, pick the one you created above and add it.
+
+### 3. Add bucket details as secret
+
+Last step is to tell your service about the new S3 bucket it can start to access. In LocalOps console, navigate the
+Service settings within the corresponding environment.
+
+In secrets section, add a new key value pair like
+
+```
+- Key: `attachments-bucket`
+- Value: `your-bucket-name`
+```
+
+Learn more about secrets [here](/environment/services/secrets).
+
+You can name the key in any way you want. In your code, you can access `attachments-bucket` environment variable to get
+the name of the bucket you created. This can be passed to the AWS SDK used in your code to read/write data. There is no
+need to provide credentials like access key since we are having role based access control here.
+
+That's it! 🎉
