@@ -60,7 +60,8 @@
             "group": "Environment",
             "pages": [
               "environment/inside",
-              "environment/create"
+              "environment/create",
+              "environment/customize"
             ]
           }
         ]

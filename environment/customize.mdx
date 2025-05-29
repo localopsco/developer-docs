@@ -1,0 +1,92 @@
+---
+title: Customise environment
+---
+
+Each app environment is provisioned with a set of network, compute and storage resources to support your application.
+
+App environments are customisable via environment templates, to support different kinds of applications that would use
+LocalOps to get deployed.
+
+Our default environment template works for most applications. In case you want to customise more, please see below.
+
+Environment templates can be created with custom:
+
+- type of compute servers (as supported by cloud servers)
+- compute/memory/gpu intensive
+- count of servers
+- application storage volume type
+- application storage volume IOPS capacity
+- application storage throughput
+- application storage IOPS/GB
+
+### Type of compute servers
+
+Any type of compute server can be picked to match your application needs.
+
+For AWS, all types of EC2 instances can be picked to run in your App environment. See
+[AWS Supported EC2 types](https://aws.amazon.com/ec2/instance-types/).
+
+### Count of compute servers
+
+Based on the size of your application, you can pick any count of compute servers to run in your App environment. These
+many servers will be provisioned every time an app environment is provisioned and attached to the underlying kubernetes
+cluster.
+
+For AWS, we provision EC2 instances.
+
+## Application storage
+
+### Volume type
+
+Based on the nature of I/O you do within your application, you can pick a volume type that gives best performance/price
+ratio. This is the type of volume that will get provisioned for your application to read/write its data. Size of the
+volume must be provided in your application Helm chart.
+
+For AWS, you can pick any volume type supported. Refer
+[AWS supported volume types](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html).
+
+### Volume IOPS
+
+Based on the nature of I/O you do within your application, you can configure IOPS (I/O operations per second) bandwidth.
+LocalOps configures volumes for this bandwidth while spinning up your application.
+
+<Note>
+  Higher IOPS values will result in higher cloud charges. Please refer to cloud provider (AWS) documentation before
+  configuration
+</Note>
+
+### Volume storage throughput
+
+Based on the nature of I/O you do within your application, you can configure storage throughput in GB/s. LocalOps
+configures EBS volumes for this bandwidth while spinning up your application.
+
+### Volume storage IOPS/GB
+
+Based on the nature of I/O you do within your application, you can configure IOPS/GB. LocalOps configures EBS volumes
+for this bandwidth while spinning up your application.
+
+## Manage Environment Templates
+
+### Create an environment template
+
+1. Click on **Environment templates** from the navigation pane on the left.
+2. Click on the **Add template** button located at the top-right corner of the page.
+3. Give a descriptive name for your template.
+4. Select the cloud provider where the template will be used.
+5. Specify the server configuration, including node type and quantity.
+6. Define the storage settings required for your application.
+7. Click the **Save Environment template** button to create your template.
+
+### Update an environment template
+
+1. Go to the **Environment templates** section from the navigation pane on the left.
+2. Choose the template you want to update.
+3. Adjust any parameters or configurations as needed.
+4. Click on the **Save Changes** button to apply the updates to your template.
+
+### Delete an environment template
+
+1. Go to the **Environment templates** section from the navigation pane on the left.
+2. Click on the template you wish to delete.
+3. Click on the **Archive this template** button.
+4. Follow the confirmation prompt and click **Continue** to delete your template.
