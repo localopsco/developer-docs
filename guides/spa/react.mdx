@@ -1,0 +1,304 @@
+---
+title: ReactJS
+---
+
+This documentation provides a step-by-step guide to prepare a Single Page Application (SPA) that was built using ReactJS
+for deploying it in any cloud using LocalOps.
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Node.js][node], version 20.15.1 at the time of writing.
+- [npm], as a package manager for installing and maintaining dependencies. This usually comes bundled with Node.js.
+- A foundational knowledge of [React].
+- [Vite] for a dev server and building optimized static assets for production.
+- [nginx] to serve static assets and also act as a reverse proxy server.
+- [docker] to build standalone containers to serve your production app.
+
+<Note>
+  This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is recommended to review their official documentation and tutorials to get up to speed
+  before proceeding with this guide.
+</Note>
+
+## Scaffolding the React App
+
+Vite offers a CLI tool that makes the scaffolding process much easier. Run the following command:
+
+```bash
+npm create vite@latest
+```
+
+Follow the prompts to create your first app. Refer to the
+[Vite guide](https://vitejs.dev/guide/#scaffolding-your-first-vite-project) to learn more about scaffolding the app.
+
+Once the application is ready, navigate to the directory and install all the dependencies:
+
+```bash
+cd vite-project # replace with the name of the project you created
+npm install
+```
+
+After the dependencies are installed, you can start the dev server by running:
+
+```bash
+npm run dev
+```
+
+This usually starts the server on port `5173`. Go to [http://localhost:5173](http://localhost:5173) to see your app.
+
+The dev server is enabled with [HMR](https://vitejs.dev/guide/features#hot-module-replacement), so it hot reloads the
+application when you make changes.
+
+## Building Your Production App
+
+When it is time to deploy your app for production, simply run:
+
+```bash
+npm run build
+```
+
+This command builds a highly optimized static bundle. By default, it uses `<root>/index.html` as the build entry point
+and produces an application bundle that is suitable to be served over a static hosting service. You can read more about
+[building for production in the Vite guide](https://vitejs.dev/guide/build.html#building-for-production).
+
+The output is found in the `<root>/dist` directory unless configured to a different path.
+
+<Tip>
+  Once built, you can preview the production build using `npm run preview` to start a production-like local web server.
+</Tip>
+
+<Warning>
+  It is important to note that `vite preview` is intended for previewing the build locally and not meant as a production
+  server.
+</Warning>
+
+### Configuring nginx
+
+Once the application is built for production, we need a static web server to serve those files. For that purpose, we are
+using [nginx], an open-source HTTP and reverse proxy server.
+
+```nginx nginx.conf.template
+server {
+    listen ${PORT};
+    server_name _;
+
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # skip this block if you don't have a backend yet
+    location /api/ {
+        proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+```
+
+Create this file `nginx.conf.template` in the root of your project. We won't be using this template now; we'll use it to
+run the nginx server inside the Docker container.
+
+Note two important blocks in this configuration:
+
+```nginx
+location / {
+  root /usr/share/nginx/html;
+  try_files $uri $uri/ /index.html;
+}
+```
+
+This block serves the `index.html` from the files we built using Vite, stored in the `/usr/share/nginx/html` folder. We
+will copy the assets to this folder while building the Docker application.
+
+And then the API block:
+
+```nginx
+location /api/ {
+    proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Assume that the site we built is being served by nginx via the domain `example.com`. Whenever an API call is made to
+`example.com/api`, the nginx server acts as a reverse proxy server and forwards the request to the backend server. You
+can use reverse proxying to navigate the traffic that is inbound to nginx. The reverse proxy server also acts as a mask,
+hiding the real backend from the outside world.
+
+<Note>
+  You might want to skip the API block if you don't have a backend yet; otherwise, nginx will throw an error for an
+  invalid host on the backend URL.
+</Note>
+
+A typical non-static web application usually will have a backend, and we make AJAX requests using
+[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) or libraries like
+[axios](https://axios-http.com/docs/intro) to get/send data to retrieve/store the application state.
+
+### Create the Docker Image
+
+Dockerizing makes the app run anywhere, agnostic of the platform. As long as Docker is installed, whether it's Windows,
+Mac, or Linux, it can run with the same behavior.
+
+Before creating the Dockerfile, let's create a `.dockerignore` file and add the contents that should not be copied over
+to the Docker file system.
+
+```ignore .dockerignore
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.git
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
+
+<Important>
+  Creating a `.dockerignore` file and adding folders like `node_modules` is a must, since dependencies will be installed
+  while building the image based on the platform preferences used. Copying those from the file system will overwrite the
+  installed dependencies and might cause errors during deployment.
+</Important>
+
+Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile is posted for reference with steps to create the production image. We leverage Docker's
+[Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/) to create a smaller-sized image for running
+the production server.
+
+```docker Dockerfile
+# Stage 1: Base
+# This stage is the first stage
+FROM node:20-alpine AS base
+
+# Switch to the app directory,
+# this will be our app's root directory inside the container
+WORKDIR /app
+
+# Copy the manifest and lock file to the root
+# Note: ./ refers to /app, since we switched context in the above step
+COPY package.json package-lock.json* ./
+
+# Install the dependencies
+RUN npm ci
+
+# Set the NODE_ENV to production
+# to configure the application to build/run under production mode
+ENV NODE_ENV=production
+
+# Copy all the files from our machine to the container
+COPY . .
+
+# Run the build to create production assets
+RUN npm run build
+
+# Stage 2: Production
+# Now we build a new stage from scratch to run the nginx server
+# This won't include any images from the previous steps
+FROM nginx:alpine AS production
+
+# The port you'd like to use for Nginx
+ENV PORT=3000
+# The URL for the backend service. Skip if irrelevant to you.
+ENV BACKEND_HOST=host.docker.internal
+# Port for the backend. Skip if irrelevant to you.
+ENV BACKEND_PORT=3001
+
+# Copy the template we created earlier for nginx to the etc folder
+# note the destination file name should be default.conf.template
+# else the variables in the config won't work
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Since we started a new stage, we need to copy the build from the
+# build step to the nginx's html directory. Note we have configured
+# this directory in the nginx config file
+COPY --from=base /app/dist /usr/share/nginx/html
+
+# Expose the port the nginx is running to the outside world
+EXPOSE ${PORT}
+
+# Start the nginx server
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t react-app:latest .
+```
+
+This command builds the `react-app` image for the platform `linux/amd64` and tags it as `latest`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images.
+
+```bash
+# only for testing in a local machine
+docker build -t react-app:latest .
+```
+
+### Run the Docker Image
+
+Let's run the Docker container using the image created of the React application with the command below.
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --name react-app \
+  -e PORT=3000 \
+  -e BACKEND_PORT=3001 \
+  -e BACKEND_HOST=host.docker.internal \
+  -d \
+  -p 3000:3000 \
+  react-app
+```
+
+- `-it`: enables interactivity with TTY.
+- `--rm`: tells the Docker Daemon to clean up the container and remove the file system after the container exits.
+- `--name react-app`: Name of the container `react-app`.
+- `-e PORT=3000`: Sets the environment variable PORT in Docker to `3000`.
+- `-e BACKEND_PORT=3001`: Sets the environment variable BACKEND_PORT in Docker to `3001`.
+- `-e BACKEND_HOST=host.docker.internal`: Sets the environment variable BACKEND_HOST in Docker to
+  `host.docker.internal`.
+- `-d`: Runs the container in detached (background) mode. You can skip the flag to see the logs directly in your
+  terminal window.
+- `-p 3000:3000`: Maps port 3000 on your host to port 3000 in the container.
+- `react-app` at the end is the name of the image.
+
+After running the command, visit `http://localhost:3000` to see the React application running inside the Docker
+container.
+
+Hurray 🎉. Now we have created and packaged a React app for production use.
+
+## Example app
+
+```text
+Source: https://github.com/localopsco/js-example-spa
+```
+
+`js-example-spa` is an example TODO app built with. This project is dockerized and the images are published to Amazon
+Elastic Container Registry (ECR).
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
+git repository and branch name to deploy this image.
+
+[react]: https://react.dev
+[npm]: https://docs.npmjs.com/about-npm
+[vite]: https://vitejs.dev/
+[node]: https://nodejs.org/en
+[docker]: https://docs.docker.com/
+[nginx]: https://nginx.org/en/

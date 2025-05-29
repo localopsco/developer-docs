@@ -44,7 +44,23 @@
                   "guides/languages/python",
                   "guides/languages/node"
                 ]
+              },
+              {
+                "group": "Single Page Applications",
+                "pages": [
+                  "guides/spa/react",
+                  "guides/spa/angular",
+                  "guides/spa/ember",
+                  "guides/spa/vue"
+                ]
               }
+            ]
+          },
+          {
+            "group": "Environment",
+            "pages": [
+              "environment/inside",
+              "environment/create"
             ]
           }
         ]

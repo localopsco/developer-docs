@@ -1,0 +1,305 @@
+---
+title: Angular
+---
+
+This documentation provides a step-by-step guide to prepare a Single Page Application (SPA) that was built using Angular
+for deploying it in any cloud using LocalOps.
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Node.js][node], v20.15.1 at the time of writing this doc.
+- [npm] as a package manager for installing and maintaining dependencies. This usually comes bundled with Node.js.
+- A foundational knowledge of [Angular].
+- [Angular CLI](https://angular.dev/cli) for dev server and building optimized static assets for production.
+- [nginx] to serve static assets and also act as a reverse proxy server.
+- [docker] to build standalone containers to serve your production app.
+
+<Note>
+This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
+speed before proceeding with this guide.
+</Note>
+
+## Installing the Angular CLI
+
+You'll need to install the Angular CLI to scaffold a new project. Open a terminal and run the following command:
+
+```bash
+npm install -g @angular/cli
+```
+
+If you are having issues running this command in Windows or Unix, check out the
+[CLI docs](https://angular.dev/tools/cli/setup-local#install-the-angular-cli) for more info.
+
+## Scaffolding the Angular App
+
+In your terminal, run the CLI command `ng new` with the desired project name. In the following examples, we'll be using
+the example project name of `angular-project`.
+
+```bash
+ng new <project-name>
+```
+
+Follow the prompts to create your first app. When prompted with the question
+`Do you want to enable Server-Side Rendering (SSR) and Static Site Generation?`, proceed with `N` (no), since this guide
+focuses only on single-page applications. We'll cover SSR in another guide.
+
+If you have more questions, check out the [Angular installation guide](https://angular.dev/installation) to learn more
+about scaffolding the app.
+
+Once the application is ready, navigate to the directory and install all the dependencies:
+
+```bash
+cd angular-project # replace with the name of the project you created
+```
+
+All of your dependencies should be installed at this point (which you can verify by checking for the existence of a
+`node_modules` folder in your project), so you can start your project by running the command:
+
+```bash
+npm start
+```
+
+If everything is successful, you should see a similar confirmation message in your terminal:
+
+```
+Watch mode enabled. Watching for file changes...
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+ ➜ Local: http://localhost:4200/
+ ➜ press h + enter to show help
+```
+
+Now you can visit the path in Local (e.g., `http://localhost:4200`) to see your application.
+
+## Building Your Production App
+
+When it is time to deploy your app for production, simply run:
+
+```bash
+npm run build
+```
+
+This will compile your TypeScript code to JavaScript, as well as optimize, bundle, and minify the output as appropriate.
+The result of this build process is output to a directory (`dist/${PROJECT_NAME}` by default).
+
+### Configuring nginx
+
+Once the application is built for production, we need a static web server to serve those files. For that purpose, we are
+using [nginx], an open-source HTTP and reverse proxy server.
+
+```nginx nginx.conf.template
+server {
+    listen ${PORT};
+    server_name _;
+
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # skip this block if you don't have a backend yet
+    location /api/ {
+        proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}
+```
+
+Create this file `nginx.conf.template` in the root of your project. We won't be using this template now; we'll use it to
+run the nginx server inside the Docker container.
+
+Note two important blocks in this configuration:
+
+```nginx
+location / {
+  root /usr/share/nginx/html;
+  try_files $uri $uri/ /index.html;
+}
+```
+
+This block serves the `index.html` from the files we built using Angular, stored in the `/usr/share/nginx/html` folder.
+We will copy the assets to this folder while building the Docker application.
+
+And then the API block:
+
+```nginx
+location /api/ {
+    proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+<Note>
+You might want to skip the API block if you don't have a backend yet; otherwise, nginx will throw an error for
+an invalid host on the backend URL.
+</Note>
+
+A typical non-static web application usually will have a backend, and we make AJAX requests using
+[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) or libraries like
+[axios](https://axios-http.com/docs/intro) to get/send data to retrieve/store the application state.
+
+Assume that the site we built is being served by nginx via the domain `example.com`. Whenever an API call is made to
+`example.com/api`, the nginx server acts as a reverse proxy server and forwards the request to the backend server.
+
+You can use reverse proxying to navigate the traffic that is inbound to nginx. The reverse proxy server also acts as a
+mask, hiding the real backend from the outside world.
+
+### Create the Docker Image
+
+Dockerizing makes the app run anywhere, agnostic of the platform. As long as Docker is installed, whether it's Windows,
+Mac, or Linux, it can run with the same behavior.
+
+Before creating the Dockerfile, let's create a `.dockerignore` file and add the contents that should not be copied over
+to the Docker file system.
+
+```ignore .dockerignore
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.git
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
+
+<Info>
+Creating a `.dockerignore` file and adding folders like `node_modules` is a must, since dependencies will
+be installed while building the image based on the platform preferences used. Copying those from the file system will
+overwrite the installed dependencies and might cause errors during deployment.
+</Info>
+
+Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile is posted for reference with steps to create the production image. We leverage Docker's
+[Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/) to create a smaller-sized image for running
+the production server.
+
+```docker Dockerfile
+# Stage 1: Base
+# This stage is the first stage
+FROM node:20-alpine AS base
+
+# Switch to the app directory,
+# this will be our app's root directory inside the container
+WORKDIR /app
+
+# Copy the manifest and lock file to the root
+# Note: ./ refers to /app, since we switched context in the above step
+COPY package.json package-lock.json* ./
+
+# Install the dependencies
+RUN npm ci
+
+# Set the NODE_ENV to production
+# to configure the application to build/run under production mode
+ENV NODE_ENV=production
+
+# Copy all the files from our machine to the container
+COPY . .
+
+# Run the build to create production assets
+RUN npm run build
+
+# Stage 2: Production
+# Now we build a new stage from scratch to run the nginx server
+# This won't include any images from the previous steps
+FROM nginx:alpine AS production
+
+# The port you'd like to use for Nginx
+ENV PORT=4200
+# The URL for the backend service
+ENV BACKEND_HOST=host.docker.internal
+# Port for the backend
+ENV BACKEND_PORT=4500
+
+# Copy the template we created earlier for nginx to the etc folder
+# note the destination file name should be default.conf.template
+# else the variables in the config won't work
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+
+# Since we started a new stage, we need to copy the build from the
+# build step to the nginx's html directory. Note we have configured
+# this directory in the nginx config file
+COPY --from=base /app/dist/angular-project/browser /usr/share/nginx/html
+
+# Expose the port the nginx is running to the outside world
+EXPOSE ${PORT}
+
+# Start the nginx server
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t angular-app:latest .
+```
+
+This command builds the `angular-app` image for platform `linux/amd64` and tags it as `latest`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images:
+
+```bash
+# only for testing in local machine
+docker build -t angular-app:latest .
+```
+
+### Run the Docker Image
+
+Let's run the Docker container using the image created of the Angular application with the command below.
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --name angular-app \
+  -e PORT=4200 \
+  -e BACKEND_PORT=4500 \
+  -e BACKEND_HOST=host.docker.internal \
+  -d \
+  -p 4200:4200 \
+  angular-app
+```
+
+- `-it`: Enables interactivity with TTY.
+- `--rm`: Tells the Docker Daemon to clean up the container and remove the file system after the container exits.
+- `--name angular-app`: Names the container `angular-app`.
+- `-e PORT=4200`: Sets the environment variable PORT in Docker to `4200`.
+- `-e BACKEND_PORT=4500`: Sets the environment variable BACKEND_PORT in Docker to `4500`.
+- `-e BACKEND_HOST=host.docker.internal`: Sets the environment variable BACKEND_HOST in Docker to
+  `host.docker.internal`.
+- `-d`: Runs the container in detached (background) mode. You can skip this flag to see the logs directly in your
+  terminal window.
+- `-p 4200:4200`: Maps port 4200 on your host to port 4200 in the container.
+- `angular-app`: The name of the image.
+
+After running the command, visit `http://localhost:4200` to see the Angular application running inside the Docker
+container.
+
+Hurray 🎉. Now we have created and packaged an Angular app for production use.
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](services/create.md) now to point at the
+git repository and branch name to deploy this image.
+
+[angular]: https://angular.dev/
+[npm]: https://docs.npmjs.com/about-npm
+[node]: https://nodejs.org/en
+[docker]: https://docs.docker.com/
+[nginx]: https://nginx.org/en/

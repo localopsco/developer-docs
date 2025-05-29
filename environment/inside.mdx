@@ -1,0 +1,102 @@
+---
+title: What's inside?
+---
+
+Each Application enivronment comprises of
+
+- Dedicated Virtual private cloud (VPC)
+- Private subnets
+- Public subnets
+- NAT gateway
+- Internet gateway
+- Kubernetes cluster (E.g., EKS in AWS)
+- Compute servers and their default volumes (E.g., EC2 in AWS)
+- Kubernetes companion deployments
+  - Prometheus
+  - Loki
+  - Grafana
+- 👉 Your App
+- Unique Domain for your app
+- Auto-renewing SSL certificate for the unique domain
+
+Let us go over each of them in detail.
+
+### Dedicated Virtual private cloud (VPC)
+
+In any connected cloud account, a dedicated network is provisioned to host everything for a given app environment.
+
+In AWS, LocalOps provisions a VPC (Virtual private cloud).
+
+### Private subnets
+
+Within the dedicated network / VPC, LocalOps creates private subnets to host data in servers having no public IP.
+
+### Public subnets
+
+Similar to public subnets, LocalOps creates public subnets to host servers having public IP. For example, Internet
+gateway.
+
+### NAT gateway
+
+In AWS, NAT Gateway and a persistent IP (elastic IP) is provisioned inside public subnet in each app environemnt for
+private subnet servers to connect to the internet. To the internet, all requests originating from private subnet servers
+will pass via NAT gateway and have NAT gateway's persistent IP address.
+
+### Internet gateway
+
+In AWS, Internet Gateway and a persistent IP (elastic IP) is provisioned inside public subnet in each app environemnt
+for all servers in the VPC to connect to the internet.
+
+### Kubernetes cluster
+
+A kubernetes cluster and control plane is provisioned inside each VPC for every app environment. This cluster runs the
+application deployed on the app environment.
+
+In AWS, AWS Elastic Kubernetes Service (EKS) is provisioned to ensure AWS managas the configure and uptime of Kubernetes
+control plane.
+
+### Compute servers
+
+To run your application's containers, compute servers are provisioned and attached to the kubernetes clusters as Nodes.
+
+In AWS, EC2 servers are provisioned. Count and type of EC2 servers depends on the environment template chosen to create
+the App environment. Any type of EC2 servers [supported by AWS](https://aws.amazon.com/ec2/instance-types/) can be
+provisioned. Also, EBS Volumes are attached by default to each of these EC2 servers. But, the applications deployed on
+Kubernetes cluster (your app) will dynamically create volumes matching your storage specifications declared in Helm
+chart.
+
+## Kubernetes companion deployments
+
+### Prometheus
+
+Open source [Prometheus](https://prometheus.io/) is installed and pre-configured by LocalOps in an App Environment to
+record system metrics of the compute nodes.
+
+### Loki
+
+Open source [Loki](https://grafana.com/oss/loki/) is installed and pre-configured by LocalOps in an app environment to
+record logs of your application.
+
+### Grafana
+
+Open source [Grafana](https://grafana.com/oss/grafana/) is installed and pre-configured by LocalOps in an app
+environment to store logs and metrics from your app environment and let you visualise them in a single dashboard.
+
+## Your app
+
+Your application happily runs on top, leveraging all the infrastructure and tools installed in the app environment.
+
+## Unique domain
+
+Your application is given a Kubernetes ingress and a unique domain by LocalOps for your users to access them anywhere
+from the internet.
+
+## SSL certificate
+
+Auto-renewing SSL certificate is provisioned. In AWS, we provision the certificate in
+[ACM](https://aws.amazon.com/certificate-manager/) in the cloud account where the app environment is running.
+
+<Info>
+  If you have more questions, please reach out to us at help@localops.co. Or schedule a [deep dive
+  session](https://on.localops.co/meetings/anand-localops/60-min-deep-dive) with us anytime over zoom.
+</Info>
