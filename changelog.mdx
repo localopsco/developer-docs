@@ -216,3 +216,94 @@ any cloud for any customer within minutes. Every account gets 100 free hours on 
 Or [schedule a demo](https://cal.com/anand-localops/founder-connect) if you want us to get you started.
 
 </Update>
+
+<Update label="June 30th, 2024">
+## Spinning up cloud resources dynamically?
+
+This release is BIG if you are spinning up cloud resources dynamically from your application. Read on!
+
+App environments run in a cloud account (say AWS) that belongs to you or your customer. For each app environment you
+spin up using LocalOps, a dedicated network is provisioned in a specific region within the connected cloud account. And
+safe/useful defaults are set during the process.
+
+This information about the dedicated network, the cloud region, the defaults and everything else is useful for the
+application in many scenarios. For example, to dynamically provision cloud resources such as EBS volumes, EC2 instances
+at run time from your application.
+
+So we have begun to pass this surrounding context / network / cloud information to your application as additional Helm
+values. These can be further consumed by your application as Environment variables as appropriate.
+
+We also send other information to your application such as App version. So that you can do update checks, license checks
+etc., as needed.
+
+Checkout our [Developer documentation](https://docs.localops.co) to learn more.
+
+Other update:
+
+We moved to [Cloudflare Turnstile](https://www.cloudflare.com/en-in/application-services/products/turnstile/) to get
+users signed up and logged in pretty fast. H-Captcha was relatively more stringent and introduced more friction.
+
+🚀 [Get Started with LocalOps](https://console.localops.co/signup) now, to automate cloud deployments, especially if you
+deploy applications on end customers cloud / Private SaaS deployments.
+
+Take a [30-min demo](https://cal.com/anand-localops/founder-connect), if you have specific questions 😄
+
+Cheers.
+
+</Update>
+
+<Update label="June 20th, 2024">
+## Help is here! One hundred articles out
+
+As we head for our launch in Product Hunt and other communities later this quarter, we wanted to make LocalOps platform
+self serve and super obvious for developers to get started with.
+
+So our team doubled down on Developer documentation past week. And wrote a ton of example code, documentation, manuals
+and help articles.
+
+We did count them and we produced ~100 articles across our Help center and Developer documentation.
+
+Checkout our developer documentation here - https://docs.localops.co and help center here - https://help.localops.co.
+
+We didn't stop there 👆.
+
+We shipped example full stack applications using ReactJS on the Front end and Python / NodeJS / Golang on the backend,
+to guide developers using one of these stacks to package their application as Helm chart and bring their applications to
+LocalOps.
+
+Checkout example repositories here:
+
+- NodeJS - https://github.com/localopsco/node-todo-example
+- Python/Django - https://github.com/localopsco/django-todo-example
+- Golang - https://github.com/localopsco/go-sample-app
+
+If someone is not using ReactJS, there are other examples available as well in our developer docs:
+
+- Angular: https://docs.localops.co/guides/spa/angular
+- Ember: https://docs.localops.co/guides/spa/ember
+- VueJS: https://docs.localops.co/guides/spa/vue
+
+(Soon) LocalOps GPT:
+
+We may create our official GPT sometime. And publish it on GPT marketplace for our users to add us, ask questions
+directly within ChatGPT interface 😇.
+
+Stay tuned!
+
+Subscribe to this blog Subscribe to this blog (bottom left) to read these posts right in your inbox whenever we publish
+next time.
+
+Get started for FREE on LocalOps: Start deploying your Apps as App environments across any cloud.
+
+Sign up for an account at LocalOps for free, to create production ready app environments in your cloud or your
+customer's cloud: https://console.localops.co/signup. Every account gets 100 hours free on Sandbox environments every
+month.
+
+If you want a personalised demo, [schedule a call](https://cal.com/anand-localops/founder-connect) with us here.
+
+We consider Documentation as our product too. We want to make it easy for Developers & DevOps teams to find what they
+need and quickly move on.
+
+We will continue investing a lot of our time to make Developer documentation super rich.
+
+</Update>
