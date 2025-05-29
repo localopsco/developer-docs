@@ -1,0 +1,60 @@
+---
+title: How to use
+---
+
+LocalOps CLI `ops` can be used to get shell access to the underlying kubernetes cluster of an App environment.
+
+```sh
+Localops CLI
+
+Usage:
+  ops [command]
+
+Available Commands:
+  completion        Generate the autocompletion script for the specified shell
+  help              Help about any command
+  login             Login to Localops Account
+  logout            Logout of Localops Account
+  update-kubeconfig Update current context to app environment kubernetes cluster
+  version           Localops CLI Version
+
+Flags:
+  -h, --help   help for lops
+
+Use "ops [command] --help" for more information about a command.
+```
+
+To get shell access, you have to
+
+1. Login to your Localops account
+2. Use `ops` cli to set kubernetes context of kubectl cli to point at the app environment's kubernetes cluster.
+3. Then Use `kubectl` to inspect the cluster.
+
+### Login to LocalOps
+
+Login to LocalOps account using your email address.
+
+```sh
+ops login
+```
+
+### Set kubernetes context
+
+Use this commnd updates your local current context to point at the app environment's kubernetes cluster.
+
+```sh
+ops update-kubeconfig -e env-id
+```
+
+To get `env-id`, visit your app environment dashboard and see "Shell" tab.
+
+### Use Kubectl
+
+After `update-kubeconfig` command succeeds, you can use any kubectl command to inspect pods, deployments, jobs and
+everything else running in your LocalOps app environment.
+
+For example, to see all cluster resources:
+
+```sh
+kubectl get all --all-namespaces
+```

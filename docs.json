@@ -106,7 +106,8 @@
             "pages": [
               "cli/install-macos",
               "cli/install-linux",
-              "cli/install-windows"
+              "cli/install-windows",
+              "cli/usage"
             ]
           }
         ]
