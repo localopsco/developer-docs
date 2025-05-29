@@ -201,7 +201,8 @@
                 ]
               },
               "bring-your-helm-charts/database-migration",
-              "bring-your-helm-charts/env-vars"
+              "bring-your-helm-charts/env-vars",
+              "bring-your-helm-charts/multiple-helm-charts"
             ]
           }
         ]

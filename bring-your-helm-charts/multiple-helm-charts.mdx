@@ -1,0 +1,98 @@
+---
+title: Multiple Helm Charts
+---
+
+In complex application environments, managing multiple Helm charts individually can become cumbersome. Consolidating
+multiple Helm charts into a single Helm chart allows for easier management, deployment, and versioning of your
+application components. This guide outlines the steps to bring multiple Helm charts into an App Helm chart.
+
+## Why Consolidate Helm Charts?
+
+Bringing multiple Helm charts into a single App Helm chart offers several benefits:
+
+- **Simplified Management**: Manage all application components (services, deployments, configurations) under one
+  umbrella.
+- **Improved Deployment**: Deploying a single Helm chart simplifies deployment workflows and ensures consistency.
+- **Version Control**: Maintain version control for all components within the same repository or package.
+- **Easier Collaboration**: Facilitates collaboration among team members working on different components of the
+  application.
+
+## Steps to Bring Multiple Helm Charts into an App Helm Chart
+
+### 1. Understand Dependencies and Interactions
+
+Before consolidating Helm charts, it's crucial to understand dependencies and interactions between different components
+of your application. Identify Helm charts for each component (e.g., frontend, backend, database) and their
+interdependencies.
+
+### 2. Create a New App Helm Chart Structure
+
+Start by creating a new directory structure for your App Helm chart. This directory will serve as the root directory
+containing subdirectories for each Helm chart you intend to include.
+
+```plaintext
+app-chart/
+├── Chart.yaml        # Main Chart metadata
+├── values.yaml       # Main Chart default values
+├── charts/
+│   ├── frontend/     # Subchart for frontend component
+│   │   ├── Chart.yaml
+│   │   ├── templates/
+│   │   │   └── ...
+│   │   └── ...
+│   ├── backend/      # Subchart for backend component
+│   │   ├── Chart.yaml
+│   │   ├── templates/
+│   │   │   └── ...
+│   │   └── ...
+│   └── database/     # Subchart for database component
+│       ├── Chart.yaml
+│       ├── templates/
+│       │   └── ...
+│       └── ...
+└── ...
+```
+
+### 3. Include Subcharts in the Main Chart
+
+Edit the `Chart.yaml` file of your main App Helm chart to define dependencies on each subchart (frontend, backend,
+database). Specify the versions and configurations required for each subchart.
+
+```yaml app-chart/Chart.yaml
+apiVersion: v2
+name: app-chart
+description: Main Helm chart for the entire application
+version: 0.1.0
+appVersion: '1.0'
+
+dependencies:
+  - name: frontend
+    version: '1.0.0'
+    repository: 'file://./charts/frontend'
+  - name: backend
+    version: '1.0.0'
+    repository: 'file://./charts/backend'
+  - name: database
+    version: '1.0.0'
+    repository: 'file://./charts/database'
+```
+
+### 4. Customize Values and Templates
+
+Modify the `values.yaml` and templates within each subchart (`charts/frontend/values.yaml`, etc.) to align with your
+application's specific configuration requirements. Ensure that values and configurations are correctly propagated from
+the main chart to the subcharts.
+
+### 5. Test and Deploy
+
+Before deploying to production, test your consolidated Helm chart in a development or staging environment. Validate that
+all components deploy as expected and that configurations are applied correctly across all subcharts.
+
+<Tip>
+Update and Version Control
+
+As you make updates to individual components (frontend, backend, database), update the corresponding subcharts within
+your main App Helm chart (`app-chart/charts/frontend`, etc.). Use version control to manage changes and track versions
+effectively.
+
+</Tip>
