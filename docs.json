@@ -79,6 +79,8 @@
                       "environment/services/cronjob"
                     ]
                   },
+                  "environment/services/micro-services",
+                  "environment/services/secrets",
                   "environment/services/delete"
                 ]
               },
