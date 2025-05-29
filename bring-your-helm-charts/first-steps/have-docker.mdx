@@ -1,0 +1,280 @@
+---
+title: I have a Docker Image
+---
+
+Now that you have your Docker images ready, we need to publish them to a registry and package them via Helm charts. If
+you don't have a Docker image, see the [I don't have a Docker image](/bring-your-helm-charts/first-steps/no-docker)
+section to create images.
+
+## Prerequisites
+
+- [AWS account](https://aws.amazon.com/)
+- [Docker] to push the built images to AWS ECR.
+
+## Publish Docker images to AWS ECR
+
+You can push your container images to an Amazon ECR repository with the `docker push` command.
+
+Before pushing the images, the Amazon ECR repository must exist. For more information, refer to the
+[AWS official guide](https://docs.aws.amazon.com/AmazonECR/latest/userguide/repository-create.html) for creating
+repositories.
+
+## Authentication
+
+We must authenticate the Docker client to the Amazon ECR registry to which we want to push the image. Authentication
+should be done for each registry used, and the tokens are valid for 12 hours.
+
+To authenticate Docker to an Amazon ECR registry, run the `aws ecr get-login-password` command and then pass the
+authentication token to the `docker login` command. If you want to authenticate to multiple registries, you must repeat
+the command for each registry.
+
+```shell
+aws ecr get-login-password --region <AWS_REGION> \
+| docker login --username AWS \
+--password-stdin <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com
+```
+
+## Manual build and push docker images
+
+### Preparing the images
+
+Ideally, it is recommended to write a [Makefile](https://opensource.com/article/18/8/what-how-makefile) or any scripts
+to automate the following process.
+
+For convenience throughout the guide, let's export some environment variables to the shell, which we will be referring
+to in the commands we use.
+
+```bash
+export IMAGE_VERSION=0.0.1 \
+  APP_NAME=my-app \
+  AWS_ACC_NO=123456789012 \
+  ECR_REGION=us-east-1 \
+  ECR_REPO=my-app-repo
+```
+
+The following is an example reference of how to set environment variables in Windows and Linux and use them:
+
+<Accordion title="Example to export environment variables in different Operating Systems">
+
+Export the variable to the shell:
+
+<Tabs>
+  <Tab title="Linux" default>
+    ```bash
+    bash export IMAGE_VERSION=1.0.0 APP_NAME=my-app
+    ```
+
+  </Tab>
+  <Tab title="Windows (CMD)">
+    ```powershell
+    powershell set IMAGE_VERSION=1.0.0 && set APP_NAME=my-app
+    ```
+  </Tab>
+  <Tab title="Windows (Powershell)">
+    ```powershell
+    powershell $env:IMAGE_VERSION="1.0.0"; $env:APP_NAME="my-app"
+    ```
+  </Tab>
+</Tabs>
+
+Using the environment variable:
+
+<Tabs>
+  <Tab title="Linux" default>
+    ```bash
+    docker build -t $APP_NAME:$IMAGE_VERSION .
+    ```
+  </Tab>
+  <Tab title="Windows (CMD)">
+     ```powershell
+    docker build -t %APP_NAME%:%IMAGE_VERSION% .
+    ```
+  </Tab>
+  <Tab title="Windows (Powershell)">
+     ```powershell
+    docker build -t ${env:APP_NAME}:${env:IMAGE_VERSION}
+    ```
+  </Tab>
+</Tabs>
+
+</Accordion>
+
+For simplicity's sake, we will be using Linux references throughout the guide.
+
+### Building the image
+
+Use the [docker build](https://docs.docker.com/reference/cli/docker/buildx/build/) command to build the images and tag
+the image with your app name and version.
+
+```bash
+docker build \
+  --platform linux/amd64 \
+  -t $APP_NAME:$IMAGE_VERSION .
+```
+
+Now, you can check the tag we created using the command:
+
+```bash
+docker image ls
+```
+
+If your `APP_NAME` is `my-app` and `IMAGE_VERSION` is `v1.0.0`, it would print the following:
+
+```
+REPOSITORY     TAG         IMAGE ID       CREATED              SIZE
+my-app         v1.0.0      4daf08897bf2   About a minute ago   136MB
+```
+
+### Tagging the image
+
+Once the app is built, tag your image with the combination of the Amazon ECR registry, repository, and image tag to use.
+The registry format is `<AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com`. Run the following commands to create two
+tags:
+
+```bash
+docker tag $APP_NAME:$IMAGE_VERSION \
+  $AWS_ACC_NO.dkr.ecr.$ECR_REGION.amazonaws.com/$ECR_REPO:$IMAGE_VERSION
+```
+
+```bash
+docker tag $APP_NAME:$IMAGE_VERSION \
+  $AWS_ACC_NO.dkr.ecr.$ECR_REGION.amazonaws.com/$ECR_REPO:latest
+```
+
+<Note>The repository name should match the repository that you created for your image.</Note>
+
+We create two tags here since we use versioning. The first one is to tag the image with the version we have built, and
+the latter is to mark the recently pushed image as latest. The `latest` tag should always point to the recently pushed
+stable image.
+
+### Push the image to ECR
+
+Once the images are tagged, push them to ECR by running the following commands:
+
+```shell
+docker push $AWS_ACC_NO.dkr.ecr.$ECR_REGION.amazonaws.com/$ECR_REPO:latest
+```
+
+```shell
+docker push $AWS_ACC_NO.dkr.ecr.$ECR_REGION.amazonaws.com/$ECR_REPO:$IMAGE_VERSION
+```
+
+You can find more information on publishing to AWS in their
+[official guide](https://docs.aws.amazon.com/AmazonECR/latest/userguide/docker-push-ecr-image.html).
+
+**Congratulations!🚀 You have successfully pushed your Docker image to an AWS ECR private repository.**
+
+## Build and push docker images with Github Actions
+
+If you are using Github, you can use Github Actions to build and push your images to AWS ECR. Here is an example
+workflow:
+
+```yaml
+name: Push the Docker image to AWS ECR Repo
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  Build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+          IMAGE_TAG: ${{ github.ref_name }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+```
+
+or, If you want to push on every commit, you can use the following workflow:
+
+```yaml
+name: Push the Docker image to AWS ECR Repo
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+    steps:
+      # ... same upto Login to Amazon ECR
+
+      - name: Get commit hash
+        id: get-commit-hash
+        run: echo "::set-output name=commit-hash::$(git rev-parse --short HEAD)"
+
+      - name: Get timestamp
+        id: get-timestamp
+        run: echo "::set-output name=timestamp::$(date +'%Y-%m-%d-%H-%M')"
+
+      - name: Build, tag, and push the image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ secrets.REPO_NAME }}
+          IMAGE_TAG: ${{ steps.get-commit-hash.outputs.commit-hash }}-${{ steps.get-timestamp.outputs.timestamp }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+```
+
+These examples are provided for customization based on your specific use case. While the examples use long-term
+credentials for authentication, it is recommended to use OpenID Connect (OIDC) for enhanced security. For more
+information, refer to the guide on
+[Configuring OpenID Connect in Amazon Web Services](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services).
+
+## Prepare a Helm chart
+
+Helm is like a package manager for Kubernetes, which coordinates the download, installation, and deployment of apps.
+Helm charts are the way we can define an application as a collection of related Kubernetes resources. In LocalOps,
+packaging the application as Helm makes deployments, updates, and managing your application a breeze.
+
+You can refer to the [node-react](/bring-your-helm-charts/tutorials/node-react) app tutorial to see how to prepare a
+Helm chart for a Node.js application. You can also refer to other [tutorials](/bring-your-helm-charts/tutorials) for
+references to create your Helm chart.
+
+## Package a Helm chart
+
+Once you have prepared your Helm chart, you need to package it. Packaging a Helm directory as a Helm chart involves
+creating a `.tgz` (tarball) file that contains your Helm chart. This file can then be easily shared, versioned, and
+deployed. Here are the steps to package your Helm chart:
+
+<Note>
+  The below steps require the **Helm CLI** to be installed. If it is not already installed, please refer to [this
+  article](https://helm.sh/docs/intro/install/) for installation instructions.
+</Note>
+
+From the root of the Helm directory, run the following command:
+
+```bash
+helm package . -d .tmp
+```
+
+The above command will package the Helm chart into a file named `<chart_name>-<chart_version>.tgz`, which will be saved
+in the `.tmp` directory.
+
+[docker]: https://docs.docker.com/

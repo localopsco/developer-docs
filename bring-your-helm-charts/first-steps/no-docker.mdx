@@ -1,0 +1,355 @@
+---
+title: I don't have a Docker Image
+---
+
+You are here because your awesome app is ready and now it's time to package it.
+
+## Prerequisites
+
+- Your app
+- [Docker] to build standalone images to serve your production app.
+
+## Getting Started
+
+Dockerizing your app ensures consistency, portability, isolation, and several other benefits. If you haven't installed
+Docker already, you can find the installation instructions for various operating systems in the
+[official docs](https://docs.docker.com/engine/install/).
+
+Let's create a simple Node.js script that runs an HTTP server on port `3000` and when the URL `/` is hit, it prints
+`Hello World!`
+
+```js app.js
+const express = require('express');
+const app = express();
+const port = process.env.PORT ?? 3000;
+
+app.get('/', (req, res) => {
+  res.send('Hello World!');
+});
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
+```
+
+We can run this app by running the following command:
+
+```bash
+node app.js
+```
+
+That's it, we have our Node.js app running.
+
+## Writing the Dockerfile
+
+Now, let's create a Dockerfile for the above app. A `Dockerfile` is a set of instructions that tells Docker how to get
+our app working in our environment.
+
+```docker Dockerfile
+# Use the official Node.js image with version 20 based on Alpine Linux
+# Alpine images are smaller in size hence preferred
+FROM node:20-alpine
+
+# Set environment variable for the application's port
+# this is used in app.js
+ENV PORT=3000
+
+# Set env to production to tell app and other tools that the app is running in production mode
+# will be useful to disable debugging logs, skip few things etc.,
+ENV NODE_ENV=production
+
+# Set the working directory inside the container to /app
+# this will be the root context of our app,
+# we will be copying and running script from inside this folder
+WORKDIR /app
+
+# Copy package.json and package-lock.json to the working directory
+COPY package.json package-lock.json* ./
+
+# Install dependencies specified in package-lock.json
+# using npm ci for a clean install
+RUN npm ci
+
+# Copy the rest of the application files to the working directory
+# while copying this respects the contents given in dockerignore
+COPY . .
+
+# Expose the application port to be accessible from outside the container
+EXPOSE ${PORT}
+
+# Start the application
+CMD ["node", "app.js"]
+```
+
+As you can see, the Dockerfile is a set of instructions that automate the steps you would take manually to get the app
+running on your machine.
+
+Though Docker supports [Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/), we won't be using that
+here since Node.js needs all the source code and `node_modules` to be present while running the application. Prefer to
+opt-in for multistage builds whenever possible.
+
+<Note>
+In real-world scenarios, you might have more than just an HTTP server. You might have other services running
+parallelly too, like schedulers, workers, notification services, gateways, etc,. You'll need to create a Dockerfile for
+each and link them while creating the Helm charts.
+
+You might also choose to run everything in the same container, which is mostly not recommended, since you might lose
+isolation, scalability, etc.
+
+</Note>
+
+<Tip>
+  It is heavily recommended to have a `.dockerignore` file to ignore certain prebuilt binaries and non-project-related
+  stuff being copied from our local to the Docker container.
+</Tip>
+
+Read more on [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files). An example ignore
+file:
+
+```ignore .dockerignore
+Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
+README.md
+.git
+```
+
+It is essential to ignore folders like `node_modules` since when installing dependencies, few libraries might build
+binaries depending on your platform. We don't want them to be copied since it might replace the binaries built inside
+the container itself while running `npm ci`, causing the application to break or misbehave.
+
+## Examples for Dockerfiles for Other Languages
+
+<Accordion title="GoLang">
+  You can put any content in here, including other components, like code:
+
+This Dockerfile uses a multistage build to compile a Go application in a Golang builder image and then runs it in a
+lightweight Alpine image, ensuring a minimal final image size.
+
+```docker Dockerfile
+# Stage 1: Build the Go application
+FROM golang:1.18 as builder
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Go module files and download dependencies
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Copy the rest of the application code
+COPY . .
+
+# Build the Go application
+RUN go build -o main .
+
+# Stage 2: Create a lightweight container to run the Go application
+FROM alpine:latest
+
+# Set the working directory inside the container
+WORKDIR /root/
+
+# Copy the Go binary from the builder stage
+COPY --from=builder /app/main .
+
+# Expose the application port
+EXPOSE 8080
+
+# Command to run the Go application
+CMD ["./main"]
+```
+
+A `.dockerignore` file for reference:
+
+```ignore
+# Ignore Go build artifacts
+main
+*.o
+*.a
+*.so
+*.out
+# Ignore other unnecessary files
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+```
+
+</Accordion>
+
+<Accordion title="Django (Python)">
+This Dockerfile installs Django dependencies in one stage and then copies the dependencies and application code to a
+slim Python image, optimizing the final container size and performance.
+
+```docker Dockerfile
+# Stage 1: Install dependencies
+FROM python:3.10-slim as builder
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application code
+COPY . .
+
+# Stage 2: Create a lightweight container to run the Django application
+FROM python:3.10-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the installed dependencies and application code from the builder stage
+COPY --from=builder /app /app
+
+# Expose the application port
+EXPOSE 8000
+
+# Command to run the Django application
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+```
+
+A `.dockerignore` file for reference:
+
+```ignore
+# Ignore Python bytecode files
+*.pyc
+*.pyo
+__pycache__
+# Ignore other unnecessary files
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+# Ignore local Django settings
+local_settings.py
+db.sqlite3
+```
+
+</Accordion>
+
+<Accordion title="Ruby on Rails">
+ This Dockerfile leverages a multistage build to install Ruby and system dependencies, precompile assets in a Ruby
+builder image, and then run the Rails application in a slimmer Ruby image, reducing the overall image size.
+
+```docker title='Dockerfile'
+# Stage 1: Build the Rails application
+FROM ruby:3.1 as builder
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Gemfile and Gemfile.lock and install dependencies
+COPY Gemfile Gemfile.lock ./
+RUN bundle install
+
+# Copy the rest of the application code
+COPY . .
+
+# Precompile the Rails assets
+RUN bundle exec rake assets:precompile
+
+# Stage 2: Create a lightweight container to run the Rails application
+FROM ruby:3.1-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the installed dependencies and application code from the builder stage
+COPY --from=builder /app /app
+
+# Install system dependencies for Rails
+RUN apt-get update && apt-get install -y nodejs
+
+# Expose the application port
+EXPOSE 3000
+
+# Command to run the Rails application
+CMD ["rails", "server", "-b", "0.0.0.0"]
+```
+
+A `.dockerignore` file for reference:
+
+```ignore
+# Ignore Ruby build artifacts
+*.gem
+*.rbc
+# Ignore other unnecessary files
+.git
+.gitignore
+Dockerfile
+docker-compose.yml
+# Ignore local Rails settings
+config/database.yml
+db/*.sqlite3
+log/*
+tmp/*
+```
+
+</Accordion>
+
+<Note>
+  All these Dockerfiles are references to how you might package the application; actual steps might vary depending on
+  the application you build and the features you use.
+</Note>
+
+## Building Images
+
+To build your Docker image, use the following command in the directory containing your Dockerfile:
+
+```bash
+docker build --platform linux/amd64 -t node-app:latest .
+```
+
+This command builds the `node-app` image for `platform linux/amd64` and tags it as `latest`. If you are locally testing
+your application, you can skip the `platform` key to build the images
+
+```bash
+# only for testing in local machine
+docker build -t node-app:latest .
+```
+
+## Running Your Docker Image
+
+Now, we have images, its time run the image. Use the following command:
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --name node-app \
+  -e PORT=3000 \
+  -d \
+  -p 3000:3000 \
+  node-app
+```
+
+- `-it`: enables interactivity with TTY
+- `--rm`: to tell the Docker Daemon to clean up the container and remove the file system after the container exits
+- `--name node-app`: Name of the container `node-app`.
+- `-e PORT=3000`: Sets the environment variable PORT in docker `3000`.
+- `-d`: Runs the container in detached(background) mode. You can skip the flag to see the logs directly in your terminal
+  window.
+- `-p 3000:3000`: Maps port 3000 on your host to port 3000 in the container.
+- `node-app` in the end is the name of the image
+
+This command runs your Docker image, mapping port `3000` of the container to port `3000` on your local machine. Once the
+service is up, visit `http://localhost:3000` to see the app we built running.
+
+Hurray 🎉. Now we have package our app for production use using docker.
+
+## Next Steps
+
+Once the docker is ready, the next steps will be
+
+- [Publishing the docker images](/bring-your-helm-charts/first-steps/have-docker#publish-docker-images-to-aws-ecr)
+- [Packaging the app with helm](/bring-your-helm-charts/first-steps/have-docker#package-a-helm-chart)
+- [Publishing your Helm charts](/bring-your-helm-charts/publish/ecr)
+- [Creating app](https://help.localops.co/en/articles/9580323-apps)
+- [Creating release](https://help.localops.co/en/articles/9582027-releases)
+- [Deploy 🚀](https://help.localops.co/en/articles/9582075-app-environments)
+
+[docker]: https://docs.docker.com/

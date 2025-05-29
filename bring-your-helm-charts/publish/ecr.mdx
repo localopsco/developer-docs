@@ -1,0 +1,66 @@
+---
+title: Publish helm chart to ECR
+---
+
+<Note>This article assumes that you have helm chart for your application.</Note>
+
+Publishing a Helm package to an AWS ECR _(Elastic Container Registry)_ private repository involves several steps:
+
+1. [Package the Helm chart](/bring-your-helm-charts/first-steps/have-docker#package-a-helm-chart)
+2. [Create an ECR private repository](#2-create-an-ecr-private-repository)
+3. [Authenticate Helm to your ECR private registry](#3-authenticate-helm-to-your-ecr-private-registry)
+4. [Push the Helm chart to ECR private registry](#4-push-the-helm-chart-to-ecr-private-registry)
+
+### 1. Package as Helm chart
+
+To package as helm chart please refer
+[this article](/bring-your-helm-charts/first-steps/have-docker#package-a-helm-chart).
+
+### 2. Create an ECR private repository
+
+1. Login to [AWS console](https://console.aws.amazon.com).
+2. Go to [ECR console](https://console.aws.amazon.com/ecr).
+3. Switch to the preferred AWS region where you want to create the ECR private repository.
+4. Create a private repository,
+   1. In the left navigation pane, click on
+      [**Private registry -> Repositories**](https://console.aws.amazon.com/ecr/private-registry/repositories).
+   2. Click on the **Create repository** button.
+   3. Fill in repository name field.<br />Repository name must be same as Helm chart name. You can find your Helm chart
+      name in **Chart.yaml -> name**.
+   4. Click on **Create repository** button.
+
+### 3. Authenticate Helm to your ECR private registry
+
+<Note>
+
+Below steps require the **AWS CLI** to be installed and setup with required credentials. If it is not already installed,
+please refer to
+[this article](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html#getting-started-install-instructions)
+for installation instructions.
+
+Below steps require the **Helm CLI** to be installed. If it is not already installed, please refer to
+[this article](https://helm.sh/docs/intro/install/) for installation instructions.
+
+</Note>
+
+- Login to ECR private helm registry,
+  ```shell
+  aws ecr get-login-password \
+       --region <aws_region> | helm registry login \
+       --username AWS \
+       --password-stdin <aws_account_no>.dkr.ecr.<aws_region>.amazonaws.com
+  ```
+  Above command should output,
+  ```shell
+  Login Succeeded
+  ```
+
+### 4. Push the Helm chart to ECR private registry
+
+- Below command will push the packaged helm chart to your ECR private registry,
+  ```shell
+  helm push <chart_name>-<chart_version>.tgz oci://<aws_acc_no>.dkr.ecr.<aws_region>.amazonaws.com/
+  ```
+- You can optionally verify the Helm push by navigating to your
+  [**ECR -> Private registry -> Repositories**](https://console.aws.amazon.com/ecr/private-registry/repositories) in
+  your AWS console.

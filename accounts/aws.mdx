@@ -19,7 +19,7 @@ cloud account, are done through its corresponding connection.
 
 ## Create a new connection
 
-### To your cloud account:
+### To your cloud account
 
 1. Sign in to LocalOps.
 2. Click on **"Connections"** from the navigation pane on the left side.
@@ -34,7 +34,7 @@ cloud account, are done through its corresponding connection.
 We create a cloudformation stack in the target AWS account to create a new OIDC provider, IAM role and attach it with
 necessary permissions. Please read further below to know how this works.
 
-### To your customer's cloud account:
+### To your customer cloud account
 
 1. Sign in to LocalOps.
 2. Click on **"Connections"** from the navigation pane on the left side.
@@ -45,10 +45,15 @@ necessary permissions. Please read further below to know how this works.
 7. Send the instructions to your point of contact at your customer end.
 8. Your point of contact or anyone in your customer's end using the connection link must have AWS console access with
    Administrator permissions to complete the process. They must be logged into their AWS account before they can click
-   on the link sent in instructions. In the AWS console, please ask them to click on "Create stack" button. **Please ask
-   them not to change any value in "Create stack" screen inside AWS. Each of the values represent your account and they
-   must not be changed**. Once the stack creation is complete, you can come back to LocalOps connections page to see the
-   connection becoming Active.
+   on the link sent in instructions. In the AWS console, please ask them to click on "Create stack" button.
+
+   <Note>
+     Please ask them not to change any value in "Create stack" screen inside AWS. Each of the values represent your
+     account and they must not be changed
+   </Note>
+
+   Once the stack creation is complete, you can come back to LocalOps connections page to see the connection becoming
+   Active.
 
 We create a cloudformation stack in the target AWS account to create a new OIDC provider, IAM role and attach it with
 necessary permissions. Please read further below to know how this works.
@@ -63,6 +68,7 @@ If you have a pre-existing AWS Organization setup, follow
 [these instructions](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_create.html) to
 create a new AWS sub-account. If not, sign up for a new AWS account here -
 [AWS Signup](https://signin.aws.amazon.com/signup?request_type=register).
+
 </Tip>
 
 ## How does this access work?
@@ -99,10 +105,12 @@ future proof as we would expand our automation capabilities at LocalOps continuo
 <Warning>
 After connecting the AWS account, DO NOT:
 
-1. Remove/modify the cloudformation stack. It holds the OIDC provider, IAM policy and IAM role to keep the cloud
-   connection alive.
-2. Remove/modify the IAM role or policy. Again, changes here will break the connection LocalOps has with the target aws
-   account.
+Remove/modify the cloudformation stack. It holds the OIDC provider, IAM policy and IAM role to keep the cloud connection
+alive.
+
+Remove/modify the IAM role or policy. Again, changes here will break the connection LocalOps has with the target aws
+account.
+
 </Warning>
 
 ## Deleting connections

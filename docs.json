@@ -11,7 +11,7 @@
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
             "group": "Get Started",
@@ -25,9 +25,9 @@
           {
             "group": "Use cases",
             "pages": [
+              "use-cases/public-saas",
               "use-cases/private-saas",
-              "use-cases/dedicated-infrastructure",
-              "use-cases/public-saas"
+              "use-cases/dedicated-infrastructure"
             ]
           },
           {
@@ -104,6 +104,7 @@
                       "environment/services/aws/s3",
                       "environment/services/aws/rds",
                       "environment/services/aws/elasti-cache",
+                      "environment/services/aws/sqs",
                       "environment/services/aws/sns"
                     ]
                   }
@@ -168,13 +169,29 @@
             "group": "Bring your helm charts (Deprecated)",
             "pages": [
               {
+                "group": "First Steps",
+                "pages": [
+                  "bring-your-helm-charts/first-steps/no-docker",
+                  "bring-your-helm-charts/first-steps/have-docker",
+                  "bring-your-helm-charts/first-steps/have-docker-compose",
+                  "bring-your-helm-charts/first-steps/have-helm"
+                ]
+              },
+              {
+                "group": "Publish Helm Charts",
+                "pages": [
+                  "bring-your-helm-charts/publish/ecr"
+                ]
+              },
+              {
                 "group": "Tutorials",
                 "pages": [
                   "bring-your-helm-charts/tutorials/python-react",
                   "bring-your-helm-charts/tutorials/node-react",
                   "bring-your-helm-charts/tutorials/go-react"
                 ]
-              }
+              },
+              "bring-your-helm-charts/make-deployments"
             ]
           }
         ]
@@ -195,11 +212,6 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Documentation",
-          "href": "https://docs.localops.co",
-          "icon": "book-open-cover"
-        },
-        {
           "anchor": "Blog",
           "href": "https://localops.co/blog",
           "icon": "newspaper"
@@ -216,11 +228,15 @@
       {
         "label": "Support",
         "href": "mailto:hello@localops.co"
+      },
+      {
+        "label": "Create account",
+        "href": "https://console.localops.co/signup"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Dashboard",
+      "label": "Sign in",
       "href": "https://console.localops.co"
     }
   },

@@ -1,0 +1,204 @@
+---
+title: I have a docker compose setup
+---
+
+Follow this guide to package your application as a Helm chart using the docker-compose.yaml file that you already have.
+We will use a simple example containing an application connected to a PostgreSQL database.
+
+```yaml compose.yml
+volumes:
+  pg_app_data:
+
+services:
+  example-app:
+    image: public.aws.ecr/<repository_id>/example-app:1.0.0
+    environment:
+      DB_HOST: database
+      DB_NAME: app_db
+      DB_USER: postrgres
+      DB_PASS: postrgres
+      DB_PORT: 5432
+      APP_PORT: 8000
+    ports:
+      - '8000:8000'
+    depends_on:
+      - database
+
+  database:
+    image: postgres:14.8-alpine3.18
+    environment:
+      POSTGRES_DB: app_db
+      POSTGRES_USER: postrgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pg_app_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+```
+
+## Create a helm chart from your Docker Compose
+
+1. Create a directory and set up the Helm Chart Directory Structure in it using `helm create example-app-chart` command.
+2. Write a deployment object (kubernetes manifest) for each of the services from docker-compose.yaml file, in the
+   templates directory.They define the desired state for application pods, ensuring that the specified number of
+   replicas of the application is running at any given time.
+
+```yaml templates/deployments.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-statefulset
+spec:
+  serviceName: '{{ .Values.db.host }}'
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-db
+  template:
+    metadata:
+      labels:
+        app: postgres-db
+    spec:
+      containers:
+        - name: postgres-container
+          image: postgres:14.8-alpine3.18
+          env:
+            - name: POSTGRES_DB
+              value: '{{ .Values.db.name }}'
+            - name: POSTGRES_USER
+              value: '{{ .Values.db.user }}'
+            - name: POSTGRES_PASSWORD
+              value: '{{ .Values.db.pass }}'
+            - name: PGDATA
+              value: /var/lib/postgresql/data/todo/
+          ports:
+            - containerPort: { { .Values.db.port } }
+          volumeMounts:
+            - name: postgres-storage
+              mountPath: /var/lib/postgresql/data
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-app-deployment
+spec:
+  replicas: { { .Values.replicaCount } }
+  selector:
+    matchLabels:
+      app: example-app
+  template:
+    metadata:
+      labels:
+        app: example-app
+    spec:
+      containers:
+        - name: example-app-container
+          image: '{{ .Values.example-app.image }}:{{ .Values.example-app.imageVersion }}'
+          env:
+            - name: DB_HOST
+              value: '{{ .Values.db.host }}'
+            - name: DB_PORT
+              value: '{{ .Values.db.port }}'
+            - name: DB_NAME
+              value: '{{ .Values.db.name }}'
+            - name: DB_USER
+              value: '{{ .Values.db.user }}'
+            - name: DB_PASS
+              value: '{{ .Values.db.pass }}'
+            - name: HELM_VERSION
+              value: '{{ .Chart.Version }}'
+            - name: APP_PORT
+              value: '{{ .Values.example-app.service.port }}'
+
+          ports:
+            containerPort: { { .Values.example-app.service.port } }
+      initContainers:
+        - name: check-db-ready
+          image: postgres:14.8-alpine3.18
+          env:
+            - name: POSTGRES_HOST
+              value: '{{ .Values.db.host }}'
+            - name: POSTGRES_PORT
+              value: '{{ .Values.db.port }}'
+          command:
+            [
+              'sh',
+              '-c',
+              'echo Checking if postgres is up; until pg_isready -h $POSTGRES_HOST -p $POSTGRES_PORT; do echo Waiting
+              for postgres database to be up...; sleep 2; done; echo Postgres is up!',
+            ]
+```
+
+<Note>
+  We can see that example-app service depends on the database service in the docker-compose file. The depends_on field
+  from Docker Compose, which defines dependencies between services, can be mimicked using initContainers in a Deployment
+  object. initContainers run to completion before the main application containers start. They can be used to ensure that
+  a dependent service is ready before starting the main application.
+</Note>
+
+3. Write a service object (kubernetes manifest) for each of the services from docker-compose.yaml file, in the templates
+   directory, to expose the ports your services run on accordingly.
+
+```yaml templates/services.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-app-service
+spec:
+  type: { { .Values.example-app.service.type } }
+  selector:
+    app: example-app
+  ports:
+    - protocol: TCP
+      port: { { .Values.example-app.service.port } }
+      targetPort: { { .Values.example-app.service.targetPort } }
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+spec:
+  selector:
+    app: postgres-db
+  ports:
+    - protocol: TCP
+      port: 5432
+```
+
+<Note>
+  The service.type field specifies how a service is exposed. Learn more about [service types and their
+  values](https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types)
+</Note>
+
+4. Create values.yaml file with appropriate values required by your helm chart
+
+```yaml values.yaml
+replicaCount: 1
+
+example-app:
+  service:
+    type: NodePort
+    port: 8000
+    targetPort: 8000
+  image: public.ecr.aws/<repository_id>/example-app
+  imageVersion: 1.0.0
+
+db:
+  host: postgres-service
+  port: 5432
+  name: app_db
+  user: postgres
+  pass: postgres
+```
+
+5. Now that you've created a helm chart using your Docker Compose follow this guide to publish your helm chart and get
+   it deployed in a Localops application environment.
+
+## Next Steps
+
+- [Publishing your Helm charts](/category/publish-helm-chart)
+- [Creating an app](https://help.localops.co/en/articles/9580323-apps)
+- [Creating a release](https://help.localops.co/en/articles/9582027-releases)
+- [Deploy 🚀](https://help.localops.co/en/articles/9582075-app-environments)
