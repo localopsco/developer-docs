@@ -1,0 +1,66 @@
+---
+title: Install on Windows
+---
+
+There are two ways to install LocalOps cli in a windows machine
+
+- [Using WSL](#using-wsl)
+- [Downloading Binaries](#downloading-binaries)
+
+## Using WSL
+
+WSL is a feature developed by Microsoft that allows you to run a Linux distribution on your Windows machine. This
+feature is supported on Windows 10 and above. For older versions of windows, you may have to
+[install it manually](https://learn.microsoft.com/en-us/windows/wsl/install-manual).
+
+### Install WSL
+
+You can choose your choice of linux distro, in this example, we will be using ubunutu. Open PowerShell or Windows
+Command Prompt in administrator mode by right-clicking and selecting "Run as administrator", enter the following command
+
+```bash
+wsl --install -d ubuntu
+```
+
+<Note>You'll need to restart your machine after the installation</Note>
+
+Checkout [Official WSL docs](https://learn.microsoft.com/en-us/windows/wsl/install) for more info.
+
+After the reboot, run the command from your PowerShell
+
+```bash
+wsl
+```
+
+Once you have installed WSL, you will need to create a user account and password for your newly installed Linux
+distribution.
+
+<Note>This user is not same as windows user.</Note>
+
+### Install CLI
+
+Once you have everything up and running, you can install LocalOps CLI by following the instructions from the
+[Install Linux](/cli/install/install-linux) page. Since we are running a linux distribution on a windows machine, steps
+are the same.
+
+## Downloading Binaries
+
+You can download the binaries and execute them. Downlod links for
+
+- [Windows arm64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-windows-arm64.zip)
+- [Windows x86_64 / amd64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-windows-amd64.zip)
+
+### Verify installation
+
+You can verify the isntallation by running the ops executable
+
+```bash
+ops.exe version
+```
+
+This should print the cli version which confirms that LocalOps CLI is sucessfully installed 🚀
+
+## Source
+
+Our binaries and install scripts are hosted in our public github repo, checkout the soruce code at
+https://github.com/localopsco/lops-cli

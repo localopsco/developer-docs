@@ -1,0 +1,50 @@
+---
+title: Install on Linux
+---
+
+# Install LocalOps CLI on Linux
+
+To quickly install or update the LocalOps CLI on your Linux distribution, run the following command in your terminal:
+
+```bash
+bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
+```
+
+This script downloads and installs the `ops` CLI to your system's PATH.
+
+<Note>You may be prompted to enter your password during the installation process.</Note>
+
+You can view the source code for the installation script on
+[GitHub](https://github.com/localopsco/lops-cli/blob/main/install.sh).
+
+## Download Binaries
+
+If you prefer to download the binary directly, you can choose the appropriate version for your Linux:
+
+- [Linux arm64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-linux-arm64.tar.gz)
+- [Linux x86_64 / amd64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-linux-amd64.tar.gz)
+
+## Verify Installation
+
+After installation, verify that the `ops` CLI is installed correctly by running:
+
+```bash
+ops version
+```
+
+This command should display the CLI version, confirming that the installation was successful. 🚀
+
+## Uninstall CLI
+
+To uninstall the cli installed via the install script run the following script
+
+```bash
+bash -c "$(curl -fsSL https://cli.localops.co/uninstall.sh)"
+```
+
+If you have manually downloaded the binary, just delete it.
+
+## Source Code
+
+Our binaries and installation scripts are hosted in our public GitHub repository:
+[LocalOps CLI GitHub Repo](https://github.com/localopsco/lops-cli).
