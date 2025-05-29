@@ -163,6 +163,19 @@
               "troubleshoot/create-environment",
               "troubleshoot/custom-domain"
             ]
+          },
+          {
+            "group": "Bring your helm charts (Deprecated)",
+            "pages": [
+              {
+                "group": "Tutorials",
+                "pages": [
+                  "bring-your-helm-charts/tutorials/python-react",
+                  "bring-your-helm-charts/tutorials/node-react",
+                  "bring-your-helm-charts/tutorials/go-react"
+                ]
+              }
+            ]
           }
         ]
       },

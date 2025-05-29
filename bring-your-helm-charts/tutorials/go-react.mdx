@@ -1,0 +1,443 @@
+---
+title: Go + React
+---
+
+In this tutorial, we will integrate a backend (Go) app with a frontend (React.js) app by preparing a Helm chart.
+
+## Prerequisites
+
+- [Docker] to build standalone containers to serve your production app.
+- [Helm] package that contains all the resources you need to deploy an application to a [Kubernetes] cluster.
+- [Minikube] to set up Kubernetes clusters locally.
+
+<Note>
+This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
+speed before proceeding with this guide.
+
+By this time, it is assumed that you have a backend with Go and a frontend application, both dockerized and published to
+a registry.
+
+</Note>
+
+If not, check out these guides to get you started before proceeding further:
+
+- [Building and packaging a Go app](/bring-your-helm-chart/language/go)
+- [Building and packaging a React app](/bring-your-helm-chart/single-page-apps/react)
+- [Publishing Docker images to a registry](/bring-your-helm-chart/first-steps/have-docker#publish-docker-images-to-aws-ecr)
+
+## Setup Minikube
+
+[Minikube] is local Kubernetes, focusing on making it easy to learn and develop for Kubernetes. Refer to the
+[installation guide](https://minikube.sigs.k8s.io/docs/start) for installing Minikube on your machine.
+
+Since we are building and testing the images locally, you might have built the
+[react-app](/bring-your-helm-chart/single-page-apps/react) and [go-app](/bring-your-helm-chart/language/go) already.
+
+In short, run these commands from the root of the respective project to build the images:
+
+```bash
+# Build the frontend (react-app) Docker image
+docker build -t react-app:latest .
+
+# Build the backend (go-app) Docker image
+docker build -t go-app:latest .
+```
+
+Once the images are built, we need to load them into Minikube:
+
+```bash
+# Load the images into Minikube
+minikube image load react-app:latest
+minikube image load go-app:latest
+```
+
+The above command takes the mentioned image that is available as an archive and makes it available in the cluster.
+
+## Create Helm Chart
+
+For this guide, we'll create a simple chart called `go-react-chart`, and then we'll create some templates inside of the
+chart.
+
+```bash
+helm create go-react-chart
+```
+
+Once the chart is created, it will have some default templates. We don't need them for now. Let's copy them to another
+folder called `templates-bak`. You might need them later for reference or you can remove them.
+
+```bash
+mv go-react-chart/templates go-react-chart/templates-bak
+```
+
+:::tip When you're writing production-grade charts, having basic versions of these charts can be really useful. So in
+your day-to-day chart authoring, you probably won't want to remove them. :::
+
+Now, create a templates directory for us to write new templates.
+
+```bash
+cd go-react-chart
+mkdir templates
+```
+
+### Create/Modify `values.yaml`
+
+Assume that you have built the images locally. You might have a `values.yaml` file in the root directory created by Helm
+with sample content. Let's clear the contents and update them with the following to specify the images and the tag to be
+used for deployments.
+
+```yaml title='values.yaml'
+frontend:
+  image:
+    repository: react-app
+    tag: latest
+  env:
+    PORT: 80
+
+backend:
+  image:
+    repository: go-app
+    tag: latest
+  env:
+    PORT: 8000
+
+gateway:
+  port: 80
+  service:
+    type: NodePort
+  image:
+    # using the alpine version of Nginx to reduce bundle size
+    repository: nginx
+    tag: alpine
+```
+
+<Note>
+  Here we are using the locally built images for testing. In a real app scenario, the repository will be replaced with
+  the actual registry URL depending on where it is published.
+</Note>
+
+For example, if your app is published in public AWS ECR, the input will be like:
+
+```yaml
+frontend:
+  image:
+    repository: public.aws.ecr/<repository_id>/react-app
+    tag: latest # or the explicit version tag: v1.0.0
+```
+
+### Create Deployments/Kubernetes Manifests
+
+Now let's create deployments for all three services:
+
+- **frontend** - a React app
+- **backend** - a Go app
+- **gateway** - an Nginx server to route traffic to the frontend and backend depending on the URL path
+
+#### Frontend Deployment
+
+Let's create a manifest that will create a deployment for the frontend application, specifying the Docker image and
+setting the `PORT` environment variable. It also creates a service to expose the frontend application.
+
+```yaml templates/frontend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: '{{ .Values.frontend.image.repository }}:{{ .Values.frontend.image.tag }}'
+          # set the imagePullPolicy only while testing local images
+          # skip this while using registry images
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: { { .Values.frontend.env.PORT } }
+          env:
+            - name: PORT
+              value: '{{ .Values.frontend.env.PORT }}'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+spec:
+  selector:
+    app: frontend
+  ports:
+    - protocol: TCP
+      port: { { .Values.frontend.env.PORT } }
+      targetPort: { { .Values.frontend.env.PORT } }
+```
+
+#### Backend Deployment
+
+Create another manifest that will create a deployment for the backend application, specifying the Docker image and
+setting the `PORT` environment variable. It also creates a service to expose the backend application.
+
+```yaml templates/backend.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: '{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}'
+          # set the imagePullPolicy only while testing local images
+          # skip this while using registry images
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: { { .Values.backend.env.PORT } }
+          env:
+            - name: PORT
+              value: '{{ .Values.backend.env.PORT }}'
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: { { .Values.backend.env.PORT } }
+      targetPort: { { .Values.backend.env.PORT } }
+```
+
+#### Gateway Deployment
+
+We need one more manifest, which will create a deployment for the Nginx gateway. This gateway service will route traffic
+to the frontend and backend services based on the request path. It also creates a service to expose the gateway.
+
+```yaml templates/gateway.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: '{{ .Values.gateway.image.repository }}:{{ .Values.gateway.image.tag }}'
+          ports:
+            - containerPort: { { .Values.gateway.port } }
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: nginx-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: { { .Values.gateway.service.type } }
+  selector:
+    app: gateway
+  ports:
+    - protocol: TCP
+      port: { { .Values.gateway.port } }
+      targetPort: { { .Values.gateway.port } }
+```
+
+#### Nginx ConfigMap
+
+This ConfigMap defines the Nginx configuration, specifying the routing rules to direct traffic to the appropriate
+service based on the request path.
+
+```yaml templates/nginx-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    events { }
+    http {
+      upstream frontend {
+        server frontend:{{ .Values.frontend.env.PORT }};
+      }
+      upstream backend {
+        server backend:{{ .Values.backend.env.PORT }};
+      }
+      server {
+        listen {{ .Values.gateway.port }};
+        location / {
+          proxy_pass http://frontend;
+        }
+        location /api/ {
+          rewrite ^/api/(.*) /$1 break;
+          proxy_pass http://backend;
+        }
+      }
+    }
+```
+
+Hurray 🎉! Now we have the chart ready. Next is to install and run the app in the local Kubernetes cluster.
+
+## Install the Chart
+
+To install the services, run the following from the root of the chart directory:
+
+```bash
+helm install go-react .
+```
+
+<Tip>
+The `helm install` command would pick the values from `values.yaml` and spin up the cluster. Alternatively, you
+can create another file called `local-values
+
+.yaml`which contains the local images, and`values.yaml` can have actual default values.
+
+</Tip>
+
+To use another YAML file instead of the default `values.yaml` for local development, run:
+
+```bash
+helm install -f local-values.yaml go-react .
+```
+
+If the installation is successful, you would see the following in your terminal output:
+
+```text
+NAME: go-react
+LAST DEPLOYED: <date time>
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+```
+
+This will bring up 3 pods for each service/deployment we created. Run the following command to see the list of pods
+running:
+
+```bash
+watch -n 2 kubectl get all
+```
+
+You should see the following in your terminal:
+
+```text
+NAME                            READY   STATUS    RESTARTS   AGE
+pod/backend-587b6668c5-fdgkt    1/1     Running   0          2m8s
+pod/frontend-84c4bb6dd6-n79f8   1/1     Running   0          2m8s
+pod/gateway-5b4bb95966-w9g7k    1/1     Running   0          2m8s
+
+NAME                 TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+service/backend      ClusterIP   10.101.127.13    <none>        8000/TCP       2m8s
+service/frontend     ClusterIP   10.106.145.105   <none>        80/TCP         2m8s
+service/gateway      NodePort    10.97.166.143    <none>        80:31517/TCP   2m8s
+service/kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        43h
+
+NAME                       READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/backend    1/1     1            1           2m8s
+deployment.apps/frontend   1/1     1            1           2m8s
+deployment.apps/gateway    1/1     1            1           2m8s
+
+NAME                                  DESIRED   CURRENT   READY   AGE
+replicaset.apps/backend-587b6668c5    1         1         1       2m8s
+replicaset.apps/frontend-84c4bb6dd6   1         1         1       2m8s
+replicaset.apps/gateway-5b4bb95966    1         1         1       2m8s
+```
+
+To get the URL of the gateway service, run:
+
+```bash
+minikube service gateway --url
+```
+
+It would print the URL. Now you can access the:
+
+- Frontend at `http://127.0.0.1:<PORT>/`
+- Backend at `http://127.0.0.1:<PORT>/api/`
+
+#### Alternatively, you could also use Minikube tunnel to view the app.
+
+Change the `gateway.service.type` in the gateway from `NodePort` to `LoadBalancer`:
+
+```yaml
+gateway:
+  port: 4000
+  service:
+    type: LoadBalancer
+```
+
+and run:
+
+```bash
+minikube tunnel
+```
+
+Now you can access the:
+
+- Frontend at `http://localhost:4000/`
+- Backend at `http://localhost:4000/api/`
+
+<Warning>
+  LoadBalancer should be used only for development purposes. While pushing Helm charts to production for use with
+  LocalOps, use `NodePort`.
+</Warning>
+
+## Uninstalling the Helm App
+
+To clean up the app, run the following:
+
+```bash
+helm uninstall go-react
+minikube stop # to stop the Minikube
+```
+
+## Before Publishing to Helm Registry
+
+<Note>
+Remove the `imagePullPolicy: IfNotPresent` from the deployment scripts. This is needed only to test the local images.
+
+Replace the repository in your `values.yaml` with actual registry images or use the custom YAML via the `-f` flag in the
+Helm CLI.
+
+</Note>
+
+## Next Steps
+
+Now we have the chart ready. The next steps would be:
+
+- [Publishing your Helm charts](/category/publish-helm-chart)
+- [Creating an app](https://help.localops.co/en/articles/9580323-apps)
+- [Creating a release](https://help.localops.co/en/articles/9582027-releases)
+- [Deploy 🚀](https://help.localops.co/en/articles/9582075-app-environments)
+
+[Docker]: https://docs.docker.com/
+[Helm]: https://helm.sh/
+[Minikube]: https://minikube.sigs.k8s.io/docs/
+[Kubernetes]: https://kubernetes.io/
