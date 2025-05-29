@@ -108,6 +108,17 @@
                   "environment/monitoring/crashes",
                   "environment/monitoring/howto"
                 ]
+              },
+              {
+                "group": "Infrastructure Resources",
+                "pages": [
+                  {
+                    "group": "AWS",
+                    "pages": [
+                      "environment/infra-resources/aws"
+                    ]
+                  }
+                ]
               }
             ]
           },
