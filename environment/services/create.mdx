@@ -1,0 +1,73 @@
+---
+title: Create service
+description: Learn how to create a new service
+---
+
+To create a new service, sign in to your LocalOps account and follow these steps.
+
+1. Navigate to the app environment where you want the service to run
+2. Go to "Services" tab
+3. Clik on "+ Add new service" tile
+4. Provide service details like Name, Kind, Source repo & branch name, Dockerfile location and run command.
+5. Give port, number of containers and any other details required there
+6. Provide secrets necessary to run your container
+7. Click "Create service"
+
+### Source repo & branch name:
+
+If you have [connected your github org/account](/accounts/connect-github), you will be able to pick a repository and its
+corresponding branch name here. When your devs push to this branch, a new deployment will automatically get triggered.
+
+<Tip>
+  You can choose to turn off automatic deployments. In this case, you can only trigger deployments from within LocalOps
+  console. This is useful if you are deploying to a customer specific standalone environment, and if you need approvals
+  to deploy new changes.
+</Tip>
+
+### Dockerfile location
+
+You can specify the file localtion within your repository where we can find the Dockefile. If the Dockerfile is present
+in a non-root directory, you can specify the name of the directory here. Example values - (empty) or `build` or `worker`
+or `app`, etc.,
+
+This is optional. Default is `` - empty string, which means Dockerfile will be expected at the root of your git repo.
+
+This is to accomodate the case of mono-repos where you might have more than one component's codebase in the same git
+repo.
+
+### Run command
+
+You can specify the run command as well. If your Dockerfile has a `CMD` directive, then that will get used by default.
+If you specific a differnet run command here in the form, it will be used instad of the `CMD` directive specified in the
+DOckerfile.
+
+This is also done to accomodate the case of mono-repos where you might have more than one component's codebase in the
+same git repo. You can have scripts of jobs/crons in the same repo. In these cases, you can use the same `Dockerfile`
+but a different `CMD` to run for your service.
+
+This is optional. Default is - `CMD` that is specified in your Dockerfile.
+
+### Number of containers
+
+Specify the number of copies of your codebase / containers to run. You can define any number from 1 to 99 to support
+your traffic.
+
+### CPU and memory requirements for each container
+
+Define the minimum CPU and memory requirements to run each container. Service containers will be scheduled to run on the
+underlying compute servers as appropriate.
+
+You can also define the max CPU and max memory here. When any container crosses this limit, it will be re-booted.
+
+:::tip Specifying max CPU and max Memory is a neat trick to catch memory leaks and restart containers. :::
+
+### Other details
+
+You can fill out other service specific details like Port (for internal or web service), Cron schedule (for cron
+service), and so on.
+
+### How to deploy
+
+Containers of the service won't start to run until you make a new deployment. Click on "Deploy" button on the top right
+corner to start a manual deployments. Otherwise, if you push new commits to the configured branch above, a new
+deployment will get triggered. Learn more at [Deploy service](services/deploy.md) guide.

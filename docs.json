@@ -63,7 +63,13 @@
               "environment/create",
               "environment/customize",
               "environment/delete",
-              "environment/shared-responsibilities"
+              "environment/shared-responsibilities",
+              {
+                "group": "Services",
+                "pages": [
+                  "environment/services/create"
+                ]
+              }
             ]
           }
         ]
