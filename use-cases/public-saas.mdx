@@ -1,0 +1,39 @@
+---
+title: Public SaaS Environments
+---
+
+LocalOps is used to get your public SaaS production environment in your cloud account.
+
+## How to Provision a production SaaS environment
+
+1. Designate a cloud account that belongs to you, to host public SaaS infrastructure.
+2. Get credentials of the cloud account and record them inside your LocalOps account as Connection.
+3. Spin up an App environment on the specific cloud connection to deploy your application.
+4. Setup a custom domain.
+
+### Step 1 - Designate a cloud account
+
+Decide and designate the cloud account where you would want to host production Public SaaS infrastructure.
+
+### Step 2 - Create a connection
+
+_Skip this step if the designated cloud account is already added as connection._
+
+Follow all the steps provided in [connecting cloud account](/accounts/aws) guide to create a cloud connection.
+
+### Step 3 - Spin up an App environment
+
+Use the connection created above and create a new App environment from App environments tab. Refer to
+[this guide](https://help.localops.co/en/articles/9584120-creating-first-environment). Pick "SaaS Production" as
+environment type when asked.
+
+Every app environment provisions exclusive network, compute, kubernetes cluster in the cloud account, to run your app.
+
+<Info>
+  If you want to create US and EU regions for your SaaS, you can pick the corresponding region while creating the
+  environment and repeat this process twice, say, once for US and once for EU.
+</Info>
+
+### Step 4 - Setup a custom domain
+
+After environment is created, you can set a custom domain like app.yourdomain.com on it and share it with the world 🎉.

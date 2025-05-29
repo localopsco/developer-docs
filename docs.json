@@ -17,7 +17,16 @@
             "group": "Get Started",
             "pages": [
               "index",
-              "howitworks"
+              "howitworks",
+              "support"
+            ]
+          },
+          {
+            "group": "Use cases",
+            "pages": [
+              "use-cases/private-saas",
+              "use-cases/dedicated-infrastructure",
+              "use-cases/public-saas"
             ]
           },
           {
@@ -119,7 +128,8 @@
                     ]
                   }
                 ]
-              }
+              },
+              "environment/eject"
             ]
           },
           {
@@ -199,6 +209,11 @@
       "x": "https://x.com/localopsco",
       "github": "https://github.com/localopsco",
       "linkedin": "https://linkedin.com/company/localops-inc"
+    }
+  },
+  "integrations": {
+    "intercom": {
+      "appId": "wjg6xmxh"
     }
   }
 }

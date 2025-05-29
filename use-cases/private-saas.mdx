@@ -1,0 +1,42 @@
+---
+title: Private SaaS deployments
+---
+
+While SaaS is popular, there are a category of customers who cannot signup for SaaS because of limitations in privacy,
+security, reliability and shared performance bottlenecks in a typical SaaS environment.
+
+These customers of yours need your application running in their cloud for maximum data privacy, control over data
+security, data soverignity and performance. This is called as Private SaaS deployment or Cloud-prem deployments.
+
+LocalOps is used to deliver applications to such customers.
+
+## How to make Private SaaS deployment:
+
+1. End Customers connect their cloud with LocalOps
+2. From inside LocalOps account, you (the developer) spin up an App environment on the specific cloud connection to
+   provision and deploy your application on customer's cloud account.
+3. Setup a custom domain
+
+We will cover each steps one by one.
+
+### Step 1: End customers connect their cloud
+
+Follow instructions in [connecting cloud account](/connect-cloud/aws.md#to-your-customers-cloud-account) guide to get
+your customer account connected with LocalOps.
+
+<Info>
+  If you are deploying to AWS, we recommend you ask end-customers to create a separate AWS sub account and provide you
+  access to the new sub account. This will isolate your cloud resources from their other applications.
+</Info>
+
+### Step 2: Create app environment
+
+You (the developer) use the connection created above and create a new App environment from App environments tab. Refer
+to [this guide](/bring-your-helm-chart/manage-apps#create-an-app). Pick "Private delivery" as environment type when
+asked.
+
+### Step 3: Setup a custom domain
+
+After App environment is created, you can set a custom domain like your-app.customerdomain.com on it and share it with
+your end customer to access. Refer to [this guide](/bring-your-helm-chart/custom-domains/attach-custom-domain) to learn
+more.
