@@ -91,6 +91,7 @@
                   },
                   "environment/services/micro-services",
                   "environment/services/secrets",
+                  "environment/services/custom-domain",
                   "environment/services/delete"
                 ]
               },
