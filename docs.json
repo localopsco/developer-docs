@@ -61,7 +61,8 @@
             "pages": [
               "environment/inside",
               "environment/create",
-              "environment/customize"
+              "environment/customize",
+              "environment/delete"
             ]
           }
         ]
