@@ -7,17 +7,17 @@ mode: 'center'
 <Update label="Jan 27th, 2025">
 ## See CloudWatch metrics/logs in one place
 
-When we provision app environment, we provision a Grafana dashboard specific to the app environment, accessible at
-monitor. `<your-app-env-domain>`. You can access metrics and logs of all nodes, pods and containers running within the
-app environment's kubernetes cluster.
+When we provision environment, we provision a Grafana dashboard specific to the environment, accessible at monitor.
+`<your-app-env-domain>`. You can access metrics and logs of all nodes, pods and containers running within the app
+environment's kubernetes cluster.
 
-If you are running your app environment in AWS, you will also see a pre-configured CloudWatch data source in the
+If you are running your environment in AWS, you will also see a pre-configured CloudWatch data source in the
 corresponding Grafana dashboard. You can access logs and metrics that are stored in CloudWatch.
 
 This is super useful if your application is using managed AWS services that are sending metrics/logs to CloudWatch.
 
-Go to “Monitor” tab in your app environment to access the Grafana dashboard. Within Grafana, see Connections > Data
-sources to see the Cloudwatch data source. Click on “Explore” next to it to see CloudWatch logs and metrics.
+Go to “Monitor” tab in your environment to access the Grafana dashboard. Within Grafana, see Connections > Data sources
+to see the Cloudwatch data source. Click on “Explore” next to it to see CloudWatch logs and metrics.
 
 Let us know what you think. Email us at help@localops.co.
 
@@ -26,7 +26,7 @@ Let us know what you think. Email us at help@localops.co.
 <Update label="January 24th, 2025">
 ## Standard retention policy set on all logs and metrics
 
-Every app environment comes with its own unique instance of Loki + Prometheus + Grafana stack. From now, all logs and
+Every environment comes with its own unique instance of Loki + Prometheus + Grafana stack. From now, all logs and
 metrics recorded by the monitoring stack have 30-day retention policy. Any log statement/metric data point is
 automatically deleted after 30 days.
 
@@ -38,27 +38,27 @@ accident.
 <Update label="January 23rd, 2025">
 ## Access any AWS managed service using IAM Role
 
-Your app container running inside App environment can now access any AWS service using IAM roles. You don’t have to
+Your app container running inside environment can now access any AWS service using IAM roles. You don’t have to
 configure any IAM key/credential as secrets in your application.
 
-LocalOps sets up a default IAM role when your app environment is provisioned in the target AWS account. We set things up
-in your app environment such that your application will be able to use this IAM role implicitly via AWS SDK, if you
-declare the `ServiceAccount` in your Helm deployment yaml spec as per our documentation.
+LocalOps sets up a default IAM role when your environment is provisioned in the target AWS account. We set things up in
+your environment such that your application will be able to use this IAM role implicitly via AWS SDK, if you declare the
+`ServiceAccount` in your Helm deployment yaml spec as per our documentation.
 
-After the app environment is provisioned, you can manually add/remove relevant IAM policies to the app specific IAM role
-we provisioned earlier.
+After the environment is provisioned, you can manually add/remove relevant IAM policies to the app specific IAM role we
+provisioned earlier.
 
 </Update>
 
 <Update label="January 14th, 2025">
-## Scale app environments
+## Scale environments
 
 ![Scaling](./images/changelog/scaling-jan-14-25.png)
 
-You can now scale up/down the underlying servers powering your app environment, manually from within LocalOps console.
+You can now scale up/down the underlying servers powering your environment, manually from within LocalOps console.
 
-Visit “Scaling” tab in your App environment page to pick a supported Node type (EC2 instance type in case of AWS) and
-save. Existing worker nodes will be seamlessly replaced by new set of worker nodes.
+Visit “Scaling” tab in your environment page to pick a supported Node type (EC2 instance type in case of AWS) and save.
+Existing worker nodes will be seamlessly replaced by new set of worker nodes.
 
 You can also set a higher number of Node count. New worker nodes wll get provisioned automatically within a minute or
 two.
@@ -98,9 +98,9 @@ See https://docs.localops.co now.
 
 ![Secrets](./images/changelog/secrets-dec-2-24.png)
 
-Pass API keys, certificates, auth token and other confidential information to your app environment as secrets from
-within Vars tab. All secrets are encrypted and stored in the destination/target cloud account and later get passed
-inside the Kubernetes cluster as encrypted secrets.
+Pass API keys, certificates, auth token and other confidential information to your environment as secrets from within
+Vars tab. All secrets are encrypted and stored in the destination/target cloud account and later get passed inside the
+Kubernetes cluster as encrypted secrets.
 
 Pass up to 100 key value pairs as secrets. Learn more at https://localops.co/blog/manage-application-secrets.
 
@@ -146,8 +146,7 @@ https://console.localops.co/
 <Update label="Aug 28th, 2024">
 ## Friday warnings
 
-When you create a new App environment or make a new Deployment on an existing environment, you will get a warning like
-this:
+When you create a new environment or make a new Deployment on an existing environment, you will get a warning like this:
 
 ![Warning](./images/changelog/friday-aug-28-24.png)
 
@@ -159,14 +158,14 @@ section inside Account settings ✌️.
 <Update label="Aug 13th, 2024">
 ## Introducing LocalOps CLI v1
 
-If you want to inspect your app environment & its backing kubernetes cluster, say to check if your application’s pods
-are running healthy, use Localops CLI to do it.
+If you want to inspect your environment & its backing kubernetes cluster, say to check if your application’s pods are
+running healthy, use Localops CLI to do it.
 
 Just install it in your local dev machine and use its update-kubeconfig sub-command to set correct kubernetes context of
 your local kubectl system. Then, you can run any kubectl command to inspect objects running in the specific app
 environment's kubernetes cluster.
 
-Checkout the new `Shell` tab in App environment page to find out more 😎.
+Checkout the new `Shell` tab in environment page to find out more 😎.
 
 ![Shell](./images/changelog/shell-aug-13-24.png)
 
@@ -177,5 +176,43 @@ bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
 ```
 
 Learn more at https://docs.localops.co/cli
+
+</Update>
+
+<Update label="Aug 6th, 2024">
+We ship every Tuesday 🚀. Just so that you know
+
+At LocalOps, we are super serious about Data Privacy. We have made it our mission to build tools for the Internet 🌐 to
+support Private App deployments / Private SaaS deployments.
+
+These days, we have begun reaching out to our signups to either check if they need assistance in their first steps with
+LocalOps or send out product updates from time to time. So, we are asking for user's explicit consent during our
+[Signup](https://console.localops.co/signup) process to reach out to them in these ways.
+
+In addition, we fixed a bunch of stuff that kept annoying us more than ever. Starting with Email Notifications.
+
+All Environments ([What is an Environment?](https://docs.localops.co/environment/inside)) get a free ssl cert and a
+subdomain on \*.localops.run domain by default. They become instantly accessible and publicly shareable on the internet
+once they are up. It takes roughly 18-20mins to provision an Environment on the cloud, say AWS today. So we inform users
+via email after their environment is fully provisioned & ready to accept requests. Sometimes, this email went out before
+the App got fully deployed within the environment and this was quite misleading! We finally fixed this bug 🐛 this week.
+
+Next up - we are planning to introduce support for AWS RDS, AWS Elastic Cache and other managed database services on
+AWS. Users could declare them as their dependencies and have them created in each environment they create for their App.
+We already support Amazon S3 and we have laid [foundations](https://docs.localops.co/environment/services/aws/s3) to
+support even more services in future. Not just in AWS but in Google Cloud and Azure as well.
+
+But, a major blocker here was that we couldn't enable Multi-AZ (Availability Zone) fallback for a DB cluster, say in
+RDS, unless we had 3 AWS private subnets in 3 unique AZs available in each environment. We improved our implementation
+to spin up 3 subnets instead of 2 subnets this week. LocalOps would connect to the target cloud account, query for
+available subnets and available AZs in that account, picks 3 AZs programmatically and spin up subnets in each of those
+AZs. 😎 Isn't this cool?
+
+There is a bunch of other new things we are building to make Private SaaS deployments easy.
+
+[Get Started](https://localops.co) with LocalOps here by signing up for a free trial. And start deploying your app on
+any cloud for any customer within minutes. Every account gets 100 free hours on sandbox environment every single month.
+
+Or [schedule a demo](https://cal.com/anand-localops/founder-connect) if you want us to get you started.
 
 </Update>
