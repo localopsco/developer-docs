@@ -81,7 +81,8 @@
                   },
                   "environment/services/delete"
                 ]
-              }
+              },
+              "environment/extend-with-iac"
             ]
           }
         ]
