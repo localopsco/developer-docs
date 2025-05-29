@@ -191,7 +191,15 @@
                   "bring-your-helm-charts/tutorials/go-react"
                 ]
               },
-              "bring-your-helm-charts/make-deployments"
+              {
+                "group": "Databases",
+                "pages": [
+                  "bring-your-helm-charts/databases/mysql",
+                  "bring-your-helm-charts/databases/postgres",
+                  "bring-your-helm-charts/databases/mongodb",
+                  "bring-your-helm-charts/databases/redis"
+                ]
+              }
             ]
           }
         ]

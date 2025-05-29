@@ -1,0 +1,124 @@
+---
+title: Redis
+---
+
+This guide will walk you through the steps to integrate Redis into your existing Helm chart for your Kubernetes
+application. By adding Redis, you can leverage its capabilities for caching, session management, and more. We will use
+the Bitnami Redis Helm chart as a dependency and configure it accordingly.
+
+## Prerequisites
+
+- Helm installed and configured
+- Kubernetes cluster up and running
+- Existing Helm chart for your application
+
+## Steps to Integrate Redis
+
+### 1. Add Redis Helm Repository
+
+First, add the Bitnami repository, which hosts the Redis Helm chart,
+
+```sh
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+### 2. Update `Chart.yaml`
+
+Open your existing Helm chart directory and edit the `Chart.yaml` file to add Redis as a dependency,
+
+```yaml Chart.yaml
+apiVersion: v2
+name: your-app
+description: A Helm chart for your Kubernetes application
+version: 0.1.0
+appVersion: '1.0'
+
+dependencies:
+  - name: redis
+    version: 17.0.1
+    repository: https://charts.bitnami.com/bitnami
+```
+
+### 3. Update `values.yaml`
+
+Create or update the values.yaml file to include configuration values for Redis. Customize the values as per your
+requirements. Refer to
+[https://github.com/bitnami/charts/blob/main/bitnami/redis/README.md#parameters](https://github.com/bitnami/charts/blob/main/bitnami/redis/README.md#parameters)
+for all the available configuration parameters supported by Redis chart.
+
+```yaml values.yaml
+redis:
+  enabled: true
+  auth:
+    password: myredispassword
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 15Gi
+```
+
+<Tip>
+  Over-provisioning on disk size (`master.persistence.size`) isn't a bad idea considering that disks are cheap in any
+  cloud. It is also slightly trickier to increase volume sizes at later point in time due to some Kubernetes
+  limitations. So we recommend you pick a good number here from the start.
+</Tip>
+
+### 4. Install/Update Dependencies
+
+Navigate to your Helm chart directory and run the following command to update dependencies,
+
+```shell
+helm dependency update
+```
+
+This command will download the Redis chart and add it to your charts/ directory.
+
+### 5. Update Your Application Deployment
+
+Modify your application's deployment files to include the Redis service. Ensure your application can connect to Redis
+using the service name and credentials specified in the `values.yaml` file.
+
+For example, if using a ConfigMap to store environment variables for your application, you might update it like this,
+
+```yaml templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: your-app-config
+data:
+  REDIS_HOST: {{ .Release.Name }}-redis-master
+  REDIS_PORT: '6379'
+  REDIS_PASSWORD: 'myredispassword'
+```
+
+### 6. Deploy Your Application
+
+Finally, deploy or upgrade your application using Helm,
+
+```shell
+helm install your-app ./your-app-chart
+# or if upgrading an existing release
+helm upgrade your-app ./your-app-chart
+```
+
+### 7. Verify Deployment
+
+Check the status of your Helm release to ensure everything is running correctly,
+
+```shell
+helm status your-app
+```
+
+Also, verify that the Redis pod is running:
+
+```shell
+kubectl get pods
+```
+
+You should see a pod for Redis, something like `your-app-redis-master-0`.
+
+Congratulations! You have successfully added Redis to your existing Helm chart. This integration allows your application
+to use Redis for caching, session management, and other use cases, managed efficiently with Helm. Customize the Redis
+configuration further by modifying the `values.yaml` file as needed. 🎉

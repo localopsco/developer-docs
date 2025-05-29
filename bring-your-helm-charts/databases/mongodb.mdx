@@ -1,0 +1,131 @@
+---
+title: MongoDB
+---
+
+This guide will walk you through the steps to integrate MongoDB into your existing Helm chart for your Kubernetes
+application. By adding MongoDB, you can leverage its capabilities for NoSQL database management. We will use the Bitnami
+MongoDB Helm chart as a dependency and configure it accordingly.
+
+## Prerequisites
+
+- Helm installed and configured
+- Kubernetes cluster up and running
+- Existing Helm chart for your application
+
+## Steps to Integrate MongoDB
+
+### 1. Add MongoDB Helm Repository
+
+First, add the Bitnami repository, which hosts the MongoDB Helm chart,
+
+```sh
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+### 2. Update `Chart.yaml`
+
+Open your existing Helm chart directory and edit the Chart.yaml file to add MongoDB as a dependency,
+
+```yaml Chart.yaml
+apiVersion: v2
+name: your-app
+description: A Helm chart for your Kubernetes application
+version: 0.1.0
+appVersion: '1.0'
+
+dependencies:
+  - name: mongodb
+    version: 13.10.3
+    repository: https://charts.bitnami.com/bitnami
+```
+
+### 3. Update `values.yaml`
+
+Create or update the `values.yaml` file to include configuration values for MongoDB. Customize the values as per your
+requirements.
+
+```yaml values.yaml
+mongodb:
+  enabled: true
+  auth:
+    rootPassword: myrootpassword
+    username: myuser
+    password: mypassword
+    database: mydatabase
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+```
+
+<Tip>
+  Over-provisioning on disk size (`primary.persistence.size`) isn't a bad idea considering that disks are cheap in any
+  cloud. It is also slightly trickier to increase volume sizes at later point in time due to some Kubernetes
+  limitations. So we recommend you pick a good number here from the start.
+</Tip>
+
+### 4. Install/Update Dependencies
+
+Navigate to your Helm chart directory and run the following command to update dependencies,
+
+```shell
+helm dependency update
+```
+
+This command will download the MongoDB chart and add it to your `charts/` directory.
+
+### 5. Update Your Application Deployment
+
+Modify your application's deployment files to include the MongoDB service. Ensure your application can connect to
+MongoDB using the service name and credentials specified in the `values.yaml` file.
+
+For example, if using a **ConfigMap** to store environment variables for your application, you might update it like
+this,
+
+```yaml templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: your-app-config
+data:
+  DATABASE_HOST: 'your-app-mongodb'
+  DATABASE_PORT: '27017'
+  DATABASE_USER: 'myuser'
+  DATABASE_PASSWORD: 'mypassword'
+  DATABASE_NAME: 'mydatabase'
+```
+
+### 6. Deploy Your Application
+
+Finally, deploy or upgrade your application using Helm,
+
+```shell
+helm install your-app ./your-app-chart
+# or if upgrading an existing release
+helm upgrade your-app ./your-app-chart
+```
+
+### 7. Verify Deployment
+
+Check the status of your Helm release to ensure everything is running correctly,
+
+```shell
+helm status your-app
+```
+
+Also, verify that the MongoDB pod is running,
+
+```shell
+kubectl get pods
+```
+
+You should see a pod for MongoDB, something like `your-app-mongodb-0`.
+
+**Congratulations! You have successfully added MongoDB to your existing Helm chart. 🚀**
+
+This integration allows your application to use MongoDB for NoSQL database management, managed efficiently with Helm.
+Customize the MongoDB configuration further by modifying the `values.yaml` file as needed.
+
+For more detailed configurations and advanced settings, refer to the
+[Bitnami MongoDB Helm chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/mongodb#readme).

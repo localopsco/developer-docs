@@ -1,0 +1,132 @@
+---
+title: MySQL
+---
+
+This guide will walk you through the steps to integrate MySQL into your existing Helm chart for your Kubernetes
+application. By adding MySQL, you can leverage its capabilities for relational database management. We will use the
+Bitnami MySQL Helm chart as a dependency and configure it accordingly.
+
+## Prerequisites
+
+- Helm installed and configured
+- Kubernetes cluster up and running
+- Existing Helm chart for your application
+
+## Steps to Integrate MySQL
+
+### 1. Add MySQL Helm Repository
+
+First, add the Bitnami repository, which hosts the MySQL Helm chart,
+
+```sh
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+### 2. Update `Chart.yaml`
+
+Open your existing Helm chart directory and edit the Chart.yaml file to add MySQL as a dependency,
+
+```yaml Chart.yaml
+# Chart.yaml
+
+apiVersion: v2
+name: your-app
+description: A Helm chart for your Kubernetes application
+version: 0.1.0
+appVersion: '1.0'
+
+dependencies:
+  - name: mysql
+    version: 9.3.5
+    repository: https://charts.bitnami.com/bitnami
+```
+
+### 3. Update `values.yaml`
+
+Create or update the `values.yaml` file to include configuration values for MySQL. Customize the values as per your
+requirements.
+
+```yaml values.yaml
+mysql:
+  enabled: true
+  auth:
+    rootPassword: myrootpassword
+    database: mydatabase
+    username: myuser
+    password: mypassword
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+```
+
+<Tip>
+  Over-provisioning on disk size (`primary.persistence.size`) isn't a bad idea considering that disks are cheap in any
+  cloud. It is also slightly trickier to increase volume sizes at later point in time due to some Kubernetes
+  limitations. So we recommend you pick a good number here from the start.
+</Tip>
+
+### 4. Install/Update Dependencies
+
+Navigate to your Helm chart directory and run the following command to update dependencies,
+
+```sh
+helm dependency update
+```
+
+This command will download the MySQL chart and add it to your `charts/` directory.
+
+5. Update Your Application Deployment
+
+Modify your application's deployment files to include the MySQL service. Ensure your application can connect to MySQL
+using the service name and credentials specified in the values.yaml file.
+
+For example, if using a ConfigMap to store environment variables for your application, you might update it like this,
+
+```yaml templates/configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: your-app-config
+data:
+  DATABASE_HOST: 'your-app-mysql'
+  DATABASE_PORT: '3306'
+  DATABASE_USER: 'myuser'
+  DATABASE_PASSWORD: 'mypassword'
+  DATABASE_NAME: 'mydatabase'
+```
+
+### 6. Deploy Your Application
+
+Finally, deploy or upgrade your application using Helm,
+
+```sh
+helm install your-app ./your-app-chart
+# or if upgrading an existing release
+helm upgrade your-app ./your-app-chart
+```
+
+### 7. Verify Deployment
+
+Check the status of your Helm release to ensure everything is running correctly,
+
+```sh
+helm status your-app
+```
+
+Also, verify that the MySQL pod is running,
+
+```sh
+kubectl get pods
+```
+
+You should see a pod for MySQL, something like `your-app-mysql-0`.
+
+**Congratulations! You have successfully added MySQL to your existing Helm chart.** 🚀
+
+This integration allows your application to use MySQL for relational database management, managed efficiently with Helm.
+Customize the MySQL configuration further by modifying the `values.yaml` file as needed.
+
+For more detailed configurations and advanced settings, refer to the Bitnami
+[MySQL Helm chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/mysql#readme).
