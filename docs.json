@@ -200,7 +200,8 @@
                   "bring-your-helm-charts/databases/redis"
                 ]
               },
-              "bring-your-helm-charts/database-migration"
+              "bring-your-helm-charts/database-migration",
+              "bring-your-helm-charts/env-vars"
             ]
           }
         ]

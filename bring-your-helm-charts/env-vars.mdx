@@ -1,0 +1,53 @@
+---
+title: Environment Variables
+---
+
+You can dynamically configure your application by passing environment variables to the container hosting your
+application image by adding them to the pod template specification in your Helm chart.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acme-api-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: acme-api
+  template:
+    metadata:
+      labels:
+        app: acme-api
+    spec:
+      containers:
+        - name: api-container
+          image: public.ecr.aws/ach42q1u/acme-api:1.0.0
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_PORT
+              value: 8080
+            - name: DB_USER
+              value: '{{ .Values.db.user }}'
+            - name: DB_PASS
+              value: '{{ .Values.db.pass }}'
+            - name: DB_HOST
+              value: '{{ .Values.db.host }}'
+            - name: DB_PORT
+              value: '{{ .Values.db.port }}'
+```
+
+You can set the values for these environment variables directly, such as APP_PORT from this example.
+
+You can also use Helm values to customize your application's configuration for each environment you wish to create.
+
+```yaml
+db:
+  host: postgres-service
+  user: postgres
+  pass: postgres
+  port: 5432
+```
+
+The environment variables `DB_USER`, `DB_PASS`, `DB_HOST` and `DB_PORT` are set dynamically during each deployment.
