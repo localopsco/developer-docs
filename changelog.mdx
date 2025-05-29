@@ -49,3 +49,86 @@ After the app environment is provisioned, you can manually add/remove relevant I
 we provisioned earlier.
 
 </Update>
+
+<Update label="January 14th, 2025">
+## Scale app environments
+
+![Scaling](./images/changelog/scaling-jan-14-25.png)
+
+You can now scale up/down the underlying servers powering your app environment, manually from within LocalOps console.
+
+Visit “Scaling” tab in your App environment page to pick a supported Node type (EC2 instance type in case of AWS) and
+save. Existing worker nodes will be seamlessly replaced by new set of worker nodes.
+
+You can also set a higher number of Node count. New worker nodes wll get provisioned automatically within a minute or
+two.
+
+Read the announcement here: https://localops.co/blog/scale-app-environments
+
+</Update>
+
+<Update label="December 17th, 2024">
+## Quick search in Developer docs
+
+Quick search in Developer docs
+
+Checkout the new search functionality in LocalOps Developer docs.
+
+You click on search bar in the top right corner or press CMD+K to then search for any term and it will take you to the
+correct topic page instantly. It will even remember your past searches if you search within the same browser next time.
+
+</Update>
+
+<Update label="December 17th, 2024">
+## Quick search in Developer docs
+
+Checkout the new search functionality in LocalOps Developer docs.
+
+You click on search bar in the top right corner or press CMD+K to then search for any term and it will take you to the
+correct topic page instantly. It will even remember your past searches if you search within the same browser next time.
+
+See https://docs.localops.co now.
+
+![Quick Search](./images/changelog/quick-search-dec-17-24.gif)
+
+</Update>
+
+<Update label="December 2nd, 2024">
+## Pass Encrypted Secrets
+
+![Secrets](./images/changelog/secrets-dec-2-24.png)
+
+Pass API keys, certificates, auth token and other confidential information to your app environment as secrets from
+within Vars tab. All secrets are encrypted and stored in the destination/target cloud account and later get passed
+inside the Kubernetes cluster as encrypted secrets.
+
+Pass up to 100 key value pairs as secrets. Learn more at https://localops.co/blog/manage-application-secrets.
+
+</Update>
+
+<Update label="October 22nd, 2024">
+## Set Environment vars
+
+![Helm Values](./images/changelog/helm-values-oct-22-24.png)
+
+Developers can now set environment variables in the brand new Yaml editor:
+
+Lookout for `Edit helm values` button.
+
+Documentation - https://docs.localops.co/bring-your-helm-charts/env-vars
+
+</Update>
+
+<Update label="October 16th, 2024">
+## Connect to AWS without IAM keys
+
+![Connection](./images/changelog/connection-oct-16-24.png)
+
+We no longer accept IAM access keys to connect to AWS accounts.
+
+We have shipped a new secure 1-click setup process to connect to AWS accounts using IAM roles and OIDC protocol. This
+ensures that all access is done using short term keys created and destroyed by AWS.
+
+AWS accounts can be connected using 1-click from Connections tab. Learn more at https://docs.localops.co/accounts/aws
+
+</Update>
