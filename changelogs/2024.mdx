@@ -159,8 +159,8 @@ Or [schedule a demo][demo] if you want us to get you started.
 
 This release is BIG if you are spinning up cloud resources dynamically from your application. Read on!
 
-App environments run in a cloud account (say AWS) that belongs to you or your customer. For each app environment you
-spin up using LocalOps, a dedicated network is provisioned in a specific region within the connected cloud account. And
+Environments run in a cloud account (say AWS) that belongs to you or your customer. For each environment you spin up
+using LocalOps, a dedicated network is provisioned in a specific region within the connected cloud account. And
 safe/useful defaults are set during the process.
 
 This information about the dedicated network, the cloud region, the defaults and everything else is useful for the
@@ -230,11 +230,10 @@ Stay tuned!
 Subscribe to this blog Subscribe to this blog (bottom left) to read these posts right in your inbox whenever we publish
 next time.
 
-Get started for FREE on LocalOps: Start deploying your Apps as App environments across any cloud.
+Get started for FREE on LocalOps: Start deploying your Apps as environments across any cloud.
 
-Sign up for an account at LocalOps for free, to create production ready app environments in your cloud or your
-customer's cloud: https://console.localops.co/signup. Every account gets 100 hours free on Sandbox environments every
-month.
+Sign up for an account at LocalOps for free, to create production ready environments in your cloud or your customer's
+cloud: https://console.localops.co/signup. Every account gets 100 hours free on Sandbox environments every month.
 
 If you want a personalised demo, [schedule a call][demo] with us here.
 
@@ -276,7 +275,7 @@ All the following actions get recorded in the Audit log.
 
 - App creation and deletion
 - Release creation and deletion
-- App Environment creation & deletion
+- Environment creation & deletion
 - App Deployments
 - Sign in and sign out
 
@@ -305,10 +304,10 @@ across all your customers.
 
 ![Invite](./images/qa-july-2-24.png)
 
-You can now invite QA team into your LocalOps account to spin up Sandbox app environments in your cloud account.
+You can now invite QA team into your LocalOps account to spin up Sandbox environments in your cloud account.
 
-QA can create sandbox app environments in your AWS/GCP/Azure account, test all new functionality your Developers shipped
-and give approval to proceed with actual production rollouts.
+QA can create sandbox environments in your AWS/GCP/Azure account, test all new functionality your Developers shipped and
+give approval to proceed with actual production rollouts.
 
 Sandbox environments are useful if you want to bring up an isolated & temporary cloud infrastructure to test out
 application functionality in isolation. They also come handy when you want to load test applications in isolation
@@ -322,8 +321,8 @@ without waiting on developers to prepare their test environment and ultimately b
 > a free 30-day trial][signup] and manage all cloud deployments across AWS/GCP/Azure in a single place - your LocalOps
 > account.
 
-Operations team can setup Cloud connections (say your AWS account) that are dedicated for such app environments. If a
-cloud connection is marked for Sandbox, they can be used to create Sandbox environments only.
+Operations team can setup Cloud connections (say your AWS account) that are dedicated for such environments. If a cloud
+connection is marked for Sandbox, they can be used to create Sandbox environments only.
 
 </Update>
 
@@ -331,7 +330,7 @@ cloud connection is marked for Sandbox, they can be used to create Sandbox envir
 We want to make it easier for you (developers) to not just deploy applications on "any cloud" (your cloud or your customer cloud / Private SaaS) but also want to let you handle customers of "any size". It could be a medium size business in Europe with 20 agents or a financial enterprise with 200 agents.
 
 So we announced capabilities last week to let developers configure N number of servers to get created (via Environment
-Template) while spinning up App environments on day 1. And that could be sufficient for many customers with predictable
+Template) while spinning up environments on day 1. And that could be sufficient for many customers with predictable
 workloads. It would get configured based on information one might have on day 1 on how big that deployment could end up
 be.
 
@@ -340,23 +339,23 @@ to expand and shrink the servers based on load.
 
 🎉 **Enter auto-scaling!**
 
-We have begun to setup auto-scaling by default (yup - by default!) in all App environments. No one has to learn a thing
+We have begun to setup auto-scaling by default (yup - by default!) in all environments. No one has to learn a thing
 about how do this all in a given target cloud - AWS, Azure or Google cloud. We make it happen behind the scenes in every
-App environment automatically.
+environment automatically.
 
 This release is the first in this series, starting with accepting minimum and maximum number of servers to spin up for
-any app environment, via environment templates.
+any environment, via environment templates.
 
 > Learn more about Environment templates: https://blog.localops.co/whats-new-on-june-18/
 
 ![Templates](./images/templates-june-25-24.png)
 
-We are marching into a place where your App environments will expand when there is more load. And will shrink when the
-load is low, achieving the true vision of "the cloud", resulting in enormous savings on cloud bills for you / your
-customer (Private SaaS deployments). Developers can define these resource requirements in their Helm chart and configure
-the min and max number of servers to create for each environment in LocalOps. LocalOps would configure Kubernetes
-cluster (which is powering the App environment) to honour those rules, seamlessly. Users don't need to learn much DevOps
-jargon to configure it all.
+We are marching into a place where your environments will expand when there is more load. And will shrink when the load
+is low, achieving the true vision of "the cloud", resulting in enormous savings on cloud bills for you / your customer
+(Private SaaS deployments). Developers can define these resource requirements in their Helm chart and configure the min
+and max number of servers to create for each environment in LocalOps. LocalOps would configure Kubernetes cluster (which
+is powering the environment) to honour those rules, seamlessly. Users don't need to learn much DevOps jargon to
+configure it all.
 
 Stay tuned, we are working hard on a set of follow up releases to fully realise this vision. All while asking very
 little from developers to learn or configure.
@@ -370,8 +369,8 @@ We consider Documentation as our product too. You will see more updates to docum
 everyone to use LocalOps.
 
 Speaking about documentation, we have placed links to documentation throughout your account. So it will be super easy to
-learn about a concept and configure App environments in a jiffy. And it will always be handy in bottom right corner in
-your account:
+learn about a concept and configure environments in a jiffy. And it will always be handy in bottom right corner in your
+account:
 
 ![Help](./images/help-june-25-24.png)
 
@@ -398,8 +397,8 @@ See you next Tuesday 👋.
 
 🎉 We shipped two new capabilities this time!
 
-First, we made it easy for you to create identical app environments with identical infra configurations, using
-Environment Templates.
+First, we made it easy for you to create identical environments with identical infra configurations, using Environment
+Templates.
 
 ### What are Environment Templates?
 
@@ -435,7 +434,7 @@ section:
 ![Tags](./images/tags-june-18-24.png)
 
 We are having a great time here in building LocalOps. We want to make it super easy and super intuitive for you to spin
-up App Environments in any cloud and deploy applications in your cloud or your customer's cloud (cloud-prem deliveries).
+up environments in any cloud and deploy applications in your cloud or your customer's cloud (cloud-prem deliveries).
 
 If you want to put LocalOps to use in your organisation for making Cloud-prem deliveries in your customer cloud or for
 provisioning tearable QA environments in your cloud or anything in between, please [book a 30-min demo][demo] with us.
@@ -459,10 +458,10 @@ Administrator, Operations or Developer role.
 How can someone think about these roles?
 
 Here is how - Developers can build apps & releases and make them available in your localops account. While Operations
-team can be customer facing to create app environments and make deployments. Administrator is of course the super admin
-and can delete/create/update everything.
+team can be customer facing to create environments and make deployments. Administrator is of course the super admin and
+can delete/create/update everything.
 
-We will soon be releasing another role called "QA" to let them create internal app environments as they see fit. More on
+We will soon be releasing another role called "QA" to let them create internal environments as they see fit. More on
 this next week may be. We have bunch of other cool stuff cooking in the kitchen.
 
 We didn't want to outsource this to WorkOS or any other similar service. We would like to keep our (password less)
@@ -475,5 +474,44 @@ See you next Tuesday.
 
 </Update>
 
+<Update label="June 4th, 2024">
+We made a release today. Thats new, to start with!
+
+We are making it a habit at LocalOps to ship every Tuesday. There it goes on our Basecamp schedule:
+
+![Mail](./images/schedule-june-4-24.png)
+
+As for today, lets start with some appetizers.
+
+If you [signed up for LocalOps][signup] and created your brand new "environments", you will get a email notification
+when your environment is created and running in a healthy state. It takes around 15-20mins to get each environment up in
+your aws cloud, so this email will be useful to pull you back in when things are ready.
+
+![Mail](./images/mail-june-4-24.png)
+
+> Side note: all environments get provisioned with a unique URL and a ssl cert by default. Just like you see on a PaaS
+> service, but in your/customer AWS cloud. Encryption at transit is enabled by default everywhere.
+
+Second, when you attempt to create a new environment, you will be greeted with the big question of what to create:
+Private delivery, Production SaaS or Sandbox/qa environments.
+
+![Environment](./images/env-june-4-24.png)
+
+Third, when you [signup for LocalOps][signup], you will be welcomed with a nice warm tour guide. It will introduce you
+to some basic concepts to be productive inside LocalOps. And I guess the tour UI looks pretty pretty for everyone. Let
+us know how it looks.
+
+![Onboarding](./images/onboarding-june-4-24.png)
+
+If all this is impressing you any bit, lets talk. We will **accelerate/streamline your private cloud deliveries** like
+you have never seen before. You can book some time to meet with us on zoom. Here is [our calendar link][demo].
+
+We will be pushing more in the next weeks to come.
+
+See you next tuesday!
+
+</Update>
+
 [demo]: https://cal.com/anand-localops/founder-connect
 [signup]: https://console.localops.co/signup
+[localops]: https://localops.co
