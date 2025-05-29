@@ -349,7 +349,7 @@ any app environment, via environment templates.
 
 > Learn more about Environment templates: https://blog.localops.co/whats-new-on-june-18/
 
-![Help](./images/templates-june-25-24.png)
+![Templates](./images/templates-june-25-24.png)
 
 We are marching into a place where your App environments will expand when there is more load. And will shrink when the
 load is low, achieving the true vision of "the cloud", resulting in enormous savings on cloud bills for you / your
@@ -391,6 +391,60 @@ cloud or provide dedicated infrastructure to specific customer accounts within y
 environment in AWS, say for first time.
 
 See you next Tuesday 👋.
+
+</Update>
+
+<Update label="June 18th, 2024">
+
+🎉 We shipped two new capabilities this time!
+
+First, we made it easy for you to create identical app environments with identical infra configurations, using
+Environment Templates.
+
+### What are Environment Templates?
+
+You get to define commonly used compute, network, storage configurations of your environments as "Environment
+Templates". Whenever you create a new environment, you get to specify the template name to use, to boot up the
+environment.
+
+![Templates](./images/templates-june-18-24.png)
+
+You can define a template for your internal QA environments, cloud-prem deliveries, single tenant deliveries or even
+SaaS production environments.
+
+For each app, you can go on to define ideal size configuration of the underlying worker nodes / virtual servers to start
+their environments in. So that no one gets to under-provision or over-provision Cloud-prem/SaaS/QA environments by
+mistake.
+
+Environment templates are offered in all accounts without limits. [Sign up][signup] now to give LocalOps a spin
+
+### Two Global Resource Tags:
+
+Second, we wanted to help DevOps teams (internal/external on your customers end) to locate cloud resources that are
+provisioned by LocalOps in their cloud account. And potentially calculate how much they are all adding up to the cloud
+(AWS, say) bill every month.
+
+So we came up with ✌️ two standard tags and attached them everywhere. You can use services like
+[AWS Resource Explorer](https://aws.amazon.com/resourceexplorer) or
+[AWS Billing console](https://aws.amazon.com/aws-cost-management/aws-billing) to filter and see resources by these two
+tags.
+
+Note: Name and value of these two tags are unique for each environment. Please copy them from environment's Settings
+section:
+
+![Tags](./images/tags-june-18-24.png)
+
+We are having a great time here in building LocalOps. We want to make it super easy and super intuitive for you to spin
+up App Environments in any cloud and deploy applications in your cloud or your customer's cloud (cloud-prem deliveries).
+
+If you want to put LocalOps to use in your organisation for making Cloud-prem deliveries in your customer cloud or for
+provisioning tearable QA environments in your cloud or anything in between, please [book a 30-min demo][demo] with us.
+We will get you started first hand.
+
+Or simply [sign up][signup] anytime. There is a 30-day free trial and a very generous 100 free hours on Sandbox/QA
+enivornments after that.
+
+See you next tuesday! 👋
 
 </Update>
 
