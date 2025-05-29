@@ -263,6 +263,9 @@
   "integrations": {
     "intercom": {
       "appId": "wjg6xmxh"
+    },
+    "posthog": {
+      "apiKey": "phc_T54pQDyo3sFjCz7a3fm2XCCoDAt7iA0l2KM9qBKauF3"
     }
   }
 }
