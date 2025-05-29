@@ -244,3 +244,62 @@ need and quickly move on.
 We will continue investing a lot of our time to make Developer documentation super rich.
 
 </Update>
+
+<Update label="June 9th, 2024">
+## Announcing Multi-Cloud audit log:
+
+Tuesdays are always special for us. We work from 3 different timezones and we come together on a single channel on every
+Tuesday to make new releases.
+
+Last week, we introduced QA role. Account owners can invite Developers and QAs within LocalOps to spin up App
+environments in their cloud or customer's cloud.
+
+🎉 Today, we shipped Audit Log.
+
+Anyone within your LocalOps account can see who created environments in which cloud or who made deployments. This will
+be super useful to ensure visibility and transparency within your team.
+
+With this release, LocalOps becomes a central audit log of who initiated what across ALL your/customer cloud accounts
+(AWS/GCP/Azure) and across ALL cloud regions.
+
+### How does it work?
+
+Everyone can see all actions done within the account, under "Audit log" tab.
+
+![Audit](./images/audit-june-9-24.png)
+
+We record & show name of the user who triggered the action and the location from which they did this action.
+
+![Audit](./images/audit-logs-june-9-24.png)
+
+All the following actions get recorded in the Audit log.
+
+- App creation and deletion
+- Release creation and deletion
+- App Environment creation & deletion
+- App Deployments
+- Sign in and sign out
+
+And of course you can filter these actions by User, App or Environments.
+
+No matter which cloud your environment is running in, all actions performed within your LocalOps account are recorded
+and shown under your Audit log screen.
+
+🤣 _Try doing the same via AWS CloudTrail in your/other AWS accounts and you will find day & night difference in Day-1
+configuration and Day-N utility. Talk about doing this across multiple AWS, Google or Azure accounts you manage and you
+would find how quickly things get impractical._
+
+Get started with LocalOps today:
+
+Want to make SaaS or Private SaaS deployments to your cloud or customer cloud from a single dashboard? [Sign up now for
+a 30-day free trial][signup].
+
+Or [book a free 30-min demo][demo] anytime and we will personally get you started with making multi-cloud deployments
+across all your customers.
+
+👋 See you next Tuesday.
+
+</Update>
+
+[demo]: https://cal.com/anand-localops/founder-connect
+[signup]: https://console.localops.co/signup
