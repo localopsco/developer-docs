@@ -133,12 +133,49 @@ AWS accounts can be connected using 1-click from Connections tab. Learn more at 
 
 </Update>
 
-<Update label="September 3r, 2024">
+<Update label="September 3rd, 2024">
 ## One click signup
 
 ![Signup](./images/changelog/one-click-signup-sept-3-24.png)
 
 Users can now Sign up or Sign In to LocalOps with 1-click, using a Github or Google account. Checkout
 https://console.localops.co/
+
+</Update>
+
+<Update label="Aug 28th, 2024">
+## Friday warnings
+
+When you create a new App environment or make a new Deployment on an existing environment, you will get a warning like
+this:
+
+![Warning](./images/changelog/friday-aug-28-24.png)
+
+And we are now fully integrated with Stripe to collect recurring payments. Go ahead and subscribe from your Billing
+section inside Account settings ✌️.
+
+</Update>
+
+<Update label="Aug 13th, 2024">
+## Introducing LocalOps CLI v1
+
+If you want to inspect your app environment & its backing kubernetes cluster, say to check if your application’s pods
+are running healthy, use Localops CLI to do it.
+
+Just install it in your local dev machine and use its update-kubeconfig sub-command to set correct kubernetes context of
+your local kubectl system. Then, you can run any kubectl command to inspect objects running in the specific app
+environment's kubernetes cluster.
+
+Checkout the new `Shell` tab in App environment page to find out more 😎.
+
+![Shell](./images/changelog/shell-aug-13-24.png)
+
+Run this command in your Terminal to install LocalOps CLI in your Mac:
+
+```bash
+bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
+```
+
+Learn more at https://docs.localops.co/cli
 
 </Update>
