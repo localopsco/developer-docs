@@ -18,7 +18,8 @@
             "pages": [
               "index",
               "howitworks",
-              "support"
+              "support",
+              "compatibility"
             ]
           },
           {
@@ -127,6 +128,12 @@
                       "environment/infra-resources/aws"
                     ]
                   }
+                ]
+              },
+              {
+                "group": "Disaster Recovery",
+                "pages": [
+                  "environment/backups-restore"
                 ]
               },
               "environment/eject"
