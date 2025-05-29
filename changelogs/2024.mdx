@@ -1,71 +1,8 @@
 ---
-title: 'Product Updates'
-description: 'New updates and improvements'
-mode: 'center'
+title: 2024
+description: Updates and improvements of year 2024
+mode: center
 ---
-
-<Update label="Jan 27th, 2025">
-## See CloudWatch metrics/logs in one place
-
-When we provision environment, we provision a Grafana dashboard specific to the environment, accessible at monitor.
-`<your-app-env-domain>`. You can access metrics and logs of all nodes, pods and containers running within the app
-environment's kubernetes cluster.
-
-If you are running your environment in AWS, you will also see a pre-configured CloudWatch data source in the
-corresponding Grafana dashboard. You can access logs and metrics that are stored in CloudWatch.
-
-This is super useful if your application is using managed AWS services that are sending metrics/logs to CloudWatch.
-
-Go to “Monitor” tab in your environment to access the Grafana dashboard. Within Grafana, see Connections > Data sources
-to see the Cloudwatch data source. Click on “Explore” next to it to see CloudWatch logs and metrics.
-
-Let us know what you think. Email us at help@localops.co.
-
-</Update>
-
-<Update label="January 24th, 2025">
-## Standard retention policy set on all logs and metrics
-
-Every environment comes with its own unique instance of Loki + Prometheus + Grafana stack. From now, all logs and
-metrics recorded by the monitoring stack have 30-day retention policy. Any log statement/metric data point is
-automatically deleted after 30 days.
-
-This significantly reduces the risk of unintentional data leaks when developers print sensitive information on logs by
-accident.
-
-</Update>
-
-<Update label="January 23rd, 2025">
-## Access any AWS managed service using IAM Role
-
-Your app container running inside environment can now access any AWS service using IAM roles. You don’t have to
-configure any IAM key/credential as secrets in your application.
-
-LocalOps sets up a default IAM role when your environment is provisioned in the target AWS account. We set things up in
-your environment such that your application will be able to use this IAM role implicitly via AWS SDK, if you declare the
-`ServiceAccount` in your Helm deployment yaml spec as per our documentation.
-
-After the environment is provisioned, you can manually add/remove relevant IAM policies to the app specific IAM role we
-provisioned earlier.
-
-</Update>
-
-<Update label="January 14th, 2025">
-## Scale environments
-
-![Scaling](./images/changelog/scaling-jan-14-25.png)
-
-You can now scale up/down the underlying servers powering your environment, manually from within LocalOps console.
-
-Visit “Scaling” tab in your environment page to pick a supported Node type (EC2 instance type in case of AWS) and save.
-Existing worker nodes will be seamlessly replaced by new set of worker nodes.
-
-You can also set a higher number of Node count. New worker nodes wll get provisioned automatically within a minute or
-two.
-
-Read the announcement here: https://localops.co/blog/scale-app-environments
-
-</Update>
 
 <Update label="December 17th, 2024">
 ## Quick search in Developer docs
@@ -89,14 +26,14 @@ correct topic page instantly. It will even remember your past searches if you se
 
 See https://docs.localops.co now.
 
-![Quick Search](./images/changelog/quick-search-dec-17-24.gif)
+![Quick Search](./images/quick-search-dec-17-24.gif)
 
 </Update>
 
 <Update label="December 2nd, 2024">
 ## Pass Encrypted Secrets
 
-![Secrets](./images/changelog/secrets-dec-2-24.png)
+![Secrets](./images/secrets-dec-2-24.png)
 
 Pass API keys, certificates, auth token and other confidential information to your environment as secrets from within
 Vars tab. All secrets are encrypted and stored in the destination/target cloud account and later get passed inside the
@@ -109,7 +46,7 @@ Pass up to 100 key value pairs as secrets. Learn more at https://localops.co/blo
 <Update label="October 22nd, 2024">
 ## Set Environment vars
 
-![Helm Values](./images/changelog/helm-values-oct-22-24.png)
+![Helm Values](./images/helm-values-oct-22-24.png)
 
 Developers can now set environment variables in the brand new Yaml editor:
 
@@ -122,7 +59,7 @@ Documentation - https://docs.localops.co/bring-your-helm-charts/env-vars
 <Update label="October 16th, 2024">
 ## Connect to AWS without IAM keys
 
-![Connection](./images/changelog/connection-oct-16-24.png)
+![Connection](./images/connection-oct-16-24.png)
 
 We no longer accept IAM access keys to connect to AWS accounts.
 
@@ -136,7 +73,7 @@ AWS accounts can be connected using 1-click from Connections tab. Learn more at 
 <Update label="September 3rd, 2024">
 ## One click signup
 
-![Signup](./images/changelog/one-click-signup-sept-3-24.png)
+![Signup](./images/one-click-signup-sept-3-24.png)
 
 Users can now Sign up or Sign In to LocalOps with 1-click, using a Github or Google account. Checkout
 https://console.localops.co/
@@ -148,7 +85,7 @@ https://console.localops.co/
 
 When you create a new environment or make a new Deployment on an existing environment, you will get a warning like this:
 
-![Warning](./images/changelog/friday-aug-28-24.png)
+![Warning](./images/friday-aug-28-24.png)
 
 And we are now fully integrated with Stripe to collect recurring payments. Go ahead and subscribe from your Billing
 section inside Account settings ✌️.
@@ -167,7 +104,7 @@ environment's kubernetes cluster.
 
 Checkout the new `Shell` tab in environment page to find out more 😎.
 
-![Shell](./images/changelog/shell-aug-13-24.png)
+![Shell](./images/shell-aug-13-24.png)
 
 Run this command in your Terminal to install LocalOps CLI in your Mac:
 

@@ -215,7 +215,8 @@
           {
             "group": "Changelog",
             "pages": [
-              "changelog"
+              "changelogs/2025",
+              "changelogs/2024"
             ]
           }
         ]
