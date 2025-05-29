@@ -1,0 +1,27 @@
+---
+title: Custom Domain
+---
+
+Integrating custom domains into App Environments provides personalized and professional web addresses. LocalOps enhances
+security by automatically applying SSL protection to all configured custom domains, ensuring encrypted web traffic by
+default.
+
+## Common Issues with Adding Custom Domains
+
+### Custom Domain Verification Failure
+
+After saving your custom domain, you will receive three CNAME records to add to your domain's DNS settings. It typically
+takes a few minutes for these DNS settings to propagate, although in some cases, it may take up to 24 hours. If you
+attempt to verify and deploy the custom domain immediately after saving, you may encounter a "Verification failed"
+error. In such instances, please wait a few additional minutes and try verification again.
+
+### Incorrect CNAME Records
+
+If custom domain verification continues to fail even after waiting, verify that the provided CNAME records are
+accurately added to your domain's DNS settings.
+
+### Using a Shorter TTL
+
+If correctly configured CNAME records still experience delays in verification, consider deleting the existing CNAME
+records and creating new ones with a Time-to-Live (TTL) of 60 seconds. This shorter TTL can expedite the verification
+process for your custom domain.

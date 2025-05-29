@@ -139,6 +139,13 @@
               "team/deactivate-user",
               "team/audit-logs"
             ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshoot/create-environment",
+              "troubleshoot/custom-domain"
+            ]
           }
         ]
       },
