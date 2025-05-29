@@ -199,7 +199,8 @@
                   "bring-your-helm-charts/databases/mongodb",
                   "bring-your-helm-charts/databases/redis"
                 ]
-              }
+              },
+              "bring-your-helm-charts/database-migration"
             ]
           }
         ]
