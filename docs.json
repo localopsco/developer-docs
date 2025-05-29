@@ -130,6 +130,15 @@
               "cli/install-windows",
               "cli/usage"
             ]
+          },
+          {
+            "group": "Team",
+            "pages": [
+              "team/understanding-roles",
+              "team/invite-users",
+              "team/deactivate-user",
+              "team/audit-logs"
+            ]
           }
         ]
       },
