@@ -301,5 +301,98 @@ across all your customers.
 
 </Update>
 
+<Update label="July 2nd, 2024">
+
+![Invite](./images/qa-july-2-24.png)
+
+You can now invite QA team into your LocalOps account to spin up Sandbox app environments in your cloud account.
+
+QA can create sandbox app environments in your AWS/GCP/Azure account, test all new functionality your Developers shipped
+and give approval to proceed with actual production rollouts.
+
+Sandbox environments are useful if you want to bring up an isolated & temporary cloud infrastructure to test out
+application functionality in isolation. They also come handy when you want to load test applications in isolation
+without interfering with anything else in the team.
+
+QAs can spin up or tear down any number of Sandbox environments in any cloud account you set them up with. You can
+invite any number of QA users within your account and let them work in isolation, without stepping on each other,
+without waiting on developers to prepare their test environment and ultimately be super productive!
+
+> FREE: Every LocalOps account gets first 100 hours for free, every single month for Sandbox environments. [Sign up for
+> a free 30-day trial][signup] and manage all cloud deployments across AWS/GCP/Azure in a single place - your LocalOps
+> account.
+
+Operations team can setup Cloud connections (say your AWS account) that are dedicated for such app environments. If a
+cloud connection is marked for Sandbox, they can be used to create Sandbox environments only.
+
+</Update>
+
+<Update label="June 25th, 2024">
+We want to make it easier for you (developers) to not just deploy applications on "any cloud" (your cloud or your customer cloud / Private SaaS) but also want to let you handle customers of "any size". It could be a medium size business in Europe with 20 agents or a financial enterprise with 200 agents.
+
+So we announced capabilities last week to let developers configure N number of servers to get created (via Environment
+Template) while spinning up App environments on day 1. And that could be sufficient for many customers with predictable
+workloads. It would get configured based on information one might have on day 1 on how big that deployment could end up
+be.
+
+But, come on! It's 2024. We are not living in SliceHost age. We are miles into the cloud era now and we want to be able
+to expand and shrink the servers based on load.
+
+🎉 **Enter auto-scaling!**
+
+We have begun to setup auto-scaling by default (yup - by default!) in all App environments. No one has to learn a thing
+about how do this all in a given target cloud - AWS, Azure or Google cloud. We make it happen behind the scenes in every
+App environment automatically.
+
+This release is the first in this series, starting with accepting minimum and maximum number of servers to spin up for
+any app environment, via environment templates.
+
+> Learn more about Environment templates: https://blog.localops.co/whats-new-on-june-18/
+
+![Help](./images/templates-june-25-24.png)
+
+We are marching into a place where your App environments will expand when there is more load. And will shrink when the
+load is low, achieving the true vision of "the cloud", resulting in enormous savings on cloud bills for you / your
+customer (Private SaaS deployments). Developers can define these resource requirements in their Helm chart and configure
+the min and max number of servers to create for each environment in LocalOps. LocalOps would configure Kubernetes
+cluster (which is powering the App environment) to honour those rules, seamlessly. Users don't need to learn much DevOps
+jargon to configure it all.
+
+Stay tuned, we are working hard on a set of follow up releases to fully realise this vision. All while asking very
+little from developers to learn or configure.
+
+### Updates to LocalOps Documentation:
+
+We also improved our documentation in bunch of different ways. Starting with instructions on getting cloud credentials
+to connect to LocalOps. Checkout https://docs.localops.co/accounts/aws.
+
+We consider Documentation as our product too. You will see more updates to documentation to make things extra clear for
+everyone to use LocalOps.
+
+Speaking about documentation, we have placed links to documentation throughout your account. So it will be super easy to
+learn about a concept and configure App environments in a jiffy. And it will always be handy in bottom right corner in
+your account:
+
+![Help](./images/help-june-25-24.png)
+
+### Announcing our changelog:
+
+You can read about weekly releases if you visit this blog at https://blog.localops.co and click on "Changelog". You can
+also access our Changelog also the bottom right help menu in your account.
+
+Please subscribe to our blog here (see bottom right) and you will receive email updates whenever we publish new posts on
+our releases and more.
+
+We did a lot of tiny improvements within your account that can make it extra clear for you to signup and deploy
+applications quickly on your customer cloud or your cloud. Sign up now to take a free 30 day trial.
+
+Take a [30-min demo](demo) with us, in case you build SaaS products and want to deploy applications in your customer
+cloud or provide dedicated infrastructure to specific customer accounts within your cloud, or want to set up production
+environment in AWS, say for first time.
+
+See you next Tuesday 👋.
+
+</Update>
+
 [demo]: https://cal.com/anand-localops/founder-connect
 [signup]: https://console.localops.co/signup
