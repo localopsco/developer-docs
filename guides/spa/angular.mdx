@@ -84,78 +84,11 @@ npm run build
 This will compile your TypeScript code to JavaScript, as well as optimize, bundle, and minify the output as appropriate.
 The result of this build process is output to a directory (`dist/${PROJECT_NAME}` by default).
 
+import ConfigureNginx from '/snippets/configuring-nginx.mdx';
+
 ### Configuring nginx
 
-Once the application is built for production, we need a static web server to serve those files. For that purpose, we are
-using [nginx], an open-source HTTP and reverse proxy server.
-
-```nginx nginx.conf.template
-server {
-    listen ${PORT};
-    server_name _;
-
-    location / {
-        root /usr/share/nginx/html;
-        try_files $uri $uri/ /index.html;
-    }
-
-    # skip this block if you don't have a backend yet
-    location /api/ {
-        proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    error_page 500 502 503 504 /50x.html;
-    location = /50x.html {
-        root /usr/share/nginx/html;
-    }
-}
-```
-
-Create this file `nginx.conf.template` in the root of your project. We won't be using this template now; we'll use it to
-run the nginx server inside the Docker container.
-
-Note two important blocks in this configuration:
-
-```nginx
-location / {
-  root /usr/share/nginx/html;
-  try_files $uri $uri/ /index.html;
-}
-```
-
-This block serves the `index.html` from the files we built using Angular, stored in the `/usr/share/nginx/html` folder.
-We will copy the assets to this folder while building the Docker application.
-
-And then the API block:
-
-```nginx
-location /api/ {
-    proxy_pass http://{BACKEND_HOST}:${BACKEND_PORT};
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-}
-```
-
-<Note>
-  You might want to skip the API block if you don't have a backend yet; otherwise, nginx will throw an error for an
-  invalid host on the backend URL.
-</Note>
-
-A typical non-static web application usually will have a backend, and we make AJAX requests using
-[fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) or libraries like
-[axios](https://axios-http.com/docs/intro) to get/send data to retrieve/store the application state.
-
-Assume that the site we built is being served by nginx via the domain `example.com`. Whenever an API call is made to
-`example.com/api`, the nginx server acts as a reverse proxy server and forwards the request to the backend server.
-
-You can use reverse proxying to navigate the traffic that is inbound to nginx. The reverse proxy server also acts as a
-mask, hiding the real backend from the outside world.
+<ConfigureNginx />
 
 ### Create the Docker Image
 
