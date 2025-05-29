@@ -1,0 +1,19 @@
+---
+title: Alerts
+---
+
+Every app environment comes pre-installed with open source Grafana.
+
+- Logs & metrics from your app and app environment are recorded by Loki & Prometheus and sent to the corresponding
+  Grafana installation running within the same cluster.
+- Each grafana installation gets its own domain and URL so that your team can login and configure views, dashboards and
+  alerting as needed for that specific environment.
+
+<Info>
+  Grafana has an extensive guide on how to configure Alerting. [Please refer to their
+  guide](https://grafana.com/docs/grafana/latest/alerting/) to learn more and configure them as you see fit for your
+  team and for each app environment.{' '}
+</Info>
+
+You can login to an environment's grafana dashboard from Monitoring tab of the App environment, from within LocalOps
+dashboard.

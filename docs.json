@@ -98,6 +98,16 @@
                     ]
                   }
                 ]
+              },
+              {
+                "group": "Monitoring",
+                "pages": [
+                  "environment/monitoring/logs",
+                  "environment/monitoring/metrics",
+                  "environment/monitoring/alerts",
+                  "environment/monitoring/crashes",
+                  "environment/monitoring/howto"
+                ]
               }
             ]
           },

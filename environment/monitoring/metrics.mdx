@@ -1,0 +1,38 @@
+---
+title: Metrics
+---
+
+Every app environment comes pre-installed with open source [Prometheus](https://prometheus.io/) and
+[Grafana](https://grafana.com/oss/). Grafana will be running on its own URL for each App environment and must be used to
+see all metrics collected from your app environment.
+
+_Grafana is simple to use yet very powerful in how you can customise the setup for yourself._
+
+### Recording metrics
+
+CPU, memory, disk and network metrics from each node running your app, inside kubernetes, is recorded by prometheus and
+sent to Grafana for your visibility.
+
+### See metrics
+
+Grafana installation of the specific environment can be opened from Monitoring tab of App Environment page.
+
+Inside grafana, you can group and see CPU/Memory/Disk/Network metrics by:
+
+- node
+- pod
+- deployment
+- service
+- namespace
+
+### In-built dashboards
+
+Grafana installation in each app environment comes with a lot of pre-built dashboards to see infrastructure/system
+metrics. You can star the frequently visited ones for convenience.
+
+### Custom dashboards
+
+You can create new dashboards within the specific Grafana isntallation to see metrics from different node, in your
+application as needed.
+
+<Info>See [Grafana docs](https://grafana.com/docs/grafana/latest/?pg=oss-graf&plcmt=resources) to learn more</Info>
