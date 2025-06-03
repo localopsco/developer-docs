@@ -37,8 +37,8 @@
                 "group": "Cloud accounts",
                 "pages": [
                   "accounts/aws",
-                  "accounts/gcp",
-                  "accounts/azure"
+                  "accounts/azure",
+                  "accounts/gcp"
                 ]
               },
               "accounts/connect-github"
@@ -47,54 +47,20 @@
           {
             "group": "Guides",
             "pages": [
-              {
-                "group": "Languages",
-                "pages": [
-                  "guides/languages/go",
-                  "guides/languages/python",
-                  "guides/languages/node"
-                ]
-              },
-              {
-                "group": "Single Page Applications",
-                "pages": [
-                  "guides/spa/react",
-                  "guides/spa/angular",
-                  "guides/spa/ember",
-                  "guides/spa/vue"
-                ]
-              }
+              "guides/languages/go",
+              "guides/languages/python",
+              "guides/languages/node",
+              "guides/spa/react",
+              "guides/spa/angular",
+              "guides/spa/ember",
+              "guides/spa/vue"
             ]
           },
           {
-            "group": "Environment",
+            "group": "Environments",
             "pages": [
               "environment/inside",
               "environment/create",
-              "environment/customize",
-              "environment/delete",
-              "environment/shared-responsibilities",
-              {
-                "group": "Services",
-                "pages": [
-                  "environment/services/create",
-                  "environment/services/deploy",
-                  {
-                    "group": "Types of services",
-                    "pages": [
-                      "environment/services/web",
-                      "environment/services/internal",
-                      "environment/services/workers",
-                      "environment/services/job",
-                      "environment/services/cronjob"
-                    ]
-                  },
-                  "environment/services/micro-services",
-                  "environment/services/secrets",
-                  "environment/services/custom-domain",
-                  "environment/services/delete"
-                ]
-              },
               "environment/extend-with-iac",
               {
                 "group": "Managed cloud services",
@@ -132,13 +98,30 @@
                   }
                 ]
               },
+              "environment/shared-responsibilities",
+              "environment/delete",
+              "environment/eject"
+            ]
+          },
+          {
+            "group": "Services",
+            "pages": [
+              "environment/services/create",
+              "environment/services/deploy",
               {
-                "group": "Disaster Recovery",
+                "group": "Types of services",
                 "pages": [
-                  "environment/backups-restore"
+                  "environment/services/web",
+                  "environment/services/internal",
+                  "environment/services/workers",
+                  "environment/services/job",
+                  "environment/services/cronjob"
                 ]
               },
-              "environment/eject"
+              "environment/services/micro-services",
+              "environment/services/secrets",
+              "environment/services/custom-domain",
+              "environment/services/delete"
             ]
           },
           {
@@ -167,7 +150,7 @@
             ]
           },
           {
-            "group": "Bring your helm charts (Deprecated)",
+            "group": "Bring your helm charts",
             "pages": [
               {
                 "group": "First Steps",

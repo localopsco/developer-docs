@@ -82,19 +82,10 @@ record logs of your application.
 Open source [Grafana](https://grafana.com/oss/grafana/) is installed and pre-configured by LocalOps in an app
 environment to store logs and metrics from your app environment and let you visualise them in a single dashboard.
 
-## Your app
+## Your services
 
-Your application happily runs on top, leveraging all the infrastructure and tools installed in the app environment.
+Your code is run as Services.  
 
-## Unique domain
-
-Your application is given a Kubernetes ingress and a unique domain by LocalOps for your users to access them anywhere
-from the internet.
-
-## SSL certificate
-
-Auto-renewing SSL certificate is provisioned. In AWS, we provision the certificate in
-[ACM](https://aws.amazon.com/certificate-manager/) in the cloud account where the app environment is running.
 
 <Info>
   If you have more questions, please reach out to us at help@localops.co. Or schedule a [deep dive

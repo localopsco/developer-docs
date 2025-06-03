@@ -5,54 +5,31 @@ title: Environment creation
 In this article we can go through troubleshoot steps for most commonly faced issues during App Environment creation and
 deletion.
 
-## Resource already exists
-
-If the AWS resource that the App Environment tries to create already exists in the AWS account then App Environment
-operation will throw error saying Resource already exists.
-
-If the existing AWS resource is not used then you can delete it and retry App Environment operation.
-
 ## Infra limit reached
 
-AWS imposes limits on the number of certain resource types that can be created. For example, by default, only 5 Elastic
-IPs (EIPs) are allowed per AWS account per region. If this limit is reached, the App Environment operation may fail with
+AWS imposes limits on the number of resource that can be created for a specific type. For example, by default, only 5 Elastic
+IPs (EIPs) are allowed per AWS account per region. If this limit is reached, the Environment create operation may fail with
 an error indicating that the maximum allowed limit has been reached.
 
-To resolve this issue, you can either clean up unused resources in your AWS account or contact AWS Support to request an
+To resolve this issue, you can either clean up unused resources in the target AWS account or contact AWS Support to request an
 increase in the resource limit, explaining your use case.
 
 ## Creation Issues
 
-When creating an App Environment, two operations are initiated: one for creating the necessary infrastructure resources
-and another for installing the application and its required infrastructure.
-
-### Infrastructure Creation Failure
-
-If the first step, which involves creating infrastructure resources, fails, you can check the operation logs to
+If creating infrastructure resources step fails, you can check the operation logs to
 understand the cause of the failure. Take appropriate actions based on the logs and retry the operation to resolve the
 issue. Sometimes, infrastructure creation failures may occur due to temporary issues on the AWS side. Retrying the
 operation often resolves such issues.
 
-### Application Installation Failure
-
-Similarly, if the second operation, involving application installation, fails, review the operation logs for details on
-why the failure occurred. Address any identified issues and retry the operation to see if it resolves the problem.
-
 ## Deletion Issues
 
-During App Environment deletion, you may encounter errors related to AWS resources not being deleted. This can occur if
-dependent resources are not yet deleted. While AWS typically handles cascading deletes automatically, there are cases
-where this process fails, leaving dangling resources that prevent deletion of the App Environment.
+During environment deletion, you may encounter errors related to AWS resources not being deleted. This can occur if
+dependent resources are not fully deleted. While AWS typically handles cascading deletes automatically, there are cases
+where this process fails, leaving dangling resources that prevent deletion of the environment.
 
 In such situations, manually delete the resources from your AWS console and retry the deletion operation. Sometimes,
 delays or glitches from AWS can also contribute to deletion failures. Retrying the deletion operation usually resolves
 these issues.
-
-You may also encounter deletion issues if the system fails to delete cloud dependencies created by your application,
-such as S3 buckets, etc. For instance, an S3 bucket cannot be deleted until its contents are removed. In such cases, you
-may need to implement a Kubernetes Job triggered during Helm uninstallation to delete the contents of the S3 bucket
-created by your application. This ensures that all necessary cleanup steps are performed before attempting to delete the
-associated resources.
 
 <Tip>
   To ensure all resources are properly deleted, use the provided App Environment tags to filter AWS resources and
