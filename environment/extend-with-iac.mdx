@@ -3,11 +3,11 @@ title: Extend using Terraform/Pulumi
 ---
 
 You may want to create additional cloud resources (Queues, Databases, Topics or anything) within a cloud account for any
-app environment - dev, stage, prod, beyond what LocalOps has provisioned for the same app environment.
+environment - dev, stage, prod, beyond what LocalOps has provisioned for the same environment.
 
-This guide explains how to extend app environments using your Terraform/Pulumi scripts.
+This guide explains how to extend environments using your Terraform/Pulumi scripts.
 
-At a high level, every app environment comes with the following components that are provisioned and managed by LocalOps:
+At a high level, every environment comes with the following components that are provisioned and managed by LocalOps:
 
 - 1 VPC
 - 3 private subnets
@@ -36,7 +36,7 @@ Pulumi.
 
 ### Using Terraform or OpenTofu
 
-Here is how you can create an RDS database within the same private subnets and VPCs of the app environment using
+Here is how you can create an RDS database within the same private subnets and VPCs of the environment using
 Terraform or OpenTofu.
 
 ```hcl
@@ -154,12 +154,12 @@ const db = new aws.rds.Instance('exampleDb', {
 ### Use same tags
 
 LocalOps creates all resources with two standard tags for any given environment. So that you can take inventory of all
-resources in the cloud, analyse cost per app environment in Cost analysis console in the cloud account and more. These
+resources in the cloud, analyse cost per environment in Cost analysis console in the cloud account and more. These
 tags are exposed within App environment Dashboard page.
 
 <img src="./images/vpc-tags.png" />
 
-When you extend app environments with custom cloud resources, you can attach the same tags so that you can see both the
+When you extend environments with custom cloud resources, you can attach the same tags so that you can see both the
 resources managed by LocalOps and those you created outside LocalOps for the same environment.
 
 ```hcl
@@ -205,5 +205,5 @@ tools, you have to manage their configuration yourself for their lifetime. They 
 LocalOps.
 
 If you want to delete environments, you will have to first delete your terraform/opentofu/pulumi stack before deleting
-app environment within LocalOps console. This is to ensure that all your additional cloud resources are deleted in full
+environment within LocalOps console. This is to ensure that all your additional cloud resources are deleted in full
 before VPC and other resources are deleted.

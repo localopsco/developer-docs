@@ -23,7 +23,7 @@ Let us go over each of them in detail.
 
 ### Dedicated Virtual private cloud (VPC)
 
-In any connected cloud account, a dedicated network is provisioned to host everything for a given app environment.
+In any connected cloud account, a dedicated network is provisioned to host everything for a given environment.
 
 In AWS, LocalOps provisions a VPC (Virtual private cloud).
 
@@ -49,8 +49,8 @@ for all servers in the VPC to connect to the internet.
 
 ### Kubernetes cluster
 
-A kubernetes cluster and control plane is provisioned inside each VPC for every app environment. This cluster runs the
-application deployed on the app environment.
+A kubernetes cluster and control plane is provisioned inside each VPC for every environment. This cluster runs the
+application deployed on the environment.
 
 In AWS, AWS Elastic Kubernetes Service (EKS) is provisioned to ensure AWS managas the configure and uptime of Kubernetes
 control plane.
@@ -69,18 +69,18 @@ chart.
 
 ### Prometheus
 
-Open source [Prometheus](https://prometheus.io/) is installed and pre-configured by LocalOps in an App Environment to
+Open source [Prometheus](https://prometheus.io/) is installed and pre-configured by LocalOps in an Environment to
 record system metrics of the compute nodes.
 
 ### Loki
 
-Open source [Loki](https://grafana.com/oss/loki/) is installed and pre-configured by LocalOps in an app environment to
+Open source [Loki](https://grafana.com/oss/loki/) is installed and pre-configured by LocalOps in an environment to
 record logs of your application.
 
 ### Grafana
 
 Open source [Grafana](https://grafana.com/oss/grafana/) is installed and pre-configured by LocalOps in an app
-environment to store logs and metrics from your app environment and let you visualise them in a single dashboard.
+environment to store logs and metrics from your environment and let you visualise them in a single dashboard.
 
 ## Your services
 

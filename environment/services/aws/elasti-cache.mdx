@@ -71,7 +71,7 @@ Learn more about secrets [here](/environment/services/secrets).
 You can name the key in any way you want. In your code, you can access `REDIS_*` environment variables to connect and
 access the database.
 
-Repeat the above process for each Elasticache instance you want to create for each app environment - test, staging,
+Repeat the above process for each Elasticache instance you want to create for each environment - test, staging,
 production, etc.,
 
 That's it!
@@ -80,7 +80,7 @@ That's it!
 
 ### 1. Setup VPC peering
 
-Your LocalOps app environment is created in its own VPC in the chosen AWS account and region. For the same application,
+Your LocalOps environment is created in its own VPC in the chosen AWS account and region. For the same application,
 if you already have a Elasticache instance running in the same/different AWS account, you can connect/access it with the
 corresponding LocalOps environment using Amazon VPC peering.
 

@@ -23,8 +23,8 @@ environment up and deploy your services inside.
 
 We collectively refer to the above set as “**Environment**”.
 
-LocalOps provisions app environments using standard in-house provisioning templates and scripts such that you can create
-any number of app environments on any cloud account (AWS, Google Cloud or Azure) and any region.
+LocalOps provisions environments using standard in-house provisioning templates and scripts such that you can create
+any number of environments on any cloud account (AWS, Google Cloud or Azure) and any region.
 
 ### Kubernetes cluster
 
@@ -47,27 +47,27 @@ triggering them from inside LocalOps dashboard.
 To debug issues, LocalOps provisions industry standard open source observability suite including Loki, Prometheus and
 Grafana inside each environment. LocalOps provisions, configures these tools and connects them with each other, so that
 your team can view Logs and Metrics in a single grafana dashboard, without any configuration. This suite is exclusively
-provisioned for each app environment and runs inside the Kubernetes cluster, right next to your services.
+provisioned for each environment and runs inside the Kubernetes cluster, right next to your services.
 
 ### Cloud Credentials
 
 LocalOps needs to have access to your cloud account, to programmatically create all cloud resources required to get the
-app environment running. You can connect your cloud account via keyless, role-based access method from Connections
+environment running. You can connect your cloud account via keyless, role-based access method from Connections
 section.
 
 ### Exclusive Infrastructure
 
-Each app environment get its own exclusive set of kubernetes cluster, compute servers and other resources listed above.
+Each environment get its own exclusive set of kubernetes cluster, compute servers and other resources listed above.
 This is ideal for providing maximum Network, Data & Compute isolation between your deployments & customers.
 
 <Note>
-All cloud infrastructure to run an app environment is provisioned in the cloud account chosen while creating the app
+All cloud infrastructure to run an environment is provisioned in the cloud account chosen while creating the app
 environment inside LocalOps. The underlying cloud account will be billed by the cloud provider (say AWS) for the
-resources running within each app environment. Cloud account's owner has to pay for these charges separately with the
+resources running within each environment. Cloud account's owner has to pay for these charges separately with the
 cloud provider. If the cloud account belongs to your customer, they would pay for these cloud resources.
 </Note>
 
 ### Security Best Practices:
 
-Within each app environment, LocalOps turns ON all security best practices suggested by the respective cloud provider.
+Within each environment, LocalOps turns ON all security best practices suggested by the respective cloud provider.
 In AWS for example, security groups, disk encryption etc., are all enabled by default.

@@ -15,7 +15,7 @@ Available Commands:
   help              Help about any command
   login             Login to Localops Account
   logout            Logout of Localops Account
-  update-kubeconfig Update current context to app environment kubernetes cluster
+  update-kubeconfig Update current context to environment kubernetes cluster
   version           Localops CLI Version
 
 Flags:
@@ -27,7 +27,7 @@ Use "ops [command] --help" for more information about a command.
 To get shell access, you have to
 
 1. Login to your Localops account
-2. Use `ops` cli to set kubernetes context of kubectl cli to point at the app environment's kubernetes cluster.
+2. Use `ops` cli to set kubernetes context of kubectl cli to point at the environment's kubernetes cluster.
 3. Then Use `kubectl` to inspect the cluster.
 
 ### Login to LocalOps
@@ -40,18 +40,18 @@ ops login
 
 ### Set kubernetes context
 
-Use this commnd updates your local current context to point at the app environment's kubernetes cluster.
+Use this commnd updates your local current context to point at the environment's kubernetes cluster.
 
 ```sh
 ops update-kubeconfig -e env-id
 ```
 
-To get `env-id`, visit your app environment dashboard and see "Shell" tab.
+To get `env-id`, visit your environment dashboard and see "Shell" tab.
 
 ### Use Kubectl
 
 After `update-kubeconfig` command succeeds, you can use any kubectl command to inspect pods, deployments, jobs and
-everything else running in your LocalOps app environment.
+everything else running in your LocalOps environment.
 
 For example, to see all cluster resources:
 
