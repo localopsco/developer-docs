@@ -232,7 +232,7 @@
     ],
     "primary": {
       "type": "button",
-      "label": "Sign in",
+      "label": "Console",
       "href": "https://console.localops.co"
     }
   },
