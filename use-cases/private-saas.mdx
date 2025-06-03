@@ -1,40 +1,37 @@
 ---
-title: Private SaaS deployments (BYOC deliveries)
+title: Private SaaS deployments / BYOC
 ---
 
-While SaaS is popular, there are a category of customers who cannot signup for SaaS because of limitations in privacy,
-security, reliability and shared performance bottlenecks in a typical SaaS environment.
+For SaaS vendors supporting enterprise customers, private deployments—also known as BYOC (Bring Your Own Cloud)—are increasingly common. Enterprises often require applications to be deployed within their own cloud environments for data residency, compliance, or security reasons.
 
-These customers of yours need your application running in their cloud for maximum data privacy, control over data
-security, data soverignity and performance. This is called as Private SaaS deployment or Cloud-prem deployments.
+LocalOps makes it simple to offer private SaaS deployments without reinventing your internal DevOps processes for each customer.
 
-LocalOps is used to deliver applications to such customers.
+### What Is a BYOC Deployment?
 
-## How to make Private SaaS deployment:
+In a BYOC model, your application is installed inside the customer’s own AWS, GCP, or Azure account. You provide the software, but the infrastructure is owned and controlled by the customer.
 
-1. End Customers connect their cloud with LocalOps
-2. From inside LocalOps account, you (the developer) spin up an App environment on the specific cloud connection to
-   provision and deploy your application on customer's cloud account.
-3. Setup a custom domain
+This approach is typically used to meet requirements such as:
+- Customer data must remain within their account
+- Isolation from other tenants for compliance
+- No shared infrastructure between customers
+- Support for air-gapped or private network environments
 
-We will cover each steps one by one.
+### How LocalOps Helps
 
-### Step 1: End customers connect their cloud
+LocalOps provides an out-of-the-box solution for provisioning, deploying, and managing your SaaS product inside customer cloud accounts:
+- Standardized environments: Define your infrastructure once (networking, compute, storage, IAM policies) and reuse it across customers.
+- Security best practices: Each environment is provisioned with hardened defaults, reducing the risk of misconfigurations.
+- GitOps-compatible: Your application can be deployed and updated through version-controlled workflows, ensuring consistency and auditability.
+- Region-aware provisioning: Deploy to the customer’s region of choice while maintaining your base configuration and policies.
+- Auto-healing and scaling: Private environments benefit from the same self-managing capabilities as centralized environments.
 
-Follow instructions in [connecting cloud account](/accounts/aws#to-your-customer-cloud-account) guide to get your
-customer account connected with LocalOps.
+### Common Use Cases
+- Enterprise customers requesting in-account installations for privacy or regulatory reasons
+- AI/ML workloads where customers want control over GPU usage or data locality
+- Healthcare or finance verticals requiring strict compliance boundaries
 
-<Info>
-  If you are deploying to AWS, we recommend you ask end-customers to create a separate AWS sub account and provide you
-  access to the new sub account. This will isolate your cloud resources from their other applications.
-</Info>
+### Outcome
 
-### Step 2: Create app environment
+Using LocalOps for BYOC allows you to serve high-value enterprise customers without increasing your DevOps burden. You can deliver your SaaS as-a-service—running in their environment—while still maintaining control over the deployment and upgrade process.
 
-You (the developer) use the connection created above and create a new App environment from App environments tab and
-configure required [services](/environment/services/create)
-
-### Step 3: Setup a custom domain
-
-After App environment is created, you can set a custom domain like your-app.customerdomain.com on it and share it with
-your end customer to access. Refer to [this guide](/environment/services/custom-domain) to learn more.
+This helps reduce sales friction, meet compliance needs, and expand into regulated industries without a full rewrite of your infrastructure tooling.

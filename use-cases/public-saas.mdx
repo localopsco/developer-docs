@@ -2,38 +2,24 @@
 title: Public SaaS deployments
 ---
 
-LocalOps is used to get your public SaaS production environment in your cloud account.
+For teams building and operating public SaaS products, managing multiple environments—such as test, staging, and production—alongside regional deployments (e.g. us-east, eu-central) can be challenging to scale and maintain.
 
-## How to Provision a production SaaS environment
+LocalOps simplifies this with a unified workflow to provision, manage, and automate these environments using GitOps principles and pre-secured defaults.
 
-1. Designate a cloud account that belongs to you, to host public SaaS infrastructure.
-2. Get credentials of the cloud account and record them inside your LocalOps account as Connection.
-3. Spin up an App environment on the specific cloud connection to deploy your application.
-4. Setup a custom domain.
+### Typical Setup
 
-### Step 1 - Designate a cloud account
+A standard public SaaS setup on LocalOps includes:
+- **Test**: Used for developer testing and quick validation.
+- **Staging**: Mirrors production for final validation before release.
+- **Production**: Live environment for customer traffic.
+- **Regional Variants**: e.g. prod-us, prod-eu, each isolated to comply with local data regulations.
 
-Decide and designate the cloud account where you would want to host production Public SaaS infrastructure.
+All environments can be spun up in minutes.
 
-### Step 2 - Create a connection
+Each environment is provisioned in your own cloud account, with built-in Monitoring stack, auto-scaling, security hardening, and Git-based deployments configured out of the box.
 
-_Skip this step if the designated cloud account is already added as connection._
-
-Follow all the steps provided in [connecting cloud account](/accounts/aws) guide to create a cloud connection.
-
-### Step 3 - Spin up an App environment
-
-Use the connection created above and create a new App environment from App environments tab. Refer to
-[this guide](https://help.localops.co/en/articles/9584120-creating-first-environment). Pick "SaaS Production" as
-environment type when asked.
-
-Every app environment provisions exclusive network, compute, kubernetes cluster in the cloud account, to run your app.
-
-<Info>
-  If you want to create US and EU regions for your SaaS, you can pick the corresponding region while creating the
-  environment and repeat this process twice, say, once for US and once for EU.
-</Info>
-
-### Step 4 - Setup a custom domain
-
-After environment is created, you can set a custom domain like app.yourdomain.com on it and share it with the world 🎉.
+### Benefits
+- **Fast environment setup:** Fully reproducible via CLI or Git workflows.
+- **Regional compliance:** Easily deploy in GDPR-compliant EU regions.
+- **Cost efficiency:** Non-prod environments auto-scale to reduce idle usage.
+- **No vendor lock-in:** Use AWS, GCP, or Azure with the same workflow.

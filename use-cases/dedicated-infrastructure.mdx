@@ -2,39 +2,37 @@
 title: Dedicated Infrastructure
 ---
 
-Your customers may be pretty serious about data isolation, network isolation or compute isolation of their account.
-Either for higher privacy, reliability or performance guarantees. They typically request to have their account running
-within dedicated server infrastructure, even if their account is running in your cloud.
+For SaaS companies working with mid-to-large enterprise customers, providing dedicated infrastructure—isolated environments hosted in the vendor’s cloud account—offers a strong middle ground between traditional multi-tenant SaaS and full BYOC (Bring Your Own Cloud) deployments.
 
-LocalOps is used to provision such dedicated infrastructure for these customers.
+LocalOps enables you to provision and manage dedicated environments for each customer in your own cloud, without the complexity of maintaining one-off stacks manually.
 
-## How to provision Dedicated Infrastructure
+### What Is Vendor-Managed Dedicated Infrastructure?
 
-1. Designate a cloud account that belongs to you, to host server infrastructure for the specific customer.
-2. Get credentials of the cloud account and record them inside your LocalOps account as Connection.
-3. From inside LocalOps account, spin up an App environment on the specific cloud connection to deploy your application.
-4. Setup a custom domain.
+In this model, the SaaS vendor hosts a separate instance of their product for each customer, running on isolated infrastructure within the vendor’s cloud account. It’s ideal for:
+- Customers who want data and compute isolation
+- Regulated industries needing tenant-level segmentation
+- High-throughput or high-security use cases
+- Enterprise accounts that prefer not to share infrastructure with other tenants
 
-### Step 1 - Designate a cloud account
+Unlike BYOC, the vendor still owns and manages the cloud account and infrastructure—but each environment is logically and physically isolated.
 
-Decide and designate the cloud account where you would want to host the dedicated server infrastructure for the
-particular customer.
+### How LocalOps Helps
 
-### Step 2 - Create a connection
+LocalOps lets you scale dedicated deployments efficiently by treating each customer environment as a managed, versioned unit:
+- **Per-customer isolation:** Each environment has its own VPC, compute pool, and databases—ensuring no cross-tenant exposure.
+- **Automated provisioning:** Environments are created from standardized templates, minimizing time-to-launch and manual effort.
+- **Lifecycle management:** Easily handle upgrades, patching, and decommissioning across many customer environments.
+- **Regional customization:** Choose cloud regions based on customer preferences or compliance requirements.
+- **Operational visibility:** Monitor, log, and manage each customer stack independently with built-in observability.
 
-_Skip this step if the designated cloud account is already added as connection._
+### Common Use Cases
+- Premium enterprise plans with dedicated infrastructure promises
+- Customers requiring enhanced performance guarantees
+- Deployment blueprints customized per vertical (e.g. finance, healthcare)
+- SaaS vendors transitioning toward hybrid or regulated markets
 
-Follow all the steps provided in [connecting cloud account](/accounts/aws) guide to create a cloud connection.
+### Outcome
 
-### Step 3 - Spin up an App Environment
+With LocalOps, offering dedicated infrastructure becomes a repeatable process—not a custom project. You can scale to dozens or hundreds of isolated environments, each tuned to a customer’s needs, while maintaining centralized control and automation.
 
-Use the connection created above and create a new App environment from App environments tab. Refer to
-[this guide](https://help.localops.co/en/articles/9584120-creating-first-environment). Pick "Private delivery" as
-environment type when asked.
-
-Every app environment provisions exclusive network, compute, kubernetes cluster in the cloud account, to run your app.
-
-### Step 4 - Setup a custom domain
-
-After environment is created, you can set a custom domain like customer.yourdomain.com on it and share it with end
-customer to use.
+This approach improves customer trust, unlocks new market segments, and reduces churn risk—without bloating your DevOps team.
