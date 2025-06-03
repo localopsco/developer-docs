@@ -1,10 +1,10 @@
 ---
-title: Support
+title: "Support"
 ---
 
 <CardGroup cols={1}>
   <Card title="Email Us" icon="envelope" href="mailto:hello@localops.co">
-    Reach us via email, at hello@localopsco.co.
+    Reach us via email, at [hello@localopsco.co](mailto:hello@localopsco.co).
   </Card>
 </CardGroup>
 
@@ -16,33 +16,21 @@ title: Support
     by other means. Check [how to eject](/environment/eject) to learn more.
   </Accordion>
   <Accordion title="Does LocalOps make all of my Application run in multiple cloud providers automatically?">
-    Yes, if you have containerised your application and made a a Kubernetes Helm Chart for it. However, if you use
-    managed cloud services such as Amazon S3, you are supposed to provide alternate implementations to run in other
-    cloud providers such as GCP or Azure.
+    Yes, if you have containerised your application and have a Dockerfile for it. However, if you use managed cloud services such as Amazon S3, you must provide alternate implementations to run in other cloud providers such as GCP or Azure.
   </Accordion>
   <Accordion title="Can I use any DB for my application?">
-    Yes. Unlike PaaS services such as Heroku, you are free to pick and use any database to build your application. As
-    long as you can find a docker image for it to declare it within Helm Chart as your dependency, LocalOps can spin up
-    an App environment with that database, in any cloud.
+    Yes. You are free to provision any database you need for your services. Just add their HOST, PORT, Username and Password as secrets within your Service settings. They will be passed down as environment variable for your containers.
   </Accordion>
   <Accordion title="Can I use a Single Page Application (SPA) framework?">
-    Yes. You are free to pick any SPA framework to build your Front end. Check [Single page apps](/guides/spa/all) to
-    learn more.
+    Yes. You can use any SPA framework to build your Front end. Check [Single page apps](/guides/spa/all) to learn more.
   </Accordion>
-  <Accordion title="How do I obfuscate/hide my code when it runs in customer's cloud?">
-    There is no fool-proof technical way to hide/obfuscate your code. If your service is written in compiled languages,
-    it helps. Otherwise we'd suggest you to address this legally in your Services agreement with customer.
+  <Accordion title="How do I obfuscate/hide my code when my environment runs in my customer's cloud?">
+    There is no fool-proof technical way to hide/obfuscate your code. If your service is written in compiled languages,it helps. Otherwise we'd suggest you to address this legally in your Services agreement with customer.
   </Accordion>
   <Accordion title="How do I calculate the hosting charges for the resources provisioned in target cloud account?">
-    LocalOps tags all cloud infrastructure resources by two standard names. `*-id` and `*-name`. You can locate them in App
-    Environment settings page. Using these tags, anyone can filter down AWS resources in AWS console and find out their
-    cost.
-
-    LocalOps will soon show a monthly cost estimator under each app environment's details page.
-
+    LocalOps tags all cloud infrastructure resources by two standard names. `*-id` and `*-name`. You can locate them in Environment dashboard. Using these tags, you can filter AWS resources in AWS console - Cost management console or Resource explorer and find out their cost. LocalOps will soon show a monthly cost estimator under each environment's details page.
   </Accordion>
   <Accordion title="Who pays for the cloud infrastructure resources created by LocalOps?">
-    LocalOps creates App environments on the connected cloud accounts. Owners of the cloud account are billed by cloud
-    provider for the resources provisioned.
+    LocalOps provisions environments on cloud accounts you connect. Account administrators of the respective cloud account have to pay the bills raised by cloud provider.
   </Accordion>
 </AccordionGroup>
