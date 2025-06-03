@@ -1,40 +1,20 @@
 ---
-title: Eject out
+title: Eject out of LocalOps
 ---
 
-LocalOps simplifies the deployment of applications onto your customer's Cloud accounts. If you decide to move away from
-using LocalOps, here are the steps and considerations to manage your infrastructure and application updates
+There is no lock-in when you use LocalOps. 
+
+You can stop using LocalOps anytime. All infrastructure resources are provisioned in the cloud accounts you connect. 
+
+If you decide to stop using LocalOps, here are the steps and considerations to manage your environments and service deployments
 independently.
 
 ## Considerations
 
-- **Infrastructure Continuity**: Infra resources created by LocalOps will continue to run even after ejecting from the
+- **Infrastructure Continuity**: Cloud resources including VPC, Subnets and Kubernetes cluster will continue to run on the same cloud account, even after ejecting from the
   platform.
-- **Managing Updates**: To apply updates or release new versions of your application, developers will have to directly
-  connect to the AWS EKS cluster and use Helm commands (`helm upgrade`) to manage deployments.
+- **Deployments**: To trigger deployments on services, developers can use `kubectl` to make manual deployments. Github Actions can also be configured to
+  connect to the Kubernetes cluster and do the same on git-push. Or ArgoCD can be setup on the respective cluster, to automate this further.
 - **Using IaC for Infrastructure**: If you choose to continue managing the infrastructure using Infrastructure as Code
   (IaC) independently, you can import the existing resources created by LocalOps into your IaC tool's state. This allows
   you to maintain and update infrastructure resources using the respective IaC tool.
-
-## Steps to Eject from LocalOps
-
-### 1. Managing Application Updates
-
-After ejecting from LocalOps, developers should:
-
-- Access the AWS EKS cluster where the application is deployed.
-- Use Helm commands (`helm upgrade`) to apply updates or release new versions of the application directly to the
-  cluster.
-
-### 2. Managing Infrastructure with IaC
-
-If you choose to manage infrastructure resources using an IaC tool:
-
-- Identify the resources created by the LocalOps Environment by using the tags provided in the Environment
-  details page. Refer [this article](/environment/infra-resources/aws).
-- Import these existing resources into your IaC tool's state to gain control over managing and updating them.
-- Modify and maintain the infrastructure as needed using your preferred IaC practices and workflows.
-
-Transitioning away from LocalOps involves ensuring continuity of infrastructure operations and adopting new practices
-for managing application updates and infrastructure resources. By following these steps, developers can manage their
-applications and infrastructure independently after ejecting from LocalOps.

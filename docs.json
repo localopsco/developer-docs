@@ -47,9 +47,9 @@
           {
             "group": "Guides",
             "pages": [
-              "guides/languages/go",
-              "guides/languages/python",
               "guides/languages/node",
+              "guides/languages/python",
+              "guides/languages/go",
               "guides/spa/react",
               "guides/spa/angular",
               "guides/spa/ember",
