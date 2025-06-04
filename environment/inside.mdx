@@ -60,7 +60,7 @@ control plane.
 To run your application's containers, compute servers are provisioned and attached to the kubernetes clusters as Nodes.
 
 In AWS, EC2 servers are provisioned. Count and type of EC2 servers depends on the environment template chosen to create
-the App environment. Any type of EC2 servers [supported by AWS](https://aws.amazon.com/ec2/instance-types/) can be
+the environment. Any type of EC2 servers [supported by AWS](https://aws.amazon.com/ec2/instance-types/) can be
 provisioned. Also, EBS Volumes are attached by default to each of these EC2 servers. But, the applications deployed on
 Kubernetes cluster (your app) will dynamically create volumes matching your storage specifications declared in Helm
 chart.
