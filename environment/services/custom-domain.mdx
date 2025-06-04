@@ -2,7 +2,7 @@
 title: Custom domain
 ---
 
-Set a custom domain for each of your service to let users reach them using your brand's domain. Say - app.your-awesome-site.com.
+Set a custom domain for each of your service to let users reach them using your brand's domain. Say, `app.your-awesome-site.com`.
 
 Here is how you can set it up.
 
@@ -34,7 +34,7 @@ Go to your DNS registrar > DNS Zone and add the given CNAME records.
 ### 3. Deploy
 
 Once you have added the given **CNAME records** to your domain's DNS settings give it few minutes for the DNS settings
-to propagate. Then click on **"Verify and deploy"** button.
+to propagate. Then, come back to Service > Custom domain setitngs page, and click on **"Verify and deploy"** button.
 
 <Tip>
   If domain verification fails then give it few more minutes for the newly updated DNS settings to propagate and try
@@ -42,9 +42,23 @@ to propagate. Then click on **"Verify and deploy"** button.
   DNS settings.
 </Tip>
 
-LocalOps will configure your service with the given new domain and provison a brand new auto-renewing SSL Certificate. 
+LocalOps will then 
+1. configure your service to run on the custom domain you added and 
+2. auomatically provison a brand new **auto-renewing SSL Certificate** for the custom domain
 
 You can now reach your service using the new domain. 
 
 ## Access current domain
-For your code/service to read the new domain, trigger a new deployment on your service. Either by manually pressing "Deploy" on the screen. Or push a new commit on the configured branch. During this deployment, LocalOps fills environment variable `LOPS_SVC_HOST` with the current active domain. 
+For your code/service to start reading the new domain, trigger a new deployment on your service. Either by pressing "Deploy" button in the service settings section. Or push a new commit on configured branch of the service. 
+
+During this deployment, LocalOps fills environment variable `LOPS_SVC_HOST` with the current active domain.
+
+```
+LOPS_SVC_HOST=app.your-awesome-site.com
+```
+
+You can access this in your app (say NodeJS app) like
+
+```js
+console.log(process.env.LOPS_SVC_HOST)
+```
