@@ -4,12 +4,91 @@ title: SNS
 
 This guide will show you steps to create SNS topics and access them from your service running within environments.
 
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more SNS topics, you can add `ops.json` in the root directory of Github repo you've connected for the service. And add SNS topics as dependency, like below.
+
+```json 
+{
+    "dependencies": {
+        "sns": {
+            "topics": [
+                {
+                    "id": "test123",
+                    "prefix": "testdep123",
+                    "exports": {
+                        "MY_SNS_TOPIC_NAME1": "$name",
+                        "MY_SNS_TOPIC_ARN1": "$arn"
+                    }
+                }
+            ]
+        },
+    }
+}
+```
+
+
+You can add as many topics as you want.
+
+Arguments you can add in each Topic object above:
+1. `id` - Alpha numeric string. Must be unique amongst the Topics you've declared above. Changing this string will replace the original topic with new one.
+2. `prefix` - Alpha numeric string. Will be used as a prefix in the name of your Topic. Changing this string will replace the original topic with new topic.
+3. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the Topic provisioned. See below for available properties. 
+
+<Warning>
+Changing `id` or `prefix` string will delete & replace the original topic with new one.
+</Warning>
+
+
+Available properties of the topic to use in `exports`:
+1. `$name` - Name of the topic 
+2. `$arn` - Amazon resource name of the topic. Eg., `arn:sns:..`
+
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in any of your active environment points at the same repository as source and when a deployment is triggered. 
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing. Resources declared in the `dependencies` object will be provisioned before your code starts to run. 
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in one of the properties above. 
+- Keys in `exports` object will be passed as enviroment variables to your service. 
+- When the service is deleted, the provisioned resources (topics, here) are deleted from the cloud account immediately & automatically. 
+
+### Access with no keys:
+
+Topics can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your containers automatically authenticate to have access to all the topics you've declared in the above JSON. 
+
+LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We provision a policy like below on that IAM role for every Topic provisioned.
+
+```
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish",
+        "sns:Subscribe",
+        "sns:Unsubscribe",
+        "sns:Receive",
+        "sns:GetTopicAttributes",
+        "sns:SetTopicAttributes",
+        "sns:ListSubscriptionsByTopic"
+      ],
+      "Resource": "your-sns-topic"
+    }
+  ]
+}
+```
+
+Curious to know the IAM role that is used? Visit your environment's main dashboard in LocalOps console to see the role.
+
+## Manual provisioning
+
 To proceed with this guide, you would need access to:
 
 1. AWS console with permissions to access SNS console and add policies to an existing IAM role.
 2. LocalOps console
-
-## Steps:
 
 ### 1. Create SNS topic
 

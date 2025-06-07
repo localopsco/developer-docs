@@ -37,11 +37,11 @@ Arguments you can add in each queue object above:
 1. `id` - Alpha numeric string. Must be unique amongst the queues you've declared above. Changing this string will replace the original queue with new one.
 2. `prefix` - Alpha numeric string. Will be used as a prefix in name your queue. Changing this string will replace the original queue with new queue.
 3. `fifo` - Set this to `true` if you need a FIFO queue. Set it to false or leave out the fifo key if you want a standard queue instead.
-4. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the queue provisioned. See below for available. 
+4. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the queue provisioned. See below for available properties. 
 
-<Note>
+<Warning>
 Changing `id` or `prefix` string will replace the original queue with new one.
-</Note>
+</Warning>
 
 
 Available properties of the queue to use in `exports`:
@@ -60,9 +60,9 @@ If you have provided `ops.json` at the root of the git repository, it will be pr
 
 ### Access with no keys:
 
-Queues can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your containers automatically have access to all the queues you've declared in the above JSON. 
+Queues can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your containers automatically authenticate to have access to all the queues you've declared in the above JSON. 
 
-LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We provision a policy like below on that IAM role for every queue provisioned:
+LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We provision a policy like below on that IAM role for every queue provisioned.
 
 ```
 {
@@ -84,7 +84,7 @@ LocalOps arranges Role based access by attaching an IAM role for all the service
 	}
 ```
 
-Visit your environment's main dashboard in LocalOps console to see the name of IAM role used.
+Curious to know the IAM role that is used? Visit your environment's main dashboard in LocalOps console to see the role.
 
 ## Manual Provisioning:
 

@@ -5,12 +5,86 @@ title: S3
 You service(s) may want to store/access files in S3. This guide will show you steps to create and access s3 buckets from
 your services.
 
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more S3 buckets, you can add `ops.json` in the root directory of Github repo you've connected for the service. And add S3 buckets as dependency, like below.
+
+```json 
+{
+    "dependencies": {
+        "s3": {
+            "buckets": [
+                {
+                    "id": "test123",
+                    "prefix": "testdep123",
+                    "exports": {
+                        "MY_BUCKET_NAME1": "$name",
+                        "MY_BUCKET_ARN1": "$arn"
+                    }
+                }
+            ]
+        },
+    }
+}
+```
+
+
+You can add as many buckets as you want.
+
+Arguments you can add in each bucket object above:
+1. `id` - Alpha numeric string. Must be unique amongst the buckets you've declared above. Changing this string will replace the original bucket with new one.
+2. `prefix` - Alpha numeric string. Will be used as a prefix in name your bucket. Changing this string will replace the original bucket with new bucket.
+3. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the bucket provisioned. See below for available properties. 
+
+<Warning>
+Changing `id` or `prefix` string will delete & replace the original bucket with new one.
+</Warning>
+
+
+Available properties of the bucket to use in `exports`:
+1. `$name` - Name of the bucket 
+2. `$arn` - Amazon resource name of the bucket. Eg., `arn:s3:..`
+
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in any of your active environment points at the same repository as source and when a deployment is triggered. 
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing. Resources declared in the `dependencies` object will be provisioned before your code starts to run. 
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in one of the properties above. 
+- Keys in `exports` object will be passed as enviroment variables to your service. 
+- When the service is deleted, the provisioned buckets are deleted from the cloud account immediately & automatically. 
+
+### Access with no keys:
+
+Buckets can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your containers automatically authenticate to have access to all the buckets you've declared in the above JSON. 
+
+LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We provision a policy like below on that IAM role for every bucket provisioned.
+
+```
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:DeleteObject",
+    "s3:ListBucket"
+  ],
+  "Resource": [
+    "arn:aws:s3:::your-bucket-name",
+    "arn:aws:s3:::your-bucket-name/*"
+  ]
+}
+```
+
+Curious to know the IAM role that is used? Visit your environment's main dashboard in LocalOps console to see the role.
+
+## Manual 
+
 To proceed with this guide, you would need access to:
 
 1. AWS console with permissions to create s3 buckets and add policies to an existing IAM role.
 2. LocalOps console
-
-## Steps:
 
 ### 1. Create S3 bucket
 

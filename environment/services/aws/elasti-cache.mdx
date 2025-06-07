@@ -3,7 +3,92 @@ title: Elasticache
 ---
 
 You service(s) may want to store/access data in a Redis/Memcache instance. This guide will show you steps to create and
-access Amazon elasticache instances that offer fully managed Redis/Memcache databases.
+access Amazon elasticache cluster that offer fully managed Redis/Memcache databases.
+
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more Elastic cache cluster, you can add `ops.json` in the root directory of Github repo you've connected for the service. And add elastic cache clusters as dependency, like below.
+
+```json 
+{
+  "dependencies": {
+    "clusters": [
+      {
+        "id": "test123",
+        "prefix": "testdep123",
+        "engine": "redis",
+        "version": "7.0",
+        "instance_type": "cache.t4g.small",
+        "num_nodes": 1,
+        "exports": {
+          "MY_ELASTICACHE_CLUSTER_NAME": "$name",
+          "MY_ELASTICACHE_CLUSTER_ARN": "$arn",
+          "MY_ELASTICACHE_CLUSTER_ENDPOINT": "$endpoint",
+          "MY_ELASTICACHE_CLUSTER_ADDRESS": "$address",
+          "MY_ELASTICACHE_CLUSTER_PORT": "$port"
+        }
+      }
+    ]
+  }
+}
+```
+
+
+You can add as many clusters as you want.
+
+Arguments you can add in each bucket object above:
+1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will replace the original cluster with new one.
+2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your cluster. Changing this string will replace the original cluster with new cluster.
+3. `engine` - Provide either `redis` or `memcache`. Default: ``. If you leave this out, we will skip creating the cluster. 
+4. `version` - Pick a version for your redis or memcache database. Ensure Elastic Cache supports it, by referring to [AWS docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html).
+5. `instance_type` - Specify any class of instance in the following groups - "cache.*". Refer to [AWS docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/CacheNodes.SupportedTypes.html) for available sizes. If you leave this out, we will skip creating the cluster. 
+6. `num_nodes` - The initial number of cache nodes that the cache cluster will have. For Redis, this value must be 1. For Memcached, this value must be between 1 and 40. If this number is reduced on subsequent runs, the highest numbered nodes will be removed.
+7. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the Elastic cache cluster provisioned. See below for available properties. 
+
+<Warning>
+Changing `id` or `prefix` string will delete & replace the original Elastic Cache cluster with new one.
+</Warning>
+
+Available properties of the Elastic cache cluster to use in `exports`:
+1. `$name` - Name of the Elastic cache cluster 
+2. `$arn` - Amazon resource name of the Elastic cache clsuter
+3. `$endpoint` - The connection endpoint in `address:port` format.
+4. `$address` - Specifies the DNS address of the elastic cache master node.
+5. `$port` - Specifies the port you will use to access the cluster node.
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in any of your active environment points at the same repository as source and when a deployment is triggered. 
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing. Resources declared in the `dependencies` object will be provisioned before your code starts to run. 
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in one of the properties above. 
+- Keys in `exports` object will be passed as enviroment variables to your service. 
+- When the service is deleted, the provisioned elastic cache clusters are deleted from the cloud account immediately & automatically. 
+
+### Private only access:
+
+Elastic cache clusters can be accessed from your code just as usual using $endpoint or $address above, and your DB libraries. 
+
+All Elastic cache clusters are created only in the private subnets of the same VPC where your environment is running. And they are attached with following security group. 
+
+Ingress:
+1. From source: `10.0.0.0/16` (Your environment's VPC CIDR IP range)
+2. At port: `6379` (for Redis) or `11211` (for Memcache)
+3. Protocol: `TCP`
+
+So only workload/containers/servers from within your environment's VPC can access the Elastic cache cluster
+
+### Pre-configured for production use:
+
+All elastic cache clusters are pre-configured for production use. 
+
+1. Daily backup is enabled. With 30-day retention for each backup. 
+2. Encryption is enabled to safeguard data at rest. 
+2. Backup is created automatically when the cluster is about to get deleted. 
+
+For speed and cost savings reasons, all the above are turned off in ephemeral services we create in the case of [pull request previews](https://localops.co/blog/introducing-pull-request-previews).
+
+## Manual provisioning of new Elastic-cache cluster:
 
 To proceed with this guide, you would need access to:
 
@@ -12,8 +97,6 @@ To proceed with this guide, you would need access to:
 
 Goal is to create a Elasticache instance (Redis, for this guide) in AWS and give your environment/service(s) access to
 it. Please follow the steps below to proceed:
-
-## Steps:
 
 ### 1. Fetch the VPC and private subnet IDs
 
