@@ -50,6 +50,7 @@
               "guides/languages/node",
               "guides/languages/python",
               "guides/languages/go",
+              "guides/spa/nextjs",
               "guides/spa/react",
               "guides/spa/angular",
               "guides/spa/ember",

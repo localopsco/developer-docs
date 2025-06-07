@@ -1,0 +1,196 @@
+---
+title: Next.js
+---
+
+This documentation provides a step-by-step guide to prepare a Next.js app and dockerizing it for deploying it to any
+cloud using LocalOps.
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Node.js][node], version 18.x or later at the time of writing.
+- [npm], as a package manager for installing and maintaining dependencies. This usually comes bundled with Node.js.
+- A foundational knowledge of [Next.js][next].
+- [docker] to build standalone containers to serve your production app.
+
+<Note>
+  This guide assumes that you have basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is recommended to review their official documentation and tutorials to get up to speed
+  before proceeding with this guide.
+</Note>
+
+## Scaffolding the Next.js App
+
+Next.js offers a CLI tool to quickly scaffold a new project. Run the following command:
+
+```bash
+npx create-next-app@latest
+```
+
+Follow the prompts to create your app. Refer to the
+[Next.js Getting Started guide](https://nextjs.org/docs/getting-started) to learn more about scaffolding the app.
+
+Once the application is ready, navigate to the directory and install all the dependencies (if not already installed):
+
+```bash
+cd your-nextjs-app # replace with the name of the project you created
+npm install
+```
+
+Once the dependencies are installed, you can start the dev server by running:
+
+```bash
+npm run dev
+```
+
+This usually starts the server on port `3000`. Go to [http://localhost:3000](http://localhost:3000) to see your app. The
+dev server supports hot reloading, so it reloads the application when you make changes.
+
+## Building and Dockerizing a Next.js App
+
+When it is time to deploy your app for production, simply run:
+
+```bash
+npm run build
+```
+
+This command builds an optimized production bundle. The output is found in the `.next` directory.
+
+<Tip>Once built, you can preview the production build using `npm run start` to start a local production server.</Tip>
+
+### Create the Docker Image
+
+Below is a Dockerfile optimized for Next.js, using multi-stage builds for smaller images and best practices for
+dependency management.
+
+```docker Dockerfile
+# syntax=docker.io/docker/dockerfile:1
+
+FROM node:18-alpine AS base
+
+# Install dependencies only when needed
+FROM base AS deps
+# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install dependencies based on the preferred package manager
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+
+# Rebuild the source code only when needed
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line in case you want to disable telemetry during the build.
+# ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN \
+  if [ -f yarn.lock ]; then yarn run build; \
+  elif [ -f package-lock.json ]; then npm run build; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm run build; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Production image, copy all the files and run next
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+# Uncomment the following line in case you want to disable telemetry during runtime.
+# ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+
+# Automatically leverage output traces to reduce image size
+# https://nextjs.org/docs/advanced-features/output-file-tracing
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT=3000
+
+# server.js is created by next build from the standalone output
+# https://nextjs.org/docs/pages/api-reference/config/next-config-js/output
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
+```
+
+Now you can build and run the Docker image. To build the Docker image:
+
+```bash
+docker build --platform linux/amd64 -t nextjs-app:latest .
+```
+
+This command builds the `nextjs-app` image for the platform `linux/amd64` and tags it as `latest`.
+
+If you are locally testing your application, you can skip the `platform` key to build the images.
+
+```bash
+# only for testing in a local machine
+docker build -t nextjs-app:latest .
+```
+
+### Run the Docker Image
+
+Let's run the Docker container using the image created of the Next.js application with the command below.
+
+```bash
+docker run \
+  -it \
+  --rm \
+  --name nextjs-app \
+  -e PORT=3000 \
+  -d \
+  -p 3000:3000 \
+  nextjs-app
+```
+
+- `-it`: enables interactivity with TTY.
+- `--rm`: tells the Docker Daemon to clean up the container and remove the file system after the container exits.
+- `--name nextjs-app`: Name of the container `nextjs-app`.
+- `-e PORT=3000`: Sets the environment variable PORT in Docker to `3000`.
+- `-d`: Runs the container in detached (background) mode. You can skip the flag to see the logs directly in your
+  terminal window.
+- `-p 3000:3000`: Maps port 3000 on your host to port 3000 in the container.
+- `nextjs-app` at the end is the name of the image.
+
+After running the command, visit `http://localhost:3000` to see the Next.js application running inside the Docker
+container.
+
+Hurray 🎉. Now we have created and packaged a Next.js app for production use.
+
+## Example app
+
+```text
+Source: https://github.com/vercel/next.js/tree/canary/examples/with-docker
+```
+
+You can refer to the `with-docker` example, which is an official example published by the Next.js team.
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) to point
+at the git repository and branch name to deploy this image.
+
+[next]: https://nextjs.org/
+[node]: https://nodejs.org/en
+[npm]: https://docs.npmjs.com/about-npm
+[docker]: https://docs.docker.com/
