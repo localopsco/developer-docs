@@ -7,9 +7,10 @@ access Amazon RDS databases that offer fully managed Postgres/MySQL databases.
 
 ## Declarative & Automatic using `ops.json`:
 
-For your service, if you need one or more RDS instances, you can add `ops.json` in the root directory of Github repo you've connected for the service. And add RDS instances as dependency, like below.
+For your service, if you need one or more RDS instances, you can add `ops.json` in the root directory of Github repo
+you've connected for the service. And add RDS instances as dependency, like below.
 
-```json 
+```json
 {
   "dependencies": {
     "rds": {
@@ -33,56 +34,75 @@ For your service, if you need one or more RDS instances, you can add `ops.json` 
           }
         }
       ]
-    },
+    }
   }
 }
 ```
 
-
 You can add as many RDS instances as you want.
 
 Arguments you can add in each instance object above:
-1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will replace the original instance with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your instance. Changing this string will replace the original instance with new instance.
-3. `engine` - Provide either `postgres` or `mysql`. Default: `postgres`
-4. `version` - Pick a version for your postgres or mysql database. Ensure RDS supports it, by referring to AWS docs - [Postgres](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-versions.html) / [MySQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Concepts.VersionMgmt.html). Default: `""` - so it will provision latest version as decided by AWS.
-5. `storage_gb` - Specify the amount of storage you need in GB. You can set one value and yet change this later. Default: `10`
-6. `instance_type` - Specify any class of instance in the following groups - "db.t4g.*", "db.t3.*", "db.m5.*". Refer to [AWS docs](https://aws.amazon.com/rds/instance-types/) for available sizes. Default: `db.t4g.small`
-7. `publicly_accessible` - Set it to `true` if you need this database to be available publicly on the internet. You would want this to be `false` most of the time. Default: `false`
-8. `multi_az` - Specifies if the RDS instance is multi-AZ
-9. `maintenance_window` - 	The window to perform maintenance in. Syntax: "ddd:hh24:mi-ddd:hh24:mi". Eg: "Mon:00:00-Mon:03:00". See [RDS Maintenance Window docs](http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#AdjustingTheMaintenanceWindow) for more information.
-8. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the RDS instance provisioned. See below for available properties. 
 
-<Warning>
-Changing `id` or `prefix` string will delete & replace the original RDS instance with new one.
-</Warning>
+1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will
+   replace the original instance with new one.
+2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your instance. Changing this string will replace
+   the original instance with new instance.
+3. `engine` - Provide either `postgres` or `mysql`. Default: `postgres`
+4. `version` - Pick a version for your postgres or mysql database. Ensure RDS supports it, by referring to AWS docs -
+   [Postgres](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-versions.html) /
+   [MySQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Concepts.VersionMgmt.html). Default: `""` - so
+   it will provision latest version as decided by AWS.
+5. `storage_gb` - Specify the amount of storage you need in GB. You can set one value and yet change this later.
+   Default: `10`
+6. `instance_type` - Specify any class of instance in the following groups - "db.t4g._", "db.t3._", "db.m5.\*". Refer to
+   [AWS docs](https://aws.amazon.com/rds/instance-types/) for available sizes. Default: `db.t4g.small`
+7. `publicly_accessible` - Set it to `true` if you need this database to be available publicly on the internet. You
+   would want this to be `false` most of the time. Default: `false`
+8. `multi_az` - Specifies if the RDS instance is multi-AZ
+9. `maintenance_window` - The window to perform maintenance in. Syntax: "ddd:hh24:mi-ddd:hh24:mi". Eg:
+   "Mon:00:00-Mon:03:00". See
+   [RDS Maintenance Window docs](http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#AdjustingTheMaintenanceWindow)
+   for more information.
+10. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+    the properties of the RDS instance provisioned. See below for available properties.
+
+<Warning>Changing `id` or `prefix` string will delete & replace the original RDS instance with new one.</Warning>
 
 Available properties of the RDS instance to use in `exports`:
-1. `$name` - Name of the RDS instance 
+
+1. `$name` - Name of the RDS instance
 2. `$arn` - Amazon resource name of the RDS instance. Eg., `arn:rds:..`
 3. `$endpoint` - The connection endpoint in `address:port` format.
 4. `$address` - Specifies the DNS address of the DB instance.
-5. `$dbName` - Specifies the database name created under the RDS instance. This is auto-created for you so you won't specific this name explicitly anywhere in your config.
-6. `$username` - Specifics the username of the database user. You will typically use this in your code's Db connection string to access the database `$dbName`.
-7. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by RDS in AWS secret manager. Your code has to read the password from the AWS secret manager using this `$passwordArn`. 
-
+5. `$dbName` - Specifies the database name created under the RDS instance. This is auto-created for you so you won't
+   specific this name explicitly anywhere in your config.
+6. `$username` - Specifics the username of the database user. You will typically use this in your code's Db connection
+   string to access the database `$dbName`.
+7. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by RDS in AWS
+   secret manager. Your code has to read the password from the AWS secret manager using this `$passwordArn`.
 
 ### Lifecycle:
 
-If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in any of your active environment points at the same repository as source and when a deployment is triggered. 
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in
+any of your active environment points at the same repository as source and when a deployment is triggered.
 
-- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing. Resources declared in the `dependencies` object will be provisioned before your code starts to run. 
-- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in one of the properties above. 
-- Keys in `exports` object will be passed as enviroment variables to your service. 
-- When the service is deleted, the provisioned RDS instances are deleted from the cloud account immediately & automatically. 
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing.
+  Resources declared in the `dependencies` object will be provisioned before your code starts to run.
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in
+  one of the properties above.
+- Keys in `exports` object will be passed as enviroment variables to your service.
+- When the service is deleted, the provisioned RDS instances are deleted from the cloud account immediately &
+  automatically.
 
 ### Private only access:
 
-RDS databases can be accessed from your code just as usual using your SQL-compatible DB libraries or ORMs. 
+RDS databases can be accessed from your code just as usual using your SQL-compatible DB libraries or ORMs.
 
-All RDS instances are created only in the private subnets of the same VPC where your environment is running. And they are attached with following security group. 
+All RDS instances are created only in the private subnets of the same VPC where your environment is running. And they
+are attached with following security group.
 
 Ingress:
+
 1. From source: `10.0.0.0/16` (Your environment's VPC CIDR IP range)
 2. At port: `5432` (for Postgres) or `3306` (for MySQL)
 3. Protocol: `TCP`
@@ -91,18 +111,20 @@ So only workload/containers/servers from within your environment's VPC can acces
 
 ### Reading Database password:
 
-We have configured such that RDS will creates & encrypts a unique random password and store it in your AWS account's secret manager. You can capture ARN of this secret under an environment variable like shown above and fetch the password value using AWS SDK.
+We have configured such that RDS will creates & encrypts a unique random password and store it in your AWS account's
+secret manager. You can capture ARN of this secret under an environment variable like shown above and fetch the password
+value using AWS SDK.
 
 ### Pre-configured for production use:
 
-All RDS instances are pre-configured for production use. 
+All RDS instances are pre-configured for production use.
 
-1. Daily backup is enabled. With 30-day retention for each backup. 
-2. Encryption is enabled to safeguard data at rest. 
-2. Backup is created automatically when the instance is about to get deleted. 
+1. Daily backup is enabled. With 30-day retention for each backup.
+2. Encryption is enabled to safeguard data at rest.
+3. Backup is created automatically when the instance is about to get deleted.
 
-For speed and cost savings reasons, all the above are turned off in ephemeral services we create in the case of [pull request previews](https://localops.co/blog/introducing-pull-request-previews).
-
+For speed and cost savings reasons, all the above are turned off in ephemeral services we create in the case of
+[pull request previews](https://localops.co/blog/introducing-pull-request-previews).
 
 ## Manually provision new RDS Instance:
 
@@ -176,9 +198,9 @@ That's it!
 
 ### 1. Setup VPC peering
 
-Your LocalOps environment is created in its own VPC in the chosen AWS account and region. For the same application,
-if you already have a RDS database instance running in the same/different AWS account, you can connect/access it with
-the corresponding LocalOps environment using Amazon VPC peering.
+Your LocalOps environment is created in its own VPC in the chosen AWS account and region. For the same application, if
+you already have a RDS database instance running in the same/different AWS account, you can connect/access it with the
+corresponding LocalOps environment using Amazon VPC peering.
 
 VPC peering lets you connect two VPCs from same or different AWS account/region so that resources in one VPC can access
 the resources in another VPC like they belong to the same network.

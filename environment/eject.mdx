@@ -2,19 +2,20 @@
 title: Eject out of LocalOps
 ---
 
-There is no lock-in when you use LocalOps. 
+There is no lock-in when you use LocalOps.
 
-You can stop using LocalOps anytime. All infrastructure resources are provisioned in the cloud accounts you connect. 
+You can stop using LocalOps anytime. All infrastructure resources are provisioned in the cloud accounts you connect.
 
-If you decide to stop using LocalOps, here are the steps and considerations to manage your environments and service deployments
-independently.
+If you decide to stop using LocalOps, here are the steps and considerations to manage your environments and service
+deployments independently.
 
 ## Considerations
 
-- **Infrastructure Continuity**: Cloud resources including VPC, Subnets and Kubernetes cluster will continue to run on the same cloud account, even after ejecting from the
-  platform.
-- **Deployments**: To trigger deployments on services, developers can use `kubectl` to make manual deployments. Github Actions can also be configured to
-  connect to the Kubernetes cluster and do the same on git-push. Or ArgoCD can be setup on the respective cluster, to automate this further.
+- **Infrastructure Continuity**: Cloud resources including VPC, Subnets and Kubernetes cluster will continue to run on
+  the same cloud account, even after ejecting from the platform.
+- **Deployments**: To trigger deployments on services, developers can use `kubectl` to make manual deployments. Github
+  Actions can also be configured to connect to the Kubernetes cluster and do the same on git-push. Or ArgoCD can be
+  setup on the respective cluster, to automate this further.
 - **Using IaC for Infrastructure**: If you choose to continue managing the infrastructure using Infrastructure as Code
   (IaC) independently, you can import the existing resources created by LocalOps into your IaC tool's state. This allows
   you to maintain and update infrastructure resources using the respective IaC tool.

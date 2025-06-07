@@ -2,15 +2,20 @@
 title: Private SaaS deployments / BYOC
 ---
 
-For SaaS vendors supporting enterprise customers, private deployments—also known as BYOC (Bring Your Own Cloud)—are increasingly common. Enterprises often require applications to be deployed within their own cloud environments for data residency, compliance, or security reasons.
+For SaaS vendors supporting enterprise customers, private deployments—also known as BYOC (Bring Your Own Cloud)—are
+increasingly common. Enterprises often require applications to be deployed within their own cloud environments for data
+residency, compliance, or security reasons.
 
-LocalOps makes it simple to offer private SaaS deployments without reinventing your internal DevOps processes for each customer.
+LocalOps makes it simple to offer private SaaS deployments without reinventing your internal DevOps processes for each
+customer.
 
 ### What Is a BYOC Deployment?
 
-In a BYOC model, your application is installed inside the customer’s own AWS, GCP, or Azure account. You provide the software, but the infrastructure is owned and controlled by the customer.
+In a BYOC model, your application is installed inside the customer’s own AWS, GCP, or Azure account. You provide the
+software, but the infrastructure is owned and controlled by the customer.
 
 This approach is typically used to meet requirements such as:
+
 - Customer data must remain within their account
 - Isolation from other tenants for compliance
 - No shared infrastructure between customers
@@ -18,20 +23,31 @@ This approach is typically used to meet requirements such as:
 
 ### How LocalOps Helps
 
-LocalOps provides an out-of-the-box solution for provisioning, deploying, and managing your SaaS product inside customer cloud accounts:
-- Standardized environments: Define your infrastructure once (networking, compute, storage, IAM policies) and reuse it across customers.
-- Security best practices: Each environment is provisioned with hardened defaults, reducing the risk of misconfigurations.
-- GitOps-compatible: Your application can be deployed and updated through version-controlled workflows, ensuring consistency and auditability.
-- Region-aware provisioning: Deploy to the customer’s region of choice while maintaining your base configuration and policies.
-- Auto-healing and scaling: Private environments benefit from the same self-managing capabilities as centralized environments.
+LocalOps provides an out-of-the-box solution for provisioning, deploying, and managing your SaaS product inside customer
+cloud accounts:
+
+- Standardized environments: Define your infrastructure once (networking, compute, storage, IAM policies) and reuse it
+  across customers.
+- Security best practices: Each environment is provisioned with hardened defaults, reducing the risk of
+  misconfigurations.
+- GitOps-compatible: Your application can be deployed and updated through version-controlled workflows, ensuring
+  consistency and auditability.
+- Region-aware provisioning: Deploy to the customer’s region of choice while maintaining your base configuration and
+  policies.
+- Auto-healing and scaling: Private environments benefit from the same self-managing capabilities as centralized
+  environments.
 
 ### Common Use Cases
+
 - Enterprise customers requesting in-account installations for privacy or regulatory reasons
 - AI/ML workloads where customers want control over GPU usage or data locality
 - Healthcare or finance verticals requiring strict compliance boundaries
 
 ### Outcome
 
-Using LocalOps for BYOC allows you to serve high-value enterprise customers without increasing your DevOps burden. You can deliver your SaaS as-a-service—running in their environment—while still maintaining control over the deployment and upgrade process.
+Using LocalOps for BYOC allows you to serve high-value enterprise customers without increasing your DevOps burden. You
+can deliver your SaaS as-a-service—running in their environment—while still maintaining control over the deployment and
+upgrade process.
 
-This helps reduce sales friction, meet compliance needs, and expand into regulated industries without a full rewrite of your infrastructure tooling.
+This helps reduce sales friction, meet compliance needs, and expand into regulated industries without a full rewrite of
+your infrastructure tooling.

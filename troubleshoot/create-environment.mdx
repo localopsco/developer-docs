@@ -7,19 +7,19 @@ deletion.
 
 ## Infra limit reached
 
-AWS imposes limits on the number of resource that can be created for a specific type. For example, by default, only 5 Elastic
-IPs (EIPs) are allowed per AWS account per region. If this limit is reached, the Environment create operation may fail with
-an error indicating that the maximum allowed limit has been reached.
+AWS imposes limits on the number of resource that can be created for a specific type. For example, by default, only 5
+Elastic IPs (EIPs) are allowed per AWS account per region. If this limit is reached, the Environment create operation
+may fail with an error indicating that the maximum allowed limit has been reached.
 
-To resolve this issue, you can either clean up unused resources in the target AWS account or contact AWS Support to request an
-increase in the resource limit, explaining your use case.
+To resolve this issue, you can either clean up unused resources in the target AWS account or contact AWS Support to
+request an increase in the resource limit, explaining your use case.
 
 ## Creation Issues
 
-If creating infrastructure resources step fails, you can check the operation logs to
-understand the cause of the failure. Take appropriate actions based on the logs and retry the operation to resolve the
-issue. Sometimes, infrastructure creation failures may occur due to temporary issues on the AWS side. Retrying the
-operation often resolves such issues.
+If creating infrastructure resources step fails, you can check the operation logs to understand the cause of the
+failure. Take appropriate actions based on the logs and retry the operation to resolve the issue. Sometimes,
+infrastructure creation failures may occur due to temporary issues on the AWS side. Retrying the operation often
+resolves such issues.
 
 ## Deletion Issues
 
@@ -32,6 +32,6 @@ delays or glitches from AWS can also contribute to deletion failures. Retrying t
 these issues.
 
 <Tip>
-  To ensure all resources are properly deleted, use the provided Environment tags to filter AWS resources and
-  confirm their removal. This helps maintain a clean and efficient AWS environment.
+  To ensure all resources are properly deleted, use the provided Environment tags to filter AWS resources and confirm
+  their removal. This helps maintain a clean and efficient AWS environment.
 </Tip>

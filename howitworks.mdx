@@ -4,8 +4,8 @@ title: How it works
 
 To deploy your code on a cloud account, LocalOps takes an environment-based approach.
 
-After you connect your cloud account, you must create a new environment for each of your deployment environments -
-test, staging, production, etc.,
+After you connect your cloud account, you must create a new environment for each of your deployment environments - test,
+staging, production, etc.,
 
 LocalOps will then provision the following set of exclusive cloud resources in the target cloud account to bring the
 environment up and deploy your services inside.
@@ -22,8 +22,8 @@ environment up and deploy your services inside.
 
 We collectively refer to the above set as “**Environment**”.
 
-LocalOps provisions environments using standard in-house provisioning templates and scripts such that you can create
-any number of environments on any cloud account (AWS, Google Cloud or Azure) and any region.
+LocalOps provisions environments using standard in-house provisioning templates and scripts such that you can create any
+number of environments on any cloud account (AWS, Google Cloud or Azure) and any region.
 
 ### Kubernetes cluster
 
@@ -51,22 +51,21 @@ provisioned for each environment and runs inside the Kubernetes cluster, right n
 ### Cloud Credentials
 
 LocalOps needs to have access to your cloud account, to programmatically create all cloud resources required to get the
-environment running. You can connect your cloud account via keyless, role-based access method from Connections
-section.
+environment running. You can connect your cloud account via keyless, role-based access method from Connections section.
 
 ### Exclusive Infrastructure
 
-Each environment get its own exclusive set of kubernetes cluster, compute servers and other resources listed above.
-This is ideal for providing maximum Network, Data & Compute isolation between your deployments & customers.
+Each environment get its own exclusive set of kubernetes cluster, compute servers and other resources listed above. This
+is ideal for providing maximum Network, Data & Compute isolation between your deployments & customers.
 
 <Note>
-All cloud infrastructure to run an environment is provisioned in the cloud account chosen while creating the app
-environment inside LocalOps. The underlying cloud account will be billed by the cloud provider (say AWS) for the
-resources running within each environment. Cloud account's owner has to pay for these charges separately with the
-cloud provider. If the cloud account belongs to your customer, they would pay for these cloud resources.
+  All cloud infrastructure to run an environment is provisioned in the cloud account chosen while creating the app
+  environment inside LocalOps. The underlying cloud account will be billed by the cloud provider (say AWS) for the
+  resources running within each environment. Cloud account's owner has to pay for these charges separately with the
+  cloud provider. If the cloud account belongs to your customer, they would pay for these cloud resources.
 </Note>
 
 ### Security Best Practices:
 
-Within each environment, LocalOps turns ON all security best practices suggested by the respective cloud provider.
-In AWS for example, security groups, disk encryption etc., are all enabled by default.
+Within each environment, LocalOps turns ON all security best practices suggested by the respective cloud provider. In
+AWS for example, security groups, disk encryption etc., are all enabled by default.

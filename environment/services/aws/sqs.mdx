@@ -5,64 +5,70 @@ title: SQS
 Amazon SQS offers fully managed FIFO / standard queues. You service(s) may want to add items/jobs/messages to a queue
 and process them later. This guide will show you steps to create and access Amazon SQS queues from your services.
 
-
 ## Declarative & Automatic using `ops.json`:
 
-For your service, if you need one or more SQS queues, you can add `ops.json` in the root directory of Github repo you've connected for the service. And add SQS queues as dependency, like below.
+For your service, if you need one or more SQS queues, you can add `ops.json` in the root directory of Github repo you've
+connected for the service. And add SQS queues as dependency, like below.
 
-```json 
+```json
 {
-    "dependencies": {
-        "sqs": {
-            "queues": [
-                {
-                    "id": "test123",
-                    "prefix": "testdep123",
-                    "fifo": true,
-                    "exports": {
-                        "MY_SQS_QUEUE_NAME1": "$name",
-                        "MY_SQS_QUEUE_ARN1": "$arn"
-                    }
-                }
-            ]
-        },
+  "dependencies": {
+    "sqs": {
+      "queues": [
+        {
+          "id": "test123",
+          "prefix": "testdep123",
+          "fifo": true,
+          "exports": {
+            "MY_SQS_QUEUE_NAME1": "$name",
+            "MY_SQS_QUEUE_ARN1": "$arn"
+          }
+        }
+      ]
     }
+  }
 }
 ```
-
 
 You can add as many queues as you want.
 
 Arguments you can add in each queue object above:
-1. `id` - Alpha numeric string. Must be unique amongst the queues you've declared above. Changing this string will replace the original queue with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name your queue. Changing this string will replace the original queue with new queue.
-3. `fifo` - Set this to `true` if you need a FIFO queue. Set it to false or leave out the fifo key if you want a standard queue instead.
-4. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the queue provisioned. See below for available properties. 
 
-<Warning>
-Changing `id` or `prefix` string will replace the original queue with new one.
-</Warning>
+1. `id` - Alpha numeric string. Must be unique amongst the queues you've declared above. Changing this string will
+   replace the original queue with new one.
+2. `prefix` - Alpha numeric string. Will be used as a prefix in name your queue. Changing this string will replace the
+   original queue with new queue.
+3. `fifo` - Set this to `true` if you need a FIFO queue. Set it to false or leave out the fifo key if you want a
+   standard queue instead.
+4. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+   the properties of the queue provisioned. See below for available properties.
 
+<Warning>Changing `id` or `prefix` string will replace the original queue with new one.</Warning>
 
 Available properties of the queue to use in `exports`:
-1. `$name` - Name of the queue 
-2. `$arn` - Amazon resource name of the queue. Eg., `arn:sqs:..`
 
+1. `$name` - Name of the queue
+2. `$arn` - Amazon resource name of the queue. Eg., `arn:sqs:..`
 
 ### Lifecycle:
 
-If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in any of your active environment points at the same repository as source and when a deployment is triggered. 
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in
+any of your active environment points at the same repository as source and when a deployment is triggered.
 
-- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing. Resources declared in the `dependencies` object will be provisioned before your code starts to run. 
-- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in one of the properties above. 
-- Keys in `exports` object will be passed as enviroment variables to your service. 
-- When the service is deleted, the provisioned queues are deleted from the cloud account immediately & automatically. 
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing.
+  Resources declared in the `dependencies` object will be provisioned before your code starts to run.
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in
+  one of the properties above.
+- Keys in `exports` object will be passed as enviroment variables to your service.
+- When the service is deleted, the provisioned queues are deleted from the cloud account immediately & automatically.
 
 ### Access with no keys:
 
-Queues can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your containers automatically authenticate to have access to all the queues you've declared in the above JSON. 
+Queues can be accessed from your code using AWS SDK. You don't have to pass any AWS secret key to authenticate. Your
+containers automatically authenticate to have access to all the queues you've declared in the above JSON.
 
-LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We provision a policy like below on that IAM role for every queue provisioned.
+LocalOps arranges Role based access by attaching an IAM role for all the services run within your environment. We
+provision a policy like below on that IAM role for every queue provisioned.
 
 ```
 {

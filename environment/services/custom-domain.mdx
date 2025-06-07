@@ -2,7 +2,8 @@
 title: Custom domain
 ---
 
-Set a custom domain for each of your service to let users reach them using your brand's domain. Say, `app.your-awesome-site.com`.
+Set a custom domain for each of your service to let users reach them using your brand's domain. Say,
+`app.your-awesome-site.com`.
 
 Here is how you can set it up.
 
@@ -11,7 +12,7 @@ Here is how you can set it up.
 ### 1. Add your domain
 
 1. Navigate to the specific environment dashboard (from Environments seciton)
-2. Click on **Services** tab to see all services 
+2. Click on **Services** tab to see all services
 3. In the Service dashboard, navigate to "Custom domain" tab.
 4. Enter your new domain and click save.
 
@@ -24,11 +25,11 @@ to your environment.
 
 In this step you will verify the ownership of your domain by adding the **CNAME records** you see in above step.
 
-Go to your DNS registrar > DNS Zone and add the given CNAME records. 
+Go to your DNS registrar > DNS Zone and add the given CNAME records.
 
 <Warning>
-  After saving the DNS settings, it takes few minutes for the newly added DNS settings to propagate. Sometimes
-  it may also take up to 24 hours.
+  After saving the DNS settings, it takes few minutes for the newly added DNS settings to propagate. Sometimes it may
+  also take up to 24 hours.
 </Warning>
 
 ### 3. Deploy
@@ -42,14 +43,17 @@ to propagate. Then, come back to Service > Custom domain setitngs page, and clic
   DNS settings.
 </Tip>
 
-LocalOps will then 
-1. configure your service to run on the custom domain you added and 
+LocalOps will then
+
+1. configure your service to run on the custom domain you added and
 2. auomatically provison a brand new **auto-renewing SSL Certificate** for the custom domain
 
-You can now reach your service using the new domain. 
+You can now reach your service using the new domain.
 
 ## Access current domain
-For your code/service to start reading the new domain, trigger a new deployment on your service. Either by pressing "Deploy" button in the service settings section. Or push a new commit on configured branch of the service. 
+
+For your code/service to start reading the new domain, trigger a new deployment on your service. Either by pressing
+"Deploy" button in the service settings section. Or push a new commit on configured branch of the service.
 
 During this deployment, LocalOps fills environment variable `LOPS_SVC_HOST` with the current active domain.
 
@@ -60,5 +64,5 @@ LOPS_SVC_HOST=app.your-awesome-site.com
 You can access this in your app (say NodeJS app) like
 
 ```js
-console.log(process.env.LOPS_SVC_HOST)
+console.log(process.env.LOPS_SVC_HOST);
 ```

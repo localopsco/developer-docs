@@ -7,13 +7,16 @@ mode: center
 <Update label="May 29, 2025">
 ## Introducing AI Code reviews
 
-We are releasing a beta version of AI code reviews today in LocalOps to let code reviews be a blissful process in your team instead of being a necessary bottleneck. 
+We are releasing a beta version of AI code reviews today in LocalOps to let code reviews be a blissful process in your
+team instead of being a necessary bottleneck.
 
-You can turn on AI code reviews when you create a new service within LocalOps. Just flip this switch and our AI will start listening on all your pull requests. 
+You can turn on AI code reviews when you create a new service within LocalOps. Just flip this switch and our AI will
+start listening on all your pull requests.
 
 ![AI Reviews](./images/aireview-may29.avif)
 
-When your team creates new PRs or pushes new commits to their existing PRs, a detailed review will be triggered to scan through all changes and add comments on the correct file and line number.
+When your team creates new PRs or pushes new commits to their existing PRs, a detailed review will be triggered to scan
+through all changes and add comments on the correct file and line number.
 
 ![AI Reviews](./images/aireviews2-may29.avif)
 
@@ -24,7 +27,8 @@ Read more in our [blog post](https://localops.co/blog/introducing-ai-code-review
 <Update label="May 22, 2025">
 ## Introducing Slack Integration
 
-Your teams can now receive alerts in a dedicated slack channel for all your deployments across all services. Just go to Account settings > Integrations page to connect your slack workspace.
+Your teams can now receive alerts in a dedicated slack channel for all your deployments across all services. Just go to
+Account settings > Integrations page to connect your slack workspace.
 
 ![Slack Integration](./images/slack-may-22.webp)
 
@@ -37,13 +41,16 @@ Read more in our [blog post](https://localops.co/blog/introducing-slack-integrat
 
 We just pushed a major capability today.
 
-We have released Pull request previews today to unblock your team to deploy, test each pull request in an isolated setup. 
-In your current app environment, say you have two services
+We have released Pull request previews today to unblock your team to deploy, test each pull request in an isolated
+setup. In your current app environment, say you have two services
 
 - backend
 - frontend
 
-Say backend service is pointed at code in main branch of backend repo. If anyone in your team raises a pull request in github, targeting to merge fix-issue30 branch into main branch, LocalOps pulls and builds the latest commit from the pull request branch fix-issue30 , creates a new preview service with the latest commit and run it in its own SSL powered URL. 
+Say backend service is pointed at code in main branch of backend repo. If anyone in your team raises a pull request in
+github, targeting to merge fix-issue30 branch into main branch, LocalOps pulls and builds the latest commit from the
+pull request branch fix-issue30 , creates a new preview service with the latest commit and run it in its own SSL powered
+URL.
 
 ![PR Environments](./images/pr-previews-may13.webp)
 
@@ -51,65 +58,74 @@ Read more in our [blog post](https://localops.co/blog/introducing-pull-request-p
 
 </Update>
 
-
 <Update label="May 9, 2025">
 ## Faster builds + Deploy Microservices and Cloud Resources on AWS
 
-#### Faster builds 
+#### Faster builds
 
 We just pushed a major change to our build setup today.
 
-From now, the build infrastructure that pulls your code & builds the docker image out of your Dockerfile, is dedicated, isolated & different from the infrastructure used by your neighbouring accounts within LocalOps. This means that when you push your code, it gets pulled and built right away. Builds no longer have to wait for their turn.
+From now, the build infrastructure that pulls your code & builds the docker image out of your Dockerfile, is dedicated,
+isolated & different from the infrastructure used by your neighbouring accounts within LocalOps. This means that when
+you push your code, it gets pulled and built right away. Builds no longer have to wait for their turn.
 
 #### Deploy Micro Services
 
-Each service that exposes a port, gets a new unique `service alias`. It is a string that you can see in Service screen and which you can use a alias for the specific service’s internal DNS host name. 
+Each service that exposes a port, gets a new unique `service alias`. It is a string that you can see in Service screen
+and which you can use a alias for the specific service’s internal DNS host name.
 
-You can add this `service alias` as `secret` in the dependent service. At run time, LocalOps replaces that string with the actual internal DNS host name. Your code can simply consume the secret as environment variable and connect to the service. 
+You can add this `service alias` as `secret` in the dependent service. At run time, LocalOps replaces that string with
+the actual internal DNS host name. Your code can simply consume the secret as environment variable and connect to the
+service.
 
 Learn more in our docs here - https://docs.localops.co/micro-services
 
-#### Extend with cloud resources 
+#### Extend with cloud resources
 
-You may want to create RDS database, S3 bucket, SNS topic or a SQS queue to fulfill business logic. We wanted to make this process easier so that you can write Terraform or Pulumi scripts to create these resources for each of your environments. So we have exposed VPC and subent IDs that we provision and manage in your AWS account. You can use these IDs as variables in your IaC stack (Terraform/Pulumi/OpenTofu) to create any cloud resource you need in AWS.
+You may want to create RDS database, S3 bucket, SNS topic or a SQS queue to fulfill business logic. We wanted to make
+this process easier so that you can write Terraform or Pulumi scripts to create these resources for each of your
+environments. So we have exposed VPC and subent IDs that we provision and manage in your AWS account. You can use these
+IDs as variables in your IaC stack (Terraform/Pulumi/OpenTofu) to create any cloud resource you need in AWS.
 
-
-Read more in our [blog post](https://localops.co/blog/what-s-new-on-may-9-deploy-microservices-spas-and-cloud-services-fast).
+Read more in our
+[blog post](https://localops.co/blog/what-s-new-on-may-9-deploy-microservices-spas-and-cloud-services-fast).
 
 </Update>
-
 
 <Update label="Apr 25, 2025">
 ## Announcing Continuous deployments with Github Integration
 
-You can now connect your Github repositories and deploy just by doing git-push. 
+You can now connect your Github repositories and deploy just by doing git-push.
 
-To get started, spin up a new environment and create a new **Service**. When you create a new service, configure a specific git repository and branch name. Whenever your team pushes new code to that branch, LocalOps will automatically pull the latest commit, build and push a new deployment to your environment. We will show build & deployment logs right there in the UI. 
+To get started, spin up a new environment and create a new **Service**. When you create a new service, configure a
+specific git repository and branch name. Whenever your team pushes new code to that branch, LocalOps will automatically
+pull the latest commit, build and push a new deployment to your environment. We will show build & deployment logs right
+there in the UI.
 
 You can create any number of services for any purpose:
 
-- Web service - Front end or back end 
+- Web service - Front end or back end
 - Internal service
 - Worker
 - Job
 - Cron job
 
-Read more about this feature in our [blog post](https://localops.co/blog/announcing-continuous-deployments-with-github-integration).
+Read more about this feature in our
+[blog post](https://localops.co/blog/announcing-continuous-deployments-with-github-integration).
 
 </Update>
-
 
 <Update label="Mar 5th, 2025">
 ## Introducing Projects
 
-🎉 We are introducing "Projects" to organize environments by teams, environments, services, customers, regions, etc., You can create a project for:
+🎉 We are introducing "Projects" to organize environments by teams, environments, services, customers, regions, etc.,
+You can create a project for:
 
 - Different module teams - Inference, Billing, Auth, Frontend, Backend, etc.,
 - Production/staging environments - EU, US, AUS, etc.,
 - Different customers - in the case of single tenant environments like Customer1-EU, Customer2-AWS, etc.,
 
-Each of these projects could have multiple staging, prod environments inside:
-![Projects](./images/projects-mar-5.webp)
+Each of these projects could have multiple staging, prod environments inside: ![Projects](./images/projects-mar-5.webp)
 
 </Update>
 

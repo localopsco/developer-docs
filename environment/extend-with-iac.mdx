@@ -31,13 +31,12 @@ You can create cloud resources manually within the cloud console and use VPC/Sub
 
 Add the VPC/Subnet IDs as variables in your Pulumi/Terraform scripts and automate those cloud resources.
 
-Say you want to create a RDS database for your environment. Here is how you will do it in Terraform, OpenTofu or
-Pulumi.
+Say you want to create a RDS database for your environment. Here is how you will do it in Terraform, OpenTofu or Pulumi.
 
 ### Using Terraform or OpenTofu
 
-Here is how you can create an RDS database within the same private subnets and VPCs of the environment using
-Terraform or OpenTofu.
+Here is how you can create an RDS database within the same private subnets and VPCs of the environment using Terraform
+or OpenTofu.
 
 ```hcl
 variable "vpc_id" {
@@ -154,8 +153,8 @@ const db = new aws.rds.Instance('exampleDb', {
 ### Use same tags
 
 LocalOps creates all resources with two standard tags for any given environment. So that you can take inventory of all
-resources in the cloud, analyse cost per environment in Cost analysis console in the cloud account and more. These
-tags are exposed within environment Dashboard page.
+resources in the cloud, analyse cost per environment in Cost analysis console in the cloud account and more. These tags
+are exposed within environment Dashboard page.
 
 <img src="./images/vpc-tags.png" />
 
