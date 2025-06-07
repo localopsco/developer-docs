@@ -30,7 +30,7 @@ For your service, if you need one or more SNS topics, you can add `ops.json` in 
 
 You can add as many topics as you want.
 
-Arguments you can add in each Topic object above:
+Arguments you can add in each topic object above:
 1. `id` - Alpha numeric string. Must be unique amongst the Topics you've declared above. Changing this string will replace the original topic with new one.
 2. `prefix` - Alpha numeric string. Will be used as a prefix in the name of your Topic. Changing this string will replace the original topic with new topic.
 3. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are the properties of the Topic provisioned. See below for available properties. 

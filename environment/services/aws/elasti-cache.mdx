@@ -36,7 +36,7 @@ For your service, if you need one or more Elastic cache cluster, you can add `op
 
 You can add as many clusters as you want.
 
-Arguments you can add in each bucket object above:
+Arguments you can add in each cluster object above:
 1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will replace the original cluster with new one.
 2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your cluster. Changing this string will replace the original cluster with new cluster.
 3. `engine` - Provide either `redis` or `memcache`. Default: ``. If you leave this out, we will skip creating the cluster. 
