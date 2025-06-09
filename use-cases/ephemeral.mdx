@@ -58,12 +58,12 @@ When a new preview service is created specifically for the PR, the same workflow
 
 In addition, resources in `ops.json` are configured differently in other ways by LocalOps, for preview services for speed of boot-up and cost savings. Backups, encryption and monitoring are turned off in cloud resources created for preview services.
 
-Following services can be defined in `ops.json` as on June 9 2025: 
-1. S3 buckets, 
-2. SNS topics, 
-3. SQS queues, 
-4. RDS instances & 
-5. Elastic cache clusters.
+Following services can be defined in `ops.json` (as on June 9 2025): 
+1. S3 buckets
+2. SNS topics 
+3. SQS queues 
+4. RDS Database instances - MySQL or Postgres
+5. Elastic cache clusters - Memcache or Redis
 
 #### Isolated cron service
 
