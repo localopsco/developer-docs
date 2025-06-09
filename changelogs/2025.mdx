@@ -7,30 +7,33 @@ mode: center
 <Update label="June 9, 2025">
 ## Configure cloud resources using ops.json
 
-You can add a new file called `ops.json` in your Git repo to declare cloud resources for serivices to use. Including AWS S3 buckets, SNS topics, SQS queues, RDS instances, Elastic cache clusters etc.,
+You can add a new file called `ops.json` in your Git repo to declare cloud resources for serivices to use. Including AWS
+S3 buckets, SNS topics, SQS queues, RDS instances, Elastic cache clusters etc.,
 
-LocalOps will provision these resources in your cloud account with production grade security, when the corresponding service is deployed. 
+LocalOps will provision these resources in your cloud account with production grade security, when the corresponding
+service is deployed.
 
 ```json
 {
-    "dependencies": {
-        "s3": {
-            "buckets": [
-                {
-                    "id": "test123",
-                    "prefix": "testdep123",
-                    "exports": {
-                        "MY_BUCKET_NAME1": "$name",
-                        "MY_BUCKET_ARN1": "$arn"
-                    }
-                }
-            ]
-        },
+  "dependencies": {
+    "s3": {
+      "buckets": [
+        {
+          "id": "test123",
+          "prefix": "testdep123",
+          "exports": {
+            "MY_BUCKET_NAME1": "$name",
+            "MY_BUCKET_ARN1": "$arn"
+          }
+        }
+      ]
     }
+  }
 }
 ```
 
-Read our [documentation](https://docs.localops.co/environment/services/ops-json). Or read the release [blog post here](https://localops.co/blog/spin-up-cloud-resources-using-json).
+Read our [documentation](https://docs.localops.co/environment/services/ops-json). Or read the release
+[blog post here](https://localops.co/blog/spin-up-cloud-resources-using-json).
 
 </Update>
 
