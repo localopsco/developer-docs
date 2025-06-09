@@ -7,8 +7,10 @@ description: Spin up ephemeral services to test pull requests in isolation
 
 LocalOps can automatically spin up ephemeral/temporary services to run your code, for every pull request your team creates in Github. Each copy can be a full-stack spin-off when combined with [ops.json configuration](/environment/services/ops-json). Read on to learn more. 
 
-### How it works 
-1. Create a new service (say, `backend`) in your environment based on a specific Github repo and branch name (say, `main` branch)
+### How it works
+Create a [new environment](/environment/create) if one doesn't exist. This will create a VPC and EKS cluster to host the ephemeral services.
+
+1. Create a [new service](/environment/services/create) (say, `backend`) in the environment based on a specific Github repo and branch name (say, `main` branch)
 2. Turn on "Enable previews" in the service. 
 3. Create and save the service 
 
