@@ -98,6 +98,14 @@ The specific resource isn't considered for preview services / ephemeral environm
 
 The specific resource is considered only for preview services / ephemeral environments if this is `true`.
 
+### Overall Lifecycle 
+
+Resources are read from `ops.json` when the [service](/environment/services/create) is being [deployed](/environment/services/deploy). 
+
+1. If the resource dependency with the given `id` is seen for the first time, it is provisioned.
+2. If the resource dependency with the an existing `id` is missing, it is deleted automatically during the next service deployment .
+3. If any of the resource dependency properties are modified, they are updated automatically during the next service deployment.
+
 ### Accessing cloud resources 
 
 Your code can access these resources using the environment variables defined in `ops.json`. For example, you can add files/objects to the S3 bucket you defined in `ops.json` (see above), like:
@@ -150,11 +158,11 @@ For example, for the S3 bucket defined in `ops.json`, LocalOps automatically add
 
 As of now, you can define the following dependencies in `ops.json`. We plan to grow this list to cover other services in AWS. Please get in touch with us at help@localops.co if you need anything specific.
 
-1. Amazon S3 buckets - for static object storage (files, pictures, etc.,). [Learn more](/environment/services/aws/s3)
-2. Amazon RDS Instances - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
-3. Amazon Elastic cache clusters - for caching, queues, pub/sub.  [Learn more](/environment/services/aws/elasti-cache)
-4. Amazon SNS topics - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
-5. Amazon SQS queuees - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)  
+1. **Amazon S3 buckets** - for static object storage (files, pictures, etc.,). [Learn more](/environment/services/aws/s3)
+2. **Amazon RDS Instances** - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
+3. **Amazon Elastic cache clusters** - for caching, queues, pub/sub.  [Learn more](/environment/services/aws/elasti-cache)
+4. **Amazon SNS topics** - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
+5. **Amazon SQS queues** - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)  
 
 ### Configured for production use, by default
 
