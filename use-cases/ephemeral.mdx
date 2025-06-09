@@ -1,0 +1,81 @@
+---
+title: Preview environments (full stack)
+description: Spin up ephemeral services to test pull requests in isolation
+---
+
+## Overview 
+
+LocalOps can automatically spin up ephemeral/temporary services to run your code, for every pull request your team creates in Github. Each copy can be a full-stack spin-off when combined with [ops.json configuration](/environment/services/ops-json). Read on to learn more. 
+
+### How it works 
+1. Create a new service (say, `backend`) in your environment based on a specific Github repo and branch name (say, `main` branch)
+2. Turn on "Enable previews" in the service. 
+3. Create and save the service 
+
+From now onwards, LocalOps listens for all pull requests on the above repository and branch `main`.
+
+When a new pull request is raised in the same github repo, from source branch `f-feature-new` targeting to merge into `main` branch, 
+1. a new copy of the service `backend` is created in the same environment, referred to as "Preview service", with the latest commit of the PR branch as source. This new PR-based service is its own service with secrets, and other configuration copied from the main service.
+2. a new comment is posted on the PR page in Github containing the pubilc URL fo the service and a link to see deployment logs. 
+
+When the PR is closed or merged, this service is automatically deleted from your environment. 
+
+### Preview services 
+
+For each PR that is open, there will be a new *Preview service* created as per the workflow mentioned above. This is its own service with its own unique name. You can see it in "Services" section of the environment, right next to the main service running based on the target branch.
+
+### Automatic deployments
+
+When new commits are pushed to the PR branch, build & deployment steps are triggered automatically on the specific "Preview service" using the latest commit. 
+
+### Handling dependencies 
+
+Say your PR is raised from `f-feature-new` branch to get merged into `main` branch.
+
+#### Inter service dependencies
+
+Say your original service depended on another service in the same environment called "ML API". This dependency may be configured as secrets in the original service `Secrets` section as "ML_API_HOST" and "ML_API_SECRET". 
+
+You can update these keys in Secrets section to turn on "**Use in preview environments**" flag. It means that when a new "preview service" is created for on PR, the secrets & their are values from the original service are copied over to the "preview service" as well. 
+
+When the preview service comes up for any given PR, it comes up with same secrets "ML_API_HOST" and "ML_API_SECRET_KEY" set to point at the same "ML API" service. And it retains the dependency as main service. 
+
+![Service deps](/images/preview-service-secrets.png)
+
+**No limits**: Since preview service is its own service with its own secrets, if you want it to point at a different ML_API service, you can visit the service > secrets section in LocalOps console, to edit the secret. There is no limit on the dependencies you can configure for the ephemeral preview services.
+
+#### Isolated cloud resources
+
+Any service can define its cloud resource dependencies (like S3 bucket, SNS topic, RDS instance etc.,) in its [ops.json](/environment/services/ops-json) file. When a new service is created, all those resources defined in `ops.json` are provisioned exclusively for the service, automatically. And when the service is deleted, those resources are deleted automatically. 
+
+When a new preview service is created specifically for the PR, the same workflow applies. Existing existing `ops.json` configuration in the PR branch is read and new cloud resources are provisioned exclusively for the PR branch and the preview service. The preview service is its own isolated service running the PR branch's code. 
+
+**preview_only**: You can define `preview_only` in the dependencies if needed to spin up certain resources only in preview services. Or spin up same resources with different configuration, just for preview services. Say you want to provision a 10GB RDS instance for pull request previews but a 100GB RDS instance during other times. 
+
+In addition, resources in `ops.json` are configured differently in other ways by LocalOps, for preview services for speed of boot-up and cost savings. Backups, encryption and monitoring are turned off in cloud resources created for preview services.
+
+Following services can be defined in `ops.json` as on June 9 2025: 
+1. S3 buckets, 
+2. SNS topics, 
+3. SQS queues, 
+4. RDS instances & 
+5. Elastic cache clusters.
+
+#### Isolated cron service
+
+`ops.json` is processed exclusively for any given preview service. So any cron configuration defined within the `ops.json` is provisioned exclusively for the preview service. 
+
+Checkout [cron docs here](/environment/service/ops-json#configuring-cron-service) for more info. 
+
+#### Third party apps
+
+You may use 3rd party services like Slack, Google Apps, and others for Integration, Authentication, Notificaitons etc., You may define these dependencies in "Secrets" section of the main service. And when the preview services comes up for a given PR, secrets with **"Use in previews"** setting **turned on**, are copied over. 
+
+When this sharing isn't ideal in your case, you may follow one of the below strategies on a case by case basis.
+1. Wait till the preview service comes up first time for a given PR. After it comes up, you may manually create a new instance of your 3rd party app for the purpose of testing it in the preview service. And add its credentials in the preview service's secret section. 
+2. If the 3rd party allows you to do #1 via their API, you can do so in your application/service boot-up logic, when the preview service comes up. LocalOps passes in `LOC_PREVIEW=true` in all preview services as in-built environment variable. 
+3. When there is a possibility to share the same 3rd party integration app/id and create a new redirect URL in the app's settings via their API, you can do the same, as a simplified case of #2 above. LocalOps passes `LOC_HOST` environment variable with the latest public url of the service.
+
+Talk to us at help@localops.co and we can come up with alternate strategies to make 3rd party apps work in preview services.
+
+

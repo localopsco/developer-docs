@@ -27,7 +27,8 @@
             "pages": [
               "use-cases/public-saas",
               "use-cases/dedicated-infrastructure",
-              "use-cases/private-saas"
+              "use-cases/private-saas",
+              "use-cases/ephemeral"
             ]
           },
           {
