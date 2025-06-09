@@ -28,6 +28,10 @@ For each PR that is open, there will be a new *Preview service* created as per t
 
 When new commits are pushed to the PR branch, build & deployment steps are triggered automatically on the specific "Preview service" using the latest commit. 
 
+### LOPS_PREVIEW=true
+
+For all preview services, LocalOps passes LOPS_PREVIEW=true as environment variable so that your code can perform any custom logic suitable for this isolated preview setup.
+
 ### Handling dependencies 
 
 Say your PR is raised from `f-feature-new` branch to get merged into `main` branch.
@@ -65,7 +69,7 @@ Following services can be defined in `ops.json` as on June 9 2025:
 
 `ops.json` is processed exclusively for any given preview service. So any cron configuration defined within the `ops.json` is provisioned exclusively for the preview service. 
 
-Checkout [cron docs here](/environment/service/ops-json#configuring-cron-service) for more info. 
+Checkout [cron docs here](/environment/services/ops-json#configuring-cron-service) for more info. 
 
 #### Third party apps
 
@@ -73,8 +77,8 @@ You may use 3rd party services like Slack, Google Apps, and others for Integrati
 
 When this sharing isn't ideal in your case, you may follow one of the below strategies on a case by case basis.
 1. Wait till the preview service comes up first time for a given PR. After it comes up, you may manually create a new instance of your 3rd party app for the purpose of testing it in the preview service. And add its credentials in the preview service's secret section. 
-2. If the 3rd party allows you to do #1 via their API, you can do so in your application/service boot-up logic, when the preview service comes up. LocalOps passes in `LOC_PREVIEW=true` in all preview services as in-built environment variable. 
-3. When there is a possibility to share the same 3rd party integration app/id and create a new redirect URL in the app's settings via their API, you can do the same, as a simplified case of #2 above. LocalOps passes `LOC_HOST` environment variable with the latest public url of the service.
+2. If the 3rd party allows you to do #1 via their API, you can do so in your application/service boot-up logic, when the preview service comes up. LocalOps passes in `LOPS_PREVIEW=true` in all preview services as in-built environment variable. 
+3. When there is a possibility to share the same 3rd party integration app/id and create a new redirect URL in the app's settings via their API, you can do the same, as a simplified case of #2 above. LocalOps passes `LOPS_SVC_HOST` environment variable with the latest public url of the service.
 
 Talk to us at help@localops.co and we can come up with alternate strategies to make 3rd party apps work in preview services.
 
