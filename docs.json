@@ -93,8 +93,8 @@
             "group": "Services",
             "pages": [
               "environment/services/create",
-              "environment/services/deploy",
               "environment/services/ops-json",
+              "environment/services/deploy",
               {
                 "group": "Types of services",
                 "pages": [
