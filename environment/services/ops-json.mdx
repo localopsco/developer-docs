@@ -228,16 +228,18 @@ those HTTP endpoints on a specific schedule. You can do the same here in `ops.js
 
 ```json
 {
-  "cron": [
-    {
-      "schedule": "*/2 * * * *",
-      "path": "/api/v1/do-every-2-mins"
-    },
-    {
-      "schedule": "0 0 * * *",
-      "path": "/api/v1/do-every-morning"
-    }
-  ]
+  "cron": {
+    "cron_jobs": [
+      {
+        "schedule": "*/2 * * * *",
+        "path": "/api/v1/do-every-2-mins"
+      },
+      {
+        "schedule": "0 0 * * *",
+        "path": "/api/v1/do-every-morning"
+      }
+    ]
+  }
 }
 ```
 
@@ -262,12 +264,14 @@ Here's a comprehensive `ops.json` example:
 
 ```json
 {
-  "cron": [
-    {
-      "schedule": "*/2 * * * *",
-      "path": "/api/v1/sync-user-metrics"
-    }
-  ],
+  "cron": {
+    "cron_jobs": [
+      {
+        "schedule": "*/2 * * * *",
+        "path": "/api/v1/sync-user-metrics"
+      }
+    ]
+  },
   "dependencies": {
     "s3": {
       "buckets": [
