@@ -94,6 +94,7 @@
             "pages": [
               "environment/services/create",
               "environment/services/deploy",
+              "environment/services/ops-json",
               {
                 "group": "Types of services",
                 "pages": [

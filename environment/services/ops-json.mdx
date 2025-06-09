@@ -1,0 +1,306 @@
+---
+title: Configure ops.json
+description: Configure services programmatically using ops.json
+---
+
+## Overview
+
+The `ops.json` file allows you to declaratively define configuration for your services. 
+
+In your service configuration `ops.json`, you can define 
+- Cloud resources that your service requires. When you deploy your service, LocalOps automatically provisions these resources for you.
+- Cron services 
+- Sidecar containers (soon)
+
+## How it Works
+
+1. Add an `ops.json` file to your Github repository
+2. Declare configuration for your service in `ops.json`
+3. Commit and push to you repo. LocalOps will trigger a deployment while honouring `ops.json` configuration.
+
+
+## Automatic provisioning of cloud resources 
+
+Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database for caching, background jobs, etc., 
+
+You can declare these dependencies once in `ops.json`. LocalOps will provision these resources and ensure they are active & enabled for your service to use.
+
+### How to provision a cloud resource 
+
+In your `ops.json`, write a key called `dependencies` and fill up your dependency in the fillowing format. 
+
+```json
+{
+  "dependencies": {
+    "<cloud-resource-type>": [
+      {
+        "id": "<give-unique-id>",
+        "prefix": "<give-prefix-for-naming>",
+        //"...any other resource specific config",
+        "exports": {
+          "ENV-VAR-KEY": "$resource-property",
+          "ENV-VAR-KEY2": "$resource-property2"
+        }
+      }
+    ]
+  }
+}
+```
+
+You can define any number of cloud resources (say, buckets) for a given cloud resource type (S3).
+
+Here is an example:
+
+```json
+{
+  "dependencies": {
+    "s3": [
+      {
+        "id": "attachments",
+        "prefix": "attachments",
+        "exports": {
+          "ATTACHMENTS_BUCKET_ARN": "$arn",
+          "ATTACHMENTS_BUCKET_NAME": "$name"
+        },
+        "skip_preview": false,
+        "preview_only": false
+      }
+    ]
+  }
+}
+```
+
+### ID (`id`)
+
+Specify a unique alpha numeric string that is unique amongst all the other resouces of same resource type (say S3). LocalOps uses this to uniquely identify the resource, provision and manage it on your behalf in your cloud.
+
+If you change the ID (`id`), the resource will be deleted and replaced by any other new one.
+
+### Prefix (`prefix`)
+
+You can provide a prefix string to use in the name of all resources. In the above case, bucket created will have a name like `attachmentsbucket-23490823940`. If you change prefix string, the resource will be deleted and replaced by any other new one.
+
+### Environment Variables (`exports`)
+
+LocalOps automatically injects environment variables for each provisioned resource to your service contaienrs. 
+
+You can define the environment variable keys and specify the properties of the cloud resource to fill it up. So in above example, LocalOps will form an environment variable by the name `ATTACHMENTS_BUCKET_ARN` and pass ARN of the new S3 bucket to it. So that in your code, you can use it like:
+
+```nodejs
+console.log("bucket arn:", process.env.ATTACHMENTS_BUCKET_ARN)
+```
+
+### Skip preview (`skip_preview`)
+
+The specific resource isn't considered for preview services / ephemeral environments if this is `true`.
+
+### Preview only (`preview_only`)
+
+The specific resource is considered only for preview services / ephemeral environments if this is `true`.
+
+### Accessing cloud resources 
+
+Your code can access these resources using the environment variables defined in `ops.json`. For example, you can add files/objects to the S3 bucket you defined in `ops.json` (see above), like:
+
+```
+const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+
+const upload = async () => {
+  await s3.send(new PutObjectCommand({
+    Bucket: process.env.ATTACHMENTS_BUCKET_NAME, //NOTE! This is the same env var you defined in ops.json
+    Key: "hello.txt",
+    Body: "Hello there!",
+    ContentType: "text/plain"
+  }));
+  console.log("✅ Uploaded!");
+};
+
+upload().catch(console.error);
+```
+
+#### Automatic role based access
+
+In AWS based environments you spin up, every container (your code) runs with a pre-configured IAM role that provides implicit, authenticated, key-less access to any cloud resource (say S3). You can see the name of pre-configured IAM role in environment's dashboard. Any IAM policy can be added to the pre-configured role to give your code appropriate access to cloud resources. 
+
+For the resources defined in `ops.json`, LocalOps automatically generates necessary IAM permissions and add them as policies in the pre-conigured IAM role. Your code can just access the resources defined in `ops.json` by name and all calls made will be authenticated calls by default.
+
+For example, for the S3 bucket defined in `ops.json`, LocalOps automatically adds the following necessary IAM permissions in the pre-configured IAM role. 
+- Read and write objects
+- List bucket contents
+
+```json
+{
+  "Effect": "Allow",
+  "Action": [
+    "s3:GetObject",
+    "s3:PutObject",
+    "s3:DeleteObject",
+    "s3:ListBucket"
+  ],
+  "Resource": [
+    "arn:aws:s3:::your-bucket-name",
+    "arn:aws:s3:::your-bucket-name/*"
+  ]
+}
+```
+
+### Supported cloud resources 
+
+As of now, you can define the following dependencies in `ops.json`. We plan to grow this list to cover other services in AWS. Please get in touch with us at help@localops.co if you need anything specific.
+
+1. Amazon S3 buckets - for static object storage (files, pictures, etc.,). [Learn more](/environment/services/aws/s3)
+2. Amazon RDS Instances - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
+3. Amazon Elastic cache clusters - for caching, queues, pub/sub.  [Learn more](/environment/services/aws/elasti-cache)
+4. Amazon SNS topics - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
+5. Amazon SQS queuees - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)  
+
+### Configured for production use, by default
+
+All cloud resources are configured with production-grade security:
+- **Encryption at rest**: Enabled by default, for all data storage services (S3, RDS, Elastic Cache)
+- **Network isolation**: Resources are deployed within your environment's VPC wherever applicable.
+- **Private only**: Resources are deployed for private access only, from within your environment's VPC wherever applicable.
+- **Access control**: Least-privilege access is configured by default for applicable resources, using fine-grained IAM policies and IAM role.
+- **High availability**: Multi AZ setup is supported in configuration and can be turned on when needed 
+- **Monitoring**: Cloudwatch monitoring is turned on by default for applicable cloud resources. These metrics and logs can be seen inside out [built-in monitoring dashboard](/environment/monitoring/metrics).
+- **Backups tuned on**: Backups are turned ON for all applicable data storage services (RDS, Elastic Cache) with 30-day retention.
+
+### Ephemeral Preview environments 
+
+LocalOps can spin up ephemeral preview environments for your service, for each Github pull request to the configured target branch of the service. 
+
+Configuration for the supported cloud resources are tuned differently for these preview environments. To ensure
+- preview environments come up fast 
+- preview enviromments don't incur a lot of costs (say in the case of RDS)
+
+Following configurations are disabled in Pull request preview environments: 
+1. Backups
+2. Cloudwatch monitoring
+3. Multi-AZ setup
+4. Encryption
+
+# Configuring Cron service 
+
+It is a common pattern in many codebases and communities, to define cron logic inside HTTP request handlers and call those HTTP endpoints on a specific schedule. You can do the same here in `ops.json`.
+
+```json
+{
+  "cron": [
+    {
+      "schedule": "*/2 * * * *",
+      "path": "/api/v1/do-every-2-mins"
+    },
+    {
+      "schedule": "0 0 * * *",
+      "path": "/api/v1/do-every-morning"
+    }
+  ]
+}
+```
+
+### Cron arguments
+
+Define `cron` key in `ops.json` and add any number of scheduled hits by giving
+
+- schedule: Specify a spechedule using the same powerful crontab syntax. [Refer here](https://crontab.guru/) on how to define this.
+- path: Specify a path to hit. Your service's internal HOST is known at run time and hence you don't have to define the URL like `https://<host>/path`.
+
+LocalOps spins up an [implicit cron service](https://hub.docker.com/r/localopsroot/opscron) within your environment, to make the API calls to your service using its private Internal host name, as per the above schedule. 
+
+Crons only work if your service is either an "external/web serivce" or "internal" service. So that there are endpoints available to hit based on a schedule.
+
+## Complete Example
+
+Here's a comprehensive `ops.json` example:
+
+```json
+{
+  "cron": [
+    {
+      "schedule": "*/2 * * * *",
+      "path": "/api/v1/sync-user-metrics"
+    }
+  ],
+  "dependencies": {
+    "s3": {
+      "buckets": [
+        {
+          "id": "user-metrics-bucket",
+          "prefix": "metrics-data",
+          "exports": {
+            "MY_BUCKET_NAME1": "$name",
+            "MY_BUCKET_ARN1": "$arn"
+          }
+        }
+      ]
+    },
+    "sns": {
+      "topics": [
+        {
+          "id": "user-alerts-topic",
+          "prefix": "user-alerts",
+          "exports": {
+            "MY_SNS_TOPIC_NAME1": "$name",
+            "MY_SNS_TOPIC_ARN1": "$arn"
+          }
+        }
+      ]
+    },
+    "sqs": {
+      "queues": [
+        {
+          "id": "metrics-queue",
+          "prefix": "metrics-events",
+          "exports": {
+            "MY_SQS_QUEUE_NAME1": "$name",
+            "MY_SQS_QUEUE_ARN1": "$arn"
+          }
+        }
+      ]
+    },
+    "rds": {
+      "instances": [
+        {
+          "id": "user-data-db",
+          "prefix": "userdata",
+          "engine": "postgres",
+          "version": "17.5",
+          "storage_gb": 10,
+          "instance_type": "db.t4g.small",
+          "publicly_accessible": false,
+          "exports": {
+            "MY_RDS_INSTANCE_NAME": "$name",
+            "MY_RDS_INSTANCE_ARN": "$arn",
+            "MY_RDS_INSTANCE_ENDPOINT": "$endpoint",
+            "MY_RDS_INSTANCE_ADDRESS": "$address",
+            "MY_RDS_INSTANCE_USERNAME": "$username",
+            "MY_RDS_INSTANCE_PASSWORD_ARN": "$passwordArn",
+            "MY_RDS_INSTANCE_DB_NAME": "$dbName"
+          }
+        }
+      ]
+    },
+    "elasticache": {
+      "clusters": [
+        {
+          "id": "session-cache",
+          "prefix": "user-session",
+          "engine": "redis",
+          "version": "7.0",
+          "instance_type": "cache.t4g.small",
+          "num_nodes": 1,
+          "exports": {
+            "MY_ELASTICACHE_CLUSTER_NAME": "$name",
+            "MY_ELASTICACHE_CLUSTER_ARN": "$arn",
+            "MY_ELASTICACHE_CLUSTER_ENDPOINT": "$endpoint",
+            "MY_ELASTICACHE_CLUSTER_ADDRESS": "$address",
+            "MY_ELASTICACHE_CLUSTER_PORT": "$port"
+          }
+        }
+      ]
+    }
+  }
+}
+```
