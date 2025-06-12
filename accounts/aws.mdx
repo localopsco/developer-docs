@@ -24,36 +24,32 @@ cloud account, are done through its corresponding connection.
 1. Sign in to LocalOps.
 2. Click on **"Connections"** from the navigation pane on the left side.
 3. Click on **"Add connection"** button to create a new connection.
-4. Give the connection a name and provide other details on the screen.
-5. Choose **AWS** as **"Cloud provider"**.
-6. In the next screen, click on "Connect AWS account" button.
-7. In the AWS console, click on "Create stack". **Please do not change any value in Create stack screen you see inside
+4. In the next screen, click on "Connect AWS account" button. 
+5. You will be taken to AWS > CloudFormation console. In that screen, scroll down to click on "Create stack". **Please do not change any value in Create stack screen you see inside
    AWS. Each of the values represent your account and they must not be changed**. Once you see the stack creation
    complete, come back to LocalOps to see the connection becoming Active.
 
-We create a cloudformation stack in the target AWS account to create a new OIDC provider, IAM role and attach it with
-necessary permissions. Please read further below to know how this works.
+We create a new cloudformation stack to repesent our acesss. The stack will create a new OIDC provider, IAM role and attach it with
+relevant permissions for us to access your AWS account. Please read further below to know how this works.
 
 ### To your customer cloud account
 
 1. Sign in to LocalOps.
 2. Click on **"Connections"** from the navigation pane on the left side.
 3. Click on **"Add connection"** button to create a new connection.
-4. Give the connection a name and provide other details on the screen.
-5. Choose **AWS** as **"Cloud provider"**.
-6. In the next screen, find the instructions pane and copy the instructions.
-7. Send the instructions to your point of contact at your customer end.
-8. Your point of contact or anyone in your customer's end using the connection link must have AWS console access with
-   Administrator permissions to complete the process. They must be logged into their AWS account before they can click
+4. In the new connection screen, give the connection a name
+5. Find the instructions text below th form. Copy and send those instructions to your point of contact at your customer end.
+8. Your point of contact or anyone in your customer's end can use the connection link to connect their AWS account with LocalOps. They must have AWS console access with
+   Administrator permissions to complete this process. They must be logged into their AWS account before they can click
    on the link sent in instructions. In the AWS console, please ask them to click on "Create stack" button.
 
-   <Note>
-     Please ask them not to change any value in "Create stack" screen inside AWS. Each of the values represent your
-     account and they must not be changed
-   </Note>
+<Note>
+   Please ask them not to change any value in "Create stack" screen inside AWS. Each of the values represent your
+   account and they must not be changed
+</Note>
 
-   Once the stack creation is complete, you can come back to LocalOps connections page to see the connection becoming
-   Active.
+Once the stack creation is complete, you can come back to LocalOps connections page to see the connection becoming
+Active.
 
 We create a cloudformation stack in the target AWS account to create a new OIDC provider, IAM role and attach it with
 necessary permissions. Please read further below to know how this works.
