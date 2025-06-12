@@ -4,20 +4,22 @@ title: What's inside?
 
 Each Application enivronment comprises of
 
+**Classic VPC setup**
 - Dedicated Virtual private cloud (VPC)
 - Private subnets
 - Public subnets
 - NAT gateway
 - Internet gateway
-- Kubernetes cluster (E.g., EKS in AWS)
+
+**Managed kubernetes cluster**
+- Cloud managed Kubernetes cluster (E.g., EKS in AWS)
 - Compute servers and their default volumes (E.g., EC2 in AWS)
-- Kubernetes companion deployments
+- Kubernetes components
   - Prometheus
   - Loki
   - Grafana
+- ELB (Elastic load balancer) for receiving all in-bound HTTP traffic 
 - 👉 Your App
-- Unique Domain for your app
-- Auto-renewing SSL certificate for the unique domain
 
 Let us go over each of them in detail.
 
