@@ -8,7 +8,7 @@ This guide will show you steps to create SNS topics and access them from your se
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more SNS topics, you can add `ops.json` in the root directory of Github repo you've
-connected for the service. And add SNS topics as dependency, like below.
+connected for the service. And add SNS topics as a dependency, like below.
 
 ```json
 {
@@ -33,10 +33,10 @@ You can add as many topics as you want.
 
 Arguments you can add in each topic object above:
 
-1. `id` - Alpha numeric string. Must be unique amongst the Topics you've declared above. Changing this string will
+1. `id` - Alphanumeric string. Must be unique amongst the Topics you've declared above. Changing this string will
    replace the original topic with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in the name of your Topic. Changing this string will
-   replace the original topic with new topic.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your topic. Changing this string will replace
+   the original topic with new topic.
 3. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
    the properties of the Topic provisioned. See below for available properties.
 

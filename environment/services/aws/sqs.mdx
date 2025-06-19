@@ -3,13 +3,13 @@ title: SQS
 description: Provision queues - Standard/FIFO in AWS
 ---
 
-Amazon SQS offers fully managed FIFO / standard queues. You service(s) may want to add items/jobs/messages to a queue
+Amazon SQS offers fully managed FIFO / standard queues. Your service(s) may want to add items/jobs/messages to a queue
 and process them later. This guide will show you steps to create and access Amazon SQS queues from your services.
 
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more SQS queues, you can add `ops.json` in the root directory of Github repo you've
-connected for the service. And add SQS queues as dependency, like below.
+connected for the service. And add SQS queues as a dependency, like below.
 
 ```json
 {
@@ -35,10 +35,10 @@ You can add as many queues as you want.
 
 Arguments you can add in each queue object above:
 
-1. `id` - Alpha numeric string. Must be unique amongst the queues you've declared above. Changing this string will
+1. `id` - Alphanumeric string. Must be unique amongst the queues you've declared above. Changing this string will
    replace the original queue with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name your queue. Changing this string will replace the
-   original queue with new queue.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your queue. Changing this string will replace
+   the original queue with new queue.
 3. `fifo` - Set this to `true` if you need a FIFO queue. Set it to false or leave out the fifo key if you want a
    standard queue instead.
 4. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are

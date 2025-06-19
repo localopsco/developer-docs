@@ -3,13 +3,13 @@ title: RDS
 description: Provision Amazon RDS databases - MySQL/Postgres
 ---
 
-You service(s) may want to store/access data in Postgres/MySQL database. This guide will show you steps to create and
+Your service(s) may want to store/access data in Postgres/MySQL database. This guide will show you steps to create and
 access Amazon RDS databases that offer fully managed Postgres/MySQL databases.
 
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more RDS instances, you can add `ops.json` in the root directory of Github repo
-you've connected for the service. And add RDS instances as dependency, like below.
+you've connected for the service. And add RDS instances as a dependency, like below.
 
 ```json
 {
@@ -44,10 +44,10 @@ You can add as many RDS instances as you want.
 
 Arguments you can add in each instance object above:
 
-1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will
+1. `id` - Alphanumeric string. Must be unique amongst the instances you've declared above. Changing this string will
    replace the original instance with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your instance. Changing this string will replace
-   the original instance with new instance.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your instance. Changing this string will
+   replace the original instance with new instance.
 3. `engine` - Provide either `postgres` or `mysql`. Default: `postgres`
 4. `version` - Pick a version for your postgres or mysql database. Ensure RDS supports it, by referring to AWS docs -
    [Postgres](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-versions.html) /

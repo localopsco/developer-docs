@@ -3,13 +3,13 @@ title: S3
 description: Provision S3 buckets for object storage
 ---
 
-You service(s) may want to store/access files in S3. This guide will show you steps to create and access s3 buckets from
-your services.
+Your service(s) may want to store/access files in S3. This guide will show you steps to create and access s3 buckets
+from your services.
 
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more S3 buckets, you can add `ops.json` in the root directory of Github repo you've
-connected for the service. And add S3 buckets as dependency, like below.
+connected for the service. And add S3 buckets as a dependency, like below.
 
 ```json
 {
@@ -34,10 +34,10 @@ You can add as many buckets as you want.
 
 Arguments you can add in each bucket object above:
 
-1. `id` - Alpha numeric string. Must be unique amongst the buckets you've declared above. Changing this string will
+1. `id` - Alphanumeric string. Must be unique amongst the buckets you've declared above. Changing this string will
    replace the original bucket with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name your bucket. Changing this string will replace the
-   original bucket with new bucket.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your bucket. Changing this string will
+   replace the original bucket with new bucket.
 3. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
    the properties of the bucket provisioned. See below for available properties.
 

@@ -3,13 +3,13 @@ title: Elasticache
 description: Provision AWS Elastic Cache clusters - Redis/Memcache
 ---
 
-You service(s) may want to store/access data in a Redis/Memcache instance. This guide will show you steps to create and
-access Amazon elasticache cluster that offer fully managed Redis/Memcache databases.
+Your service(s) may want to store/access data in a Redis/Memcache instance. This guide will show you steps to create and
+access Amazon ElastiCache cluster that offers fully managed Redis/Memcache databases.
 
 ## Declarative & Automatic using `ops.json`:
 
-For your service, if you need one or more Elastic cache cluster, you can add `ops.json` in the root directory of Github
-repo you've connected for the service. And add elastic cache clusters as dependency, like below.
+For your service, if you need one or more ElastiCache clusters, you can add `ops.json` in the root directory of Github
+repo you've connected for the service. And add ElastiCache clusters as a dependency, like below.
 
 ```json
 {
@@ -39,10 +39,10 @@ You can add as many clusters as you want.
 
 Arguments you can add in each cluster object above:
 
-1. `id` - Alpha numeric string. Must be unique amongst the instances you've declared above. Changing this string will
+1. `id` - Alphanumeric string. Must be unique amongst the instances you've declared above. Changing this string will
    replace the original cluster with new one.
-2. `prefix` - Alpha numeric string. Will be used as a prefix in name of your cluster. Changing this string will replace
-   the original cluster with new cluster.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your cluster. Changing this string will
+   replace the original cluster with new cluster.
 3. `engine` - Provide either `redis` or `memcache`. Default: ``. If you leave this out, we will skip creating the
    cluster.
 4. `version` - Pick a version for your redis or memcache database. Ensure Elastic Cache supports it, by referring to
@@ -54,18 +54,16 @@ Arguments you can add in each cluster object above:
    For Memcached, this value must be between 1 and 40. If this number is reduced on subsequent runs, the highest
    numbered nodes will be removed.
 7. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
-   the properties of the Elastic cache cluster provisioned. See below for available properties.
+   the properties of the ElastiCache cluster provisioned. See below for available properties.
 
-<Warning>
-  Changing `id` or `prefix` string will delete & replace the original Elastic Cache cluster with new one.
-</Warning>
+<Warning>Changing `id` or `prefix` string will delete & replace the original ElastiCache cluster with new one.</Warning>
 
-Available properties of the Elastic cache cluster to use in `exports`:
+Available properties of the ElastiCache cluster to use in `exports`:
 
-1. `$name` - Name of the Elastic cache cluster
-2. `$arn` - Amazon resource name of the Elastic cache clsuter
+1. `$name` - Name of the ElastiCache cluster
+2. `$arn` - Amazon resource name of the ElastiCache cluster
 3. `$endpoint` - The connection endpoint in `address:port` format.
-4. `$address` - Specifies the DNS address of the elastic cache master node.
+4. `$address` - Specifies the DNS address of the ElastiCache master node.
 5. `$port` - Specifies the port you will use to access the cluster node.
 
 ### Lifecycle:
