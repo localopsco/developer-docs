@@ -2,8 +2,8 @@
 title: I have a docker compose setup
 ---
 
-Follow this guide to package your application as a Helm chart using the docker-compose.yaml file that you already have.
-We will use a simple example containing an application connected to a PostgreSQL database.
+Follow this guide to package your application as a Helm chart using the `docker-compose.yaml` file that you already
+have. We will use a simple example containing an application connected to a PostgreSQL database.
 
 ```yaml compose.yml
 volumes:
@@ -15,8 +15,8 @@ services:
     environment:
       DB_HOST: database
       DB_NAME: app_db
-      DB_USER: postrgres
-      DB_PASS: postrgres
+      DB_USER: postgres
+      DB_PASS: postgres
       DB_PORT: 5432
       APP_PORT: 8000
     ports:
@@ -28,7 +28,7 @@ services:
     image: postgres:14.8-alpine3.18
     environment:
       POSTGRES_DB: app_db
-      POSTGRES_USER: postrgres
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - pg_app_data:/var/lib/postgresql/data
@@ -36,11 +36,12 @@ services:
       - '5432:5432'
 ```
 
-## Create a helm chart from your Docker Compose
+## Create a Helm chart from your Docker Compose
 
-1. Create a directory and set up the Helm Chart Directory Structure in it using `helm create example-app-chart` command.
-2. Write a deployment object (kubernetes manifest) for each of the services from docker-compose.yaml file, in the
-   templates directory.They define the desired state for application pods, ensuring that the specified number of
+1. Create a directory and set up the Helm Chart Directory Structure in it using the `helm create example-app-chart`
+   command.
+2. Write a deployment object (Kubernetes manifest) for each of the services from the `docker-compose.yaml` file, in the
+   templates directory. They define the desired state for application pods, ensuring that the specified number of
    replicas of the application is running at any given time.
 
 ```yaml templates/deployments.yaml

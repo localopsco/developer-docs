@@ -27,7 +27,7 @@ spec:
             - containerPort: 8080
           env:
             - name: APP_PORT
-              value: 8080
+              value: '8080'
             - name: DB_USER
               value: '{{ .Values.db.user }}'
             - name: DB_PASS
@@ -38,7 +38,7 @@ spec:
               value: '{{ .Values.db.port }}'
 ```
 
-You can set the values for these environment variables directly, such as APP_PORT from this example.
+You can set the values for these environment variables directly, such as `APP_PORT` in this example.
 
 You can also use Helm values to customize your application's configuration for each environment you wish to create.
 
@@ -50,4 +50,4 @@ db:
   port: 5432
 ```
 
-The environment variables `DB_USER`, `DB_PASS`, `DB_HOST` and `DB_PORT` are set dynamically during each deployment.
+The environment variables `DB_USER`, `DB_PASS`, `DB_HOST`, and `DB_PORT` are set dynamically during each deployment.

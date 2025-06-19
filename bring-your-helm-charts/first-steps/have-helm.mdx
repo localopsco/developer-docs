@@ -4,8 +4,8 @@ title: I have a Helm Chart
 
 Awesome! You have everything you need to get your deployments running.
 
-Next step is to publish your helm chart. Checkout [this guide](/bring-your-helm-charts/publish/ecr) to publish your Helm
-chart to Amazon ECR (Elastic Container Registry).
+The next step is to publish your Helm chart. Check out [this guide](/bring-your-helm-charts/publish/ecr) to publish your
+Helm chart to Amazon ECR (Elastic Container Registry).
 
 <Info>
   LocalOps currently can access Helm charts stored in Amazon ECR. Support for other registries will be coming soon.
@@ -13,12 +13,12 @@ chart to Amazon ECR (Elastic Container Registry).
 
 Once you finish publishing your Helm chart, follow these steps:
 
-1. Create an [App](https://help.localops.co/en/articles/9580323-apps)
+1. Create an [App](https://help.localops.co/en/articles/9580323-apps).
 2. Create a [Release](https://help.localops.co/en/articles/9582027-releases) for each version of your Helm chart that
    you wish to deploy.
-3. Create a [Cloud Connection](/accounts/aws) to the target cloud account's where you would like to create your app
+3. Create a [Cloud Connection](/accounts/aws) to the target cloud account where you would like to create your app
    environments.
-4. Select the desired connection, specific application, release version, and the environment template to be applied and
-   proceed to create an [environment](https://help.localops.co/en/articles/9582075-app-environments).
+4. Select the desired connection, specific application, release version, and the environment template to be applied,
+   then proceed to create an [environment](https://help.localops.co/en/articles/9582075-app-environments).
 
 That's it.
