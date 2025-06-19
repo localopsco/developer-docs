@@ -7,7 +7,7 @@ service repo and branch name.
 
 ### Automatic deployment
 
-This is written for a github repository. Same steps are applicable for almost all git providers.
+This is written for a GitHub repository. Same steps are applicable for almost all git providers.
 
 If you have a local development environment for the git repository configured for the given service, you can simply
 follow these steps to start deployment.
@@ -18,9 +18,9 @@ $ ..add commits
 $ git push <remote-name> <branch-name>
 ```
 
-If your github org doesn't allow direct git push on the branch, you can ask your team to raise pull requests (PRs)
-targeting the configured branch name of the service. If you merge the PR, a new dpeloyment will start in LocalOps with
-the latest commit on that branch.
+If your GitHub organization doesn't allow direct git push on the branch, you can ask your team to raise pull requests
+(PRs) targeting the configured branch name of the service. If you merge the PR, a new deployment will start in LocalOps
+with the latest commit on that branch.
 
 Or if you directly edit files in Github website and make new commits on the configured branch name of the service, a new
 deployment will start.
@@ -31,7 +31,7 @@ see the logs.
 ### Manual deployment
 
 1. Click on "environments" on the left
-2. Navigate inside relevant environment
+2. Navigate into the relevant environment
 3. Navigate to Services tab
 4. Click on the service where you want to trigger new deployment
 5. On the top right corner, click on "Deploy".

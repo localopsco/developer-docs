@@ -18,7 +18,7 @@ In your service configuration `ops.json`, you can define
 
 1. Add an `ops.json` file to your Github repository
 2. Declare configuration for your service in `ops.json`
-3. Commit and push to you repo. LocalOps will trigger a deployment while honouring `ops.json` configuration.
+3. Commit and push to your repo. LocalOps will trigger a deployment while honoring `ops.json` configuration.
 
 ## Automatic provisioning of cloud resources
 
@@ -30,7 +30,7 @@ active & enabled for your service to use.
 
 ### How to provision a cloud resource
 
-In your `ops.json`, write a key called `dependencies` and fill up your dependency in the fillowing format.
+In your `ops.json`, write a key called `dependencies` and fill up your dependency in the following format.
 
 ```json
 {
@@ -138,7 +138,7 @@ const upload = async () => {
       Key: 'hello.txt',
       Body: 'Hello there!',
       ContentType: 'text/plain',
-    }),
+    })
   );
   console.log('✅ Uploaded!');
 };

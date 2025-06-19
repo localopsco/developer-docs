@@ -6,18 +6,18 @@ Every environment comes pre-installed with its own instance of open source [Loki
 [Grafana](https://grafana.com/oss/). Grafana will be running on its own URL for each environment and must be used to see
 all logs collected from your environment.
 
-_Grafana is simple to use yet very powerful in how you can customise the setup for yourself._
+_Grafana is simple to use yet very powerful in how you can customize the setup for yourself._
 
 ### Print logs
 
-Your application should be printing logs to STDOUT or STDERR. These logs will be collected automatically by pre-install
-Loki and kept available for you to view inside Grafana dashboard.
+Your application should be printing logs to STDOUT or STDERR. These logs will be collected automatically by
+pre-installed Loki and kept available for you to view inside Grafana dashboard.
 
 ### See logs
 
 Grafana dashboard can be opened from Monitoring tab, in Environment page.
 
-Logs are collected and kept organised under a Kubernetes namespace. Your application is hosted in a specific Kuberntes
+Logs are collected and kept organised under a Kubernetes namespace. Your application is hosted in a specific Kubernetes
 namespace using which you can filter and see logs under Explore section.
 
 ### Custom dashboards
