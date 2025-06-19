@@ -219,7 +219,7 @@ Read more about [.dockerignore here](https://docs.docker.com/build/building/cont
 <Note>
   Creating a `.dockerignore` file and adding folders like `node_modules` is must, since dependencies will be installed
   while building the image based on the platform preferences used. Copying those from file system will overwrite the
-  installed dependecies and might error out during deployment
+  installed dependencies and might fail during deployment
 </Note>
 
 ### Run DB migration inside docker image
@@ -238,8 +238,8 @@ python manage.py migrate
 exec "$@"
 ```
 
-Optionally you can have a seperate image to run your DB migrations. In production setup, it is advisable to have
-seperate image to run DB migrations.
+Optionally you can have a separate image to run your DB migrations. In production setup, it is advisable to have
+separate image to run DB migrations.
 
 ### Create [Dockerfile](https://docs.docker.com/reference/dockerfile/)
 
