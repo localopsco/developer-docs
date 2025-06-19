@@ -2,9 +2,10 @@
 title: What's inside?
 ---
 
-Each Application enivronment comprises of
+Each Application environment comprises
 
 **Classic VPC setup**
+
 - Dedicated Virtual private cloud (VPC)
 - Private subnets
 - Public subnets
@@ -12,13 +13,14 @@ Each Application enivronment comprises of
 - Internet gateway
 
 **Managed kubernetes cluster**
+
 - Cloud managed Kubernetes cluster (E.g., EKS in AWS)
 - Compute servers and their default volumes (E.g., EC2 in AWS)
 - Kubernetes components
   - Prometheus
   - Loki
   - Grafana
-- ELB (Elastic load balancer) for receiving all in-bound HTTP traffic 
+- ELB (Elastic load balancer) for receiving all in-bound HTTP traffic
 - 👉 Your App
 
 Let us go over each of them in detail.
@@ -35,7 +37,7 @@ Within the dedicated network / VPC, LocalOps creates private subnets to host dat
 
 ### Public subnets
 
-Similar to public subnets, LocalOps creates public subnets to host servers having public IP. For example, Internet
+Similar to private subnets, LocalOps creates public subnets to host servers having public IP. For example, Internet
 gateway.
 
 ### NAT gateway
