@@ -35,17 +35,19 @@ In your `ops.json`, write a key called `dependencies` and fill up your dependenc
 ```json
 {
   "dependencies": {
-    "<cloud-resource-type>": [
-      {
-        "id": "<give-unique-id>",
-        "prefix": "<give-prefix-for-naming>",
-        //"...any other resource specific config",
-        "exports": {
-          "ENV-VAR-KEY": "$resource-property",
-          "ENV-VAR-KEY2": "$resource-property2"
+    "<cloud-service-type>": {
+      "<cloud-resource-type>": [
+        {
+          "id": "<give-unique-id>",
+          "prefix": "<give-prefix-for-naming>",
+          //"...any other resource specific config",
+          "exports": {
+            "ENV-VAR-KEY": "$resource-property",
+            "ENV-VAR-KEY2": "$resource-property2"
+          }
         }
-      }
-    ]
+      ]
+    }
   }
 }
 ```
@@ -57,18 +59,20 @@ Here is an example:
 ```json
 {
   "dependencies": {
-    "s3": [
-      {
-        "id": "attachments",
-        "prefix": "attachments",
-        "exports": {
-          "ATTACHMENTS_BUCKET_ARN": "$arn",
-          "ATTACHMENTS_BUCKET_NAME": "$name"
-        },
-        "skip_preview": false,
-        "preview_only": false
-      }
-    ]
+    "s3": {
+      "buckets": [
+        {
+          "id": "attachments",
+          "prefix": "attachments",
+          "exports": {
+            "ATTACHMENTS_BUCKET_ARN": "$arn",
+            "ATTACHMENTS_BUCKET_NAME": "$name"
+          },
+          "skip_preview": false,
+          "preview_only": false
+        }
+      ]
+    }
   }
 }
 ```
