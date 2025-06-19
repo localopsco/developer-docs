@@ -7,13 +7,15 @@ mode: center
 <Update label="June 18, 2025">
 ## Rollback deployments
 
-You can now roll back to any previous commit directly from the LocalOps console. 
+You can now roll back to any previous commit directly from the LocalOps console.
 
-In Services > deployments tab, just press on the "Re-deploy" button in any of the past successful deployments. We’ll fetch that commit, rebuild, and redeploy it—restoring your app exactly as it was.
+In Services > deployments tab, just press on the "Re-deploy" button in any of the past successful deployments. We’ll
+fetch that commit, rebuild, and redeploy it—restoring your app exactly as it was.
 
-Previously, we relied on developers to push a new commit to reverse changes. But in reality, that’s often painful. Reverting complex changes in a fresh commit isn’t always straightforward.
+Previously, we relied on developers to push a new commit to reverse changes. But in reality, that’s often painful.
+Reverting complex changes in a fresh commit isn’t always straightforward.
 
-So we’ve built an explicit rollback mechanism—a safer, cleaner, and faster way to go back to a known-good version. 
+So we’ve built an explicit rollback mechanism—a safer, cleaner, and faster way to go back to a known-good version.
 
 Read more on our release [blog post here](https://localops.co/blog/spin-up-cloud-resources-using-json).
 
@@ -22,8 +24,8 @@ Read more on our release [blog post here](https://localops.co/blog/spin-up-cloud
 <Update label="June 9, 2025">
 ## Configure cloud resources using ops.json
 
-You can add a new file called `ops.json` in your Git repo to declare cloud resources for serivices to use. Including AWS
-S3 buckets, SNS topics, SQS queues, RDS instances, Elastic cache clusters etc.,
+You can add a new file called `ops.json` in your Git repo to declare cloud resources for services to use. Including AWS
+S3 buckets, SNS topics, SQS queues, RDS instances, ElasticCache clusters etc.,
 
 LocalOps will provision these resources in your cloud account with production grade security, when the corresponding
 service is deployed.
@@ -120,9 +122,9 @@ you push your code, it gets pulled and built right away. Builds no longer have t
 #### Deploy Micro Services
 
 Each service that exposes a port, gets a new unique `service alias`. It is a string that you can see in Service screen
-and which you can use a alias for the specific service’s internal DNS host name.
+and which you can use as an alias for the specific service’s internal DNS host name.
 
-You can add this `service alias` as `secret` in the dependent service. At run time, LocalOps replaces that string with
+You can add this `service alias` as a `secret` in the dependent service. At run time, LocalOps replaces that string with
 the actual internal DNS host name. Your code can simply consume the secret as environment variable and connect to the
 service.
 
@@ -132,7 +134,7 @@ Learn more in our docs here - https://docs.localops.co/micro-services
 
 You may want to create RDS database, S3 bucket, SNS topic or a SQS queue to fulfill business logic. We wanted to make
 this process easier so that you can write Terraform or Pulumi scripts to create these resources for each of your
-environments. So we have exposed VPC and subent IDs that we provision and manage in your AWS account. You can use these
+environments. So we have exposed VPC and subnet IDs that we provision and manage in your AWS account. You can use these
 IDs as variables in your IaC stack (Terraform/Pulumi/OpenTofu) to create any cloud resource you need in AWS.
 
 Read more in our
@@ -233,14 +235,14 @@ You can now scale up/down the underlying servers powering your environment, manu
 Visit “Scaling” tab in your environment page to pick a supported Node type (EC2 instance type in case of AWS) and save.
 Existing worker nodes will be seamlessly replaced by new set of worker nodes.
 
-You can also set a higher number of Node count. New worker nodes wll get provisioned automatically within a minute or
+You can also set a higher number of Node count. New worker nodes will get provisioned automatically within a minute or
 two.
 
 Read the announcement here: https://localops.co/blog/scale-app-environments
 
 </Update>
 
-For previous year. Checkout [2024](/changelogs/2024)
+For the previous year, check out [2024](/changelogs/2024)
 
 [demo]: https://cal.com/anand-localops/founder-connect
 [signup]: https://console.localops.co/signup

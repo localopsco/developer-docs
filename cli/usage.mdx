@@ -2,10 +2,10 @@
 title: Usage
 ---
 
-LocalOps CLI `ops` can be used to get shell access to the underlying kubernetes cluster of an environment.
+LocalOps CLI `ops` can be used to get shell access to the underlying Kubernetes cluster of an environment.
 
 ```sh
-Localops CLI
+LocalOps CLI
 
 Usage:
   ops [command]
@@ -13,22 +13,22 @@ Usage:
 Available Commands:
   completion        Generate the autocompletion script for the specified shell
   help              Help about any command
-  login             Login to Localops Account
-  logout            Logout of Localops Account
-  update-kubeconfig Update current context to environment kubernetes cluster
-  version           Localops CLI Version
+  login             Login to LocalOps Account
+  logout            Logout of LocalOps Account
+  update-kubeconfig Update current context to environment Kubernetes cluster
+  version           LocalOps CLI Version
 
 Flags:
-  -h, --help   help for lops
+  -h, --help   help for ops
 
 Use "ops [command] --help" for more information about a command.
 ```
 
-To get shell access, you have to
+To get shell access, you need to
 
-1. Login to your Localops account
-2. Use `ops` cli to set kubernetes context of kubectl cli to point at the environment's kubernetes cluster.
-3. Then Use `kubectl` to inspect the cluster.
+1. Login to your LocalOps account
+2. Use `ops` CLI to set Kubernetes context of `kubectl` CLI to point at the environment's Kubernetes cluster.
+3. Then use `kubectl` to inspect the cluster.
 
 ### Login to LocalOps
 
