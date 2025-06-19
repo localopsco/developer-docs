@@ -18,31 +18,12 @@
             "pages": [
               "index",
               "howitworks",
-              "support",
-              "compatibility"
-            ]
-          },
-          {
-            "group": "Deployment Use cases",
-            "pages": [
               "use-cases/public-saas",
               "use-cases/dedicated-infrastructure",
               "use-cases/private-saas",
-              "use-cases/ephemeral"
-            ]
-          },
-          {
-            "group": "Accounts",
-            "pages": [
-              {
-                "group": "Cloud accounts",
-                "pages": [
-                  "accounts/aws",
-                  "accounts/azure",
-                  "accounts/gcp"
-                ]
-              },
-              "accounts/connect-github"
+              "use-cases/ephemeral",
+              "support",
+              "compatibility"
             ]
           },
           {
@@ -56,6 +37,20 @@
               "guides/spa/angular",
               "guides/spa/ember",
               "guides/spa/vue"
+            ]
+          },
+          {
+            "group": "Connections",
+            "pages": [
+              {
+                "group": "Cloud accounts",
+                "pages": [
+                  "accounts/aws",
+                  "accounts/azure",
+                  "accounts/gcp"
+                ]
+              },
+              "accounts/connect-github"
             ]
           },
           {
@@ -96,29 +91,19 @@
               "environment/services/create",
               "environment/services/ops-json",
               "environment/services/deploy",
+              "environment/services/web",
+              "environment/services/internal",
+              "environment/services/workers",
+              "environment/services/job",
+              "environment/services/cronjob",
               {
-                "group": "Types of services",
+                "group": "AWS services",
                 "pages": [
-                  "environment/services/web",
-                  "environment/services/internal",
-                  "environment/services/workers",
-                  "environment/services/job",
-                  "environment/services/cronjob"
-                ]
-              },
-              {
-                "group": "Use cloud services",
-                "pages": [
-                  {
-                    "group": "AWS",
-                    "pages": [
-                      "environment/services/aws/s3",
-                      "environment/services/aws/rds",
-                      "environment/services/aws/elasti-cache",
-                      "environment/services/aws/sqs",
-                      "environment/services/aws/sns"
-                    ]
-                  }
+                  "environment/services/aws/s3",
+                  "environment/services/aws/rds",
+                  "environment/services/aws/elasti-cache",
+                  "environment/services/aws/sqs",
+                  "environment/services/aws/sns"
                 ]
               },
               "environment/services/micro-services",
