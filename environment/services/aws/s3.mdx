@@ -1,6 +1,6 @@
 ---
-title: S3
-description: Provision S3 buckets for object storage
+title: S3 Buckets
+description: Provision S3 buckets as object storage for files and attachments
 ---
 
 Your service(s) may want to store/access files in S3. This guide will show you steps to create and access s3 buckets
@@ -9,7 +9,11 @@ from your services.
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more S3 buckets, you can add `ops.json` in the root directory of Github repo you've
-connected for the service. And add S3 buckets as a dependency, like below.
+connected for the service. 
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add S3 buckets as a dependency, like below.
 
 ```json
 {

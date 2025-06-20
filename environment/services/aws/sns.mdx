@@ -1,5 +1,5 @@
 ---
-title: SNS
+title: SNS Topics
 description: Provision Amazon SNS topics for pub/sub communication
 ---
 
@@ -8,7 +8,11 @@ This guide will show you steps to create SNS topics and access them from your se
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more SNS topics, you can add `ops.json` in the root directory of Github repo you've
-connected for the service. And add SNS topics as a dependency, like below.
+connected for the service. 
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add SNS topics as a dependency, like below.
 
 ```json
 {

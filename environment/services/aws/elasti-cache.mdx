@@ -1,5 +1,5 @@
 ---
-title: Elasticache
+title: Elasticache Redis & Memcache
 description: Provision AWS Elastic Cache clusters - Redis/Memcache
 ---
 
@@ -9,28 +9,34 @@ access Amazon ElastiCache cluster that offers fully managed Redis/Memcache datab
 ## Declarative & Automatic using `ops.json`:
 
 For your service, if you need one or more ElastiCache clusters, you can add `ops.json` in the root directory of Github
-repo you've connected for the service. And add ElastiCache clusters as a dependency, like below.
+repo. 
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add ElastiCache clusters as a dependency, like below.
 
 ```json
 {
   "dependencies": {
-    "clusters": [
-      {
-        "id": "test123",
-        "prefix": "testdep123",
-        "engine": "redis",
-        "version": "7.0",
-        "instance_type": "cache.t4g.small",
-        "num_nodes": 1,
-        "exports": {
-          "MY_ELASTICACHE_CLUSTER_NAME": "$name",
-          "MY_ELASTICACHE_CLUSTER_ARN": "$arn",
-          "MY_ELASTICACHE_CLUSTER_ENDPOINT": "$endpoint",
-          "MY_ELASTICACHE_CLUSTER_ADDRESS": "$address",
-          "MY_ELASTICACHE_CLUSTER_PORT": "$port"
+    "elasticache": {
+      "clusters": [
+        {
+          "id": "test123",
+          "prefix": "testdep123",
+          "engine": "redis",
+          "version": "7.0",
+          "instance_type": "cache.t4g.small",
+          "num_nodes": 1,
+          "exports": {
+            "MY_ELASTICACHE_CLUSTER_NAME": "$name",
+            "MY_ELASTICACHE_CLUSTER_ARN": "$arn",
+            "MY_ELASTICACHE_CLUSTER_ENDPOINT": "$endpoint",
+            "MY_ELASTICACHE_CLUSTER_ADDRESS": "$address",
+            "MY_ELASTICACHE_CLUSTER_PORT": "$port"
+          }
         }
-      }
-    ]
+      ]
+    }
   }
 }
 ```
