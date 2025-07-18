@@ -16,10 +16,10 @@ ephemeral services.
 
 1. Create a [new service](/environment/services/create) (say, `backend`) in the environment based on a specific Github
    repo and branch name (say, `main` branch)
-2. Turn on "Enable previews" in the service.
+2. Turn on "Enable pull request previews" in the service.
 3. Create and save the service
 
-From now onwards, LocalOps listens for all pull requests on the above repository and branch `main`.
+From now onwards, LocalOps listens for all pull requests created in the above repository and against the branch configured in the service.
 
 When a new pull request is raised in the same GitHub repo, from source branch `f-feature-new` targeting the `main`
 branch,
@@ -31,6 +31,8 @@ branch,
    deployment logs.
 
 When the PR is closed or merged, the preview service is automatically deleted from your environment.
+
+<Note>For preview environments to work, the github user who is commiting on the pull request branch must be added to LocalOps as a user. And they must have linked their Github profile with LocalOps from inside Profile settings: https://console.localops.co/profile</Note>
 
 ### Preview services
 
