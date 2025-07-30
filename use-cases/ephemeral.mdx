@@ -47,7 +47,7 @@ When new commits are pushed to the PR branch, build & deployment steps are trigg
 
 ### LOPS_PREVIEW=true
 
-For all preview services, LocalOps passes LOPS_PREVIEW=true as environment variable so that your code can perform any
+For all preview services, LocalOps passes `LOPS_PREVIEW=true` as environment variable so that your code can perform any
 custom logic suitable for this isolated preview setup.
 
 ### Handling dependencies
@@ -91,13 +91,96 @@ In addition, resources in `ops.json` are configured differently in other ways by
 speed of boot-up and cost savings. Backups, encryption and monitoring are turned off in cloud resources created for
 preview services.
 
-Following services can be defined in `ops.json` (as on June 9 2025):
+Following services can be defined in `ops.json`:
 
 1. S3 buckets
 2. SNS topics
 3. SQS queues
 4. RDS Database instances - MySQL or Postgres
 5. Elastic cache clusters - Memcache or Redis
+
+#### Isolated database, cache, queues and workers
+
+In addition to above cloud-managed resources, you can also spin any number of these services as ephemeral resources for each PR, to run within the same environment/Kubernetes cluster:
+
+1. Postgres / MySQL database 
+2. Redis / Memcache servers
+3. RabbitMQ queue
+4. Customer workers 
+
+So for example, you can make a brand new postgres server come up for each PR, in your environment. 
+
+Just add an `ops.json` in your Github repository that is configured for the main service, if you haven't done it already.
+
+In `ops.json`, add `previews` key and list down all dependencies like this:
+
+```json
+{
+    "previews": {
+        "dependencies": {
+            "db": [
+                {
+                    "id": "db",
+                    "prefix": "db",
+                    "engine": "postgres",
+                    "version": "17.5",
+                    "exports": {
+                        "DB_HOST": "$host",
+                        "DB_PORT": "$port",
+                        "DB_USER": "$user",
+                        "DB_NAME": "$db",
+                        "DB_PASS": "$pass"
+                    }
+                }
+            ],
+            "cache": [
+                {
+                    "id": "redis",
+                    "prefix": "redis",
+                    "engine": "redis",
+                    "version": "8.0.3",
+                    "exports": {
+                        "REDIS_HOST": "$host",
+                        "REDIS_PORT": "$port"
+                    }
+                }
+            ],
+            "queues": [
+                {
+                    "id": "rabbitmq",
+                    "prefix": "rabbitmq",
+                    "engine": "rabbitmq",
+                    "version": "4",
+                    "exports": {
+                        "QUEUE_HOST": "$host",
+                        "QUEUE_PORT": "$port",
+                        "QUEUE_VHOST": "$vhost",
+                        "QUEUE_USER": "$user",
+                        "QUEUE_PASS": "$pass"
+                    }
+                }
+            ]
+        },
+        "workers": [
+            {
+                "id": "worker",
+                "prefix": "worker",
+                "cmd": "node server.js",
+                "env": {
+                    "variable": "value"
+                },
+                "count": 2
+            }
+        ]
+    }
+}
+```
+
+Within `exports` key, define all the information you want to export from the resource and inject them as environment variables in your service. 
+
+All these resources will be created for each PR preview service and get deleted automatically when the PR is closed or merged. 
+
+Checkout [ops.json docs here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews) for more info.
 
 #### Isolated cron service
 
