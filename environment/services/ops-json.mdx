@@ -35,6 +35,8 @@ Here is the order in which resources/declarations defined in ops.json are provis
 
 ## Init Jobs 
 
+Applicable and run only for a [web](/environment/services/web) service. 
+
 Say you want to run a db migration before a service is started. Just add the job inside `init` key like below:
 
 ```json
@@ -43,7 +45,6 @@ Say you want to run a db migration before a service is started. Just add the job
         {
             "id": "migrate",
             "prefix": "migrate",
-            "image": "nginx:1.29", //optional
             "cmd": "python3 manage.py migrate",
             "env": {
                 "var": "value"
@@ -82,6 +83,15 @@ Note that `init` is an array. So you can add any number of these jobs. They will
             "env": {
                 "var": "value"
             }
+        },
+        {
+            "id": "adhoc",
+            "prefix": "adhoc",
+            "image": "alpine/curl:8.14.1",
+            "cmd": "curl -fsSL https://www.google.com/",
+            "env": {
+                "var": "value"
+            }
         }
     ]
 }
@@ -97,7 +107,7 @@ Environment variables passed here are not the only ones passed into the job. Fol
 Variables defined in the set #4 overrides the ones defined in say, #3 above.
 
 #### Order and errors
-Init jobs are run only for `web` services. And they are run first before the service is started. If any of the init jobs fail to complete successfully, deployment fails and the main web service won't start. 
+Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails and the main `web` service won't start. 
 
 ## Automatic provisioning of cloud resources
 
