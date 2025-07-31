@@ -20,6 +20,85 @@ In your service configuration `ops.json`, you can define
 2. Declare configuration for your service in `ops.json`
 3. Commit and push to your repo. LocalOps will trigger a deployment while honoring `ops.json` configuration.
 
+## Order of operations run from `ops.json`
+
+Here is the order in which resources/declarations defined in ops.json are provisioned during a deployment:
+
+1. Dependencies defined in `dependencies` are provisioned first. [See here](/environment/services/ops-json#automatic-provisioning-of-cloud-resources)
+2. Dependencies defined in `previews.dependencies` are provisioned in the order defined. [See here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews)
+3. Jobs defined in `init` array are executed in order. These jobs must start and finish one after the other successfully. [See here](/environment/services/ops-json#init-jobs)
+4. Main service is run.
+5. Cron jobs defined in `cron` are started. [See here](/environment/services/ops-json#configuring-cron-service)
+6. Workers in `previews.workers` are started. [See here](/environment/services/ops-json#isolated-workers)
+
+#2 and #3 are run only in Pull request preview sevices. 
+
+## Init Jobs 
+
+Say you want to run a db migration before a service is started. Just add the job inside `init` key like below:
+
+```json
+{
+    "init": [
+        {
+            "id": "migrate",
+            "prefix": "migrate",
+            "image": "nginx:1.29", //optional
+            "cmd": "python3 manage.py migrate",
+            "env": {
+                "var": "value"
+            }
+        }
+    ]
+}
+```
+
+Configuration for each `init` job:
+1. `id` - Unique identifier to identify this resource within the environment 
+2. `prefix` - String that will be used as prefix in the name of the resource 
+3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
+4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit in your branch/PR.
+5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for this service in LocalOps console UI will also be injected into the job. 
+
+<Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
+
+Note that `init` is an array. So you can add any number of these jobs. They will be run in the order you have declared here.
+
+```json 
+{
+    "init": [
+        {
+            "id": "migrate",
+            "prefix": "migrate",
+            "cmd": "python3 manage.py migrate",
+            "env": {
+                "var": "value"
+            }
+        },
+        {
+            "id": "seeddb",
+            "prefix": "seeddb",
+            "cmd": "python3 manage.py seed",
+            "env": {
+                "var": "value"
+            }
+        }
+    ]
+}
+```
+
+#### Environment variables 
+Environment variables passed here are not the only ones passed into the job. Following set are injected into the job automatically, in the order mentioned here:
+1. Any variable you have added in LocalOps console UI are passed to the job. 
+2. In addition, any cloud `dependencies` > `exports` variables you declared using below and 
+3. Other preview service `previews.depdendencies` > `exports` variables are added too.
+4. Variables in `env` above init job config
+
+Variables defined in the set #4 overrides the ones defined in say, #3 above.
+
+#### Order and errors
+Init jobs are run only for `web` services. And they are run first before the service is started. If any of the init jobs fail to complete successfully, deployment fails and the main web service won't start. 
+
 ## Automatic provisioning of cloud resources
 
 Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database
@@ -208,7 +287,7 @@ All cloud resources are configured with production-grade security:
 - **Backups tuned on**: Backups are turned ON for all applicable data storage services (RDS, Elastic Cache) with 30-day
   retention.
 
-### Ephemeral Preview environments
+### Tuned For Ephemeral Preview environments
 
 LocalOps can spin up ephemeral preview environments for your service, for each Github pull request to the configured
 target branch of the service.
@@ -548,12 +627,33 @@ make the API calls to your service using its private Internal host name, as per 
 Crons only work if your service is either an "external/web serivce" or "internal" service. So that there are endpoints
 available to hit based on a schedule.
 
+
 ## Complete Example
 
 Here's a comprehensive `ops.json` example:
 
 ```json
 {
+  "init": [
+    {
+      "id": "migrate",
+      "prefix": "migrate",
+      "image": "nginx:1.29", //optional
+      "cmd": "python3 manage.py migrate",
+      "env": {
+        "var": "migrate"
+      }
+    },
+    {
+      "id": "seeddb",
+      "prefix": "seeddb",
+      "image": "nginx:stable-bookworm",
+      "cmd": "python3 manage.py seed",
+      "env": {
+        "var": "seed"
+      }
+    }
+  ],
   "cron": {
     "cron_jobs": [
       {
