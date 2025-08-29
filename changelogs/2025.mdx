@@ -4,6 +4,52 @@ description: Updates and improvements of year 2025
 mode: center
 ---
 
+<Update label="Aug 29, 2025">
+
+## Run any Docker Image as service
+
+You can now spin up a service using any pre-built docker image. 
+
+While creating a new service, just pick Docker Image as source and provide 
+1. Docker registry url
+2. Docker image name 
+
+And trigger a new deployment. You can pick a specific version to run, while triggering new deployment. Default version/tag: `latest`.
+
+All options supported in a traditional service are supported in Docker image services also. You can:
+1. Configure environment variables
+2. Specific resource requirements like CPU and Memory 
+3. Run any number of copies of the container 
+4. Attach custom domain for the service 
+
+</Update>
+
+<Update label="July 30, 2025">
+
+## Ephemeral database, queues, cache and workers for Preview environments
+
+You can now spin up temporary copies of databases, cache and queue servers for every PR you test using preview environments. 
+
+### Supported services:
+
+Databases:
+1. MySQL
+2. Postgres
+
+Cache services:
+1. Redis
+2. Memcache 
+
+Queues:
+1. RabbitMQ
+
+Email us at help@localops.co if you need support for more services.
+
+Read announcement on our [blog post](https://localops.co/blog/ephemeral-db-cache-queues-workers-for-preview-environments)
+Learn more from [documentation](https://docs.localops.co/use-cases/ephemeral#isolated-database%2C-cache%2C-queues-and-workers)
+
+</Update>
+
 <Update label="June 27, 2025">
 
 ## New UI, 1-click service deployments and more
