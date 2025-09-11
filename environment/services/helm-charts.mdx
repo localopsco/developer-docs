@@ -1,0 +1,61 @@
+---
+title: Use Helm charts
+---
+
+You can spin up a new service using any public Helm Chart.
+
+While creating a new service, just pick "Helm chart" as the Source and provide 
+1. Helm repo url
+2. Helm chart name 
+3. Values.yaml
+
+And trigger a new deployment. While triggering a new deployment, provide the specific version to run. 
+
+You can edit your current service in Service > Settings section and update Helm Values to customise your deployment. 
+
+### Interacting with the chart and its internal services:
+
+Say you want to run Postgresql as a service using its Helm chart.
+
+#### Case 1: Other services to use chart's services
+
+Say you want your NodeJS app to use Postgres as its database.
+
+The other service (NodeJS service) from the same environment can use Postgresql database running as part of the Helm Chart installation. Using "service alias" of the helm chart, one can frame the hostname for the chart's service (postgresql) using the format below.
+```
+$chart_svc_alias/service/<service-name>
+```
+And this can be given as value in any Secret added in secret section. Your code can use it as `hostname` for the corresponding service.
+
+`<service-name>` is the name of the service that is running as part of Helm chart installation and is of type `NodePort` or `ClusterIP`. Refer to your Helm chart's documentation to find the `<service-name>`.
+
+For our current example: You can add this as DB_HOST secret under secrets section of the NodeJS app service and use it in your code via env var.
+```
+$chart_svc_alias/service/postgresql
+```
+
+#### Case 2: Charts to use another chart's services
+
+Say you want to use Temporal and want it to use Postgres as its database.
+
+A Helm chart running within the same environment as a service, can use services running as part of another helm chart by using their service alias as an alias for hostname. And provide them as below in Values.yaml configuration.
+
+```yaml
+database:
+  host: {{ hosts "$other_chart_svc_alias/service/<service-name>" }}
+```
+
+Any Values.Yaml configuration can have go-template style expressions wrapped in `{{` and `}}`. 
+
+`hosts` here is a helper function we support today that can bring the internal dns hostname of any service running within the same LocalOps environment. 
+
+For current example, run Temporal chart and Postgres chart as services within your LocalOps environemnt. And provide the following in Temporal chart's values.yaml configuration.
+
+```yaml
+default:
+  driver: sql
+    sql:
+      driverName: postgres
+      host: {{ hosts "$pg_chart_svc_alias/service/postgresql" }}
+      port: 5432
+```

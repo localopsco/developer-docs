@@ -106,6 +106,8 @@
                   "environment/services/aws/sns"
                 ]
               },
+              "environment/services/docker",
+              "environment/services/helm-charts",
               "environment/services/micro-services",
               "environment/services/secrets",
               "environment/services/custom-domain",
