@@ -731,6 +731,17 @@ Here's a comprehensive `ops.json` example:
       }
     ]
   },
+  "processes": [
+    {
+      "id": "my-process-1",
+      "prefix": "worker",
+      "cmd": "node server.js",
+      "env": {
+        "variable": "value"
+      },
+      "count": 2
+    }
+  ],
   "dependencies": {
     "s3": {
       "buckets": [
@@ -854,18 +865,7 @@ Here's a comprehensive `ops.json` example:
           }
         }
       ]
-    },
-    "workers": [
-      {
-        "id": "worker",
-        "prefix": "worker",
-        "cmd": "node server.js",
-        "env": {
-          "variable": "value"
-        },
-        "count": 2
-      }
-    ]
+    }
   }
 }
 ```
