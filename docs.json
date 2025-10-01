@@ -44,11 +44,7 @@
             "pages": [
               {
                 "group": "Cloud accounts",
-                "pages": [
-                  "accounts/aws",
-                  "accounts/azure",
-                  "accounts/gcp"
-                ]
+                "pages": ["accounts/aws", "accounts/azure", "accounts/gcp"]
               },
               "accounts/connect-github"
             ]
@@ -74,9 +70,7 @@
                 "pages": [
                   {
                     "group": "AWS",
-                    "pages": [
-                      "environment/infra-resources/aws"
-                    ]
+                    "pages": ["environment/infra-resources/aws"]
                   }
                 ]
               },
@@ -116,28 +110,15 @@
           },
           {
             "group": "CLI",
-            "pages": [
-              "cli/install-macos",
-              "cli/install-linux",
-              "cli/install-windows",
-              "cli/usage"
-            ]
+            "pages": ["cli/install-macos", "cli/install-linux", "cli/install-windows", "cli/usage"]
           },
           {
             "group": "Team",
-            "pages": [
-              "team/understanding-roles",
-              "team/invite-users",
-              "team/deactivate-user",
-              "team/audit-logs"
-            ]
+            "pages": ["team/understanding-roles", "team/invite-users", "team/deactivate-user", "team/audit-logs"]
           },
           {
             "group": "Troubleshooting",
-            "pages": [
-              "troubleshoot/create-environment",
-              "troubleshoot/custom-domain"
-            ]
+            "pages": ["troubleshoot/create-environment", "troubleshoot/custom-domain"]
           },
           {
             "group": "Bring your helm charts (soon)",
@@ -153,9 +134,7 @@
               },
               {
                 "group": "Publish Helm Charts",
-                "pages": [
-                  "bring-your-helm-charts/publish/ecr"
-                ]
+                "pages": ["bring-your-helm-charts/publish/ecr"]
               },
               {
                 "group": "Tutorials",
@@ -187,10 +166,7 @@
         "groups": [
           {
             "group": "Changelog",
-            "pages": [
-              "changelogs/2025",
-              "changelogs/2024"
-            ]
+            "pages": ["changelogs/2025", "changelogs/2024"]
           }
         ]
       }

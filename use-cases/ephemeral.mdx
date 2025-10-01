@@ -19,7 +19,8 @@ ephemeral services.
 2. Turn on "Enable pull request previews" in the service.
 3. Create and save the service
 
-From now onwards, LocalOps listens for all pull requests created in the above repository and against the branch configured in the service.
+From now onwards, LocalOps listens for all pull requests created in the above repository and against the branch
+configured in the service.
 
 When a new pull request is raised in the same GitHub repo, from source branch `f-feature-new` targeting the `main`
 branch,
@@ -32,7 +33,11 @@ branch,
 
 When the PR is closed or merged, the preview service is automatically deleted from your environment.
 
-<Note>For preview environments to work, the github user who is commiting on the pull request branch must be added to your LocalOps account as a user. And they must have linked their Github profile with LocalOps from inside Profile settings: https://console.localops.co/profile</Note>
+<Note>
+  For preview environments to work, the github user who is commiting on the pull request branch must be added to your
+  LocalOps account as a user. And they must have linked their Github profile with LocalOps from inside Profile settings:
+  https://console.localops.co/profile
+</Note>
 
 ### Preview services
 
@@ -101,86 +106,91 @@ Following services can be defined in `ops.json`:
 
 #### Isolated database, cache, queues and workers
 
-In addition to above cloud-managed resources, you can also spin any number of these services as ephemeral resources for each PR, to run within the same environment/Kubernetes cluster:
+In addition to above cloud-managed resources, you can also spin any number of these services as ephemeral resources for
+each PR, to run within the same environment/Kubernetes cluster:
 
-1. Postgres / MySQL database 
+1. Postgres / MySQL database
 2. Redis / Memcache servers
 3. RabbitMQ queue
-4. Workers 
+4. Workers
 
-So for example, you can make a brand new postgres server come up for each PR, in your environment. 
+So for example, you can make a brand new postgres server come up for each PR, in your environment.
 
-Just add an `ops.json` in your Github repository that is configured for the main service, if you haven't done it already.
+Just add an `ops.json` in your Github repository that is configured for the main service, if you haven't done it
+already.
 
 In `ops.json`, add `previews` key and list down all dependencies like this:
 
 ```json
 {
-    "previews": {
-        "dependencies": {
-            "db": [
-                {
-                    "id": "db",
-                    "prefix": "db",
-                    "engine": "postgres",
-                    "version": "17.5",
-                    "exports": {
-                        "DB_HOST": "$host",
-                        "DB_PORT": "$port",
-                        "DB_USER": "$user",
-                        "DB_NAME": "$db",
-                        "DB_PASS": "$pass"
-                    }
-                }
-            ],
-            "cache": [
-                {
-                    "id": "redis",
-                    "prefix": "redis",
-                    "engine": "redis",
-                    "version": "8.0.3",
-                    "exports": {
-                        "REDIS_HOST": "$host",
-                        "REDIS_PORT": "$port"
-                    }
-                }
-            ],
-            "queues": [
-                {
-                    "id": "rabbitmq",
-                    "prefix": "rabbitmq",
-                    "engine": "rabbitmq",
-                    "version": "4",
-                    "exports": {
-                        "QUEUE_HOST": "$host",
-                        "QUEUE_PORT": "$port",
-                        "QUEUE_VHOST": "$vhost",
-                        "QUEUE_USER": "$user",
-                        "QUEUE_PASS": "$pass"
-                    }
-                }
-            ]
+  "previews": {
+    "dependencies": {
+      "db": [
+        {
+          "id": "db",
+          "prefix": "db",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DB_HOST": "$host",
+            "DB_PORT": "$port",
+            "DB_USER": "$user",
+            "DB_NAME": "$db",
+            "DB_PASS": "$pass"
+          }
+        }
+      ],
+      "cache": [
+        {
+          "id": "redis",
+          "prefix": "redis",
+          "engine": "redis",
+          "version": "8.0.3",
+          "exports": {
+            "REDIS_HOST": "$host",
+            "REDIS_PORT": "$port"
+          }
+        }
+      ],
+      "queues": [
+        {
+          "id": "rabbitmq",
+          "prefix": "rabbitmq",
+          "engine": "rabbitmq",
+          "version": "4",
+          "exports": {
+            "QUEUE_HOST": "$host",
+            "QUEUE_PORT": "$port",
+            "QUEUE_VHOST": "$vhost",
+            "QUEUE_USER": "$user",
+            "QUEUE_PASS": "$pass"
+          }
+        }
+      ]
+    },
+    "workers": [
+      {
+        "id": "worker",
+        "prefix": "worker",
+        "cmd": "node server.js",
+        "env": {
+          "variable": "value"
         },
-        "workers": [
-            {
-                "id": "worker",
-                "prefix": "worker",
-                "cmd": "node server.js",
-                "env": {
-                    "variable": "value"
-                },
-                "count": 2
-            }
-        ]
-    }
+        "count": 2
+      }
+    ]
+  }
 }
 ```
 
-Within `exports` key, define all the information you want to export from the resource and inject them as environment variables in your service. 
+Within `exports` key, define all the information you want to export from the resource and inject them as environment
+variables in your service.
 
-All these resources will be created for each PR preview service and get deleted automatically when the PR is closed or merged. 
+All these resources will be created for each PR preview service and get deleted automatically when the PR is closed or
+merged.
 
-Checkout [ops.json docs here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews) for more info.
+Checkout [ops.json docs here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews)
+for more info.
 
 #### Isolated cron service
 

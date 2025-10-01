@@ -10,14 +10,15 @@ mode: center
 
 You can now spin up a new service using any public Helm Chart.
 
-While creating a new service, just pick "Helm chart" as the Source and provide 
+While creating a new service, just pick "Helm chart" as the Source and provide
+
 1. Helm repo url
-2. Helm chart name 
+2. Helm chart name
 3. Values.yaml
 
-And trigger a new deployment. While triggering a new deployment, provide the specific version to run. 
+And trigger a new deployment. While triggering a new deployment, provide the specific version to run.
 
-You can edit your current service in Service > Settings section and update Helm Values to customise your deployment. 
+You can edit your current service in Service > Settings section and update Helm Values to customise your deployment.
 
 ### Interacting with the chart and its internal services:
 
@@ -27,15 +28,23 @@ Say you want to run Postgresql as a service using its Helm chart.
 
 Say you want your NodeJS app to use Postgres as its database.
 
-The other service (NodeJS service) from the same environment can use Postgresql database running as part of the Helm Chart installation. Using "service alias" of the helm chart, one can frame the hostname for the chart's service (postgresql) using the format below.
+The other service (NodeJS service) from the same environment can use Postgresql database running as part of the Helm
+Chart installation. Using "service alias" of the helm chart, one can frame the hostname for the chart's service
+(postgresql) using the format below.
+
 ```
 $chart_svc_alias/service/<service-name>
 ```
-And this can be given as value in any Secret added in secret section. Your code can use it as `hostname` for the corresponding service.
 
-`<service-name>` is the name of the service that is running as part of Helm chart installation and is of type `NodePort` or `ClusterIP`. Refer to your Helm chart's documentation to find the `<service-name>`.
+And this can be given as value in any Secret added in secret section. Your code can use it as `hostname` for the
+corresponding service.
 
-For our current example: You can add this as DB_HOST secret under secrets section of the NodeJS app service and use it in your code via env var.
+`<service-name>` is the name of the service that is running as part of Helm chart installation and is of type `NodePort`
+or `ClusterIP`. Refer to your Helm chart's documentation to find the `<service-name>`.
+
+For our current example: You can add this as DB_HOST secret under secrets section of the NodeJS app service and use it
+in your code via env var.
+
 ```
 $chart_svc_alias/service/postgresql
 ```
@@ -44,18 +53,21 @@ $chart_svc_alias/service/postgresql
 
 Say you want to use Temporal and want it to use Postgres as its database.
 
-A Helm chart running within the same environment as a service, can use services running as part of another helm chart by using their service alias as an alias for hostname. And provide them as below in Values.yaml configuration.
+A Helm chart running within the same environment as a service, can use services running as part of another helm chart by
+using their service alias as an alias for hostname. And provide them as below in Values.yaml configuration.
 
 ```yaml
 database:
-  host: {{ hosts "$other_chart_svc_alias/service/<service-name>" }}
+  host: { { hosts "$other_chart_svc_alias/service/<service-name>" } }
 ```
 
-Any Values.Yaml configuration can have go-template style expressions wrapped in `{{` and `}}`. 
+Any Values.Yaml configuration can have go-template style expressions wrapped in `{{` and `}}`.
 
-`hosts` here is a helper function we support today that can bring the internal dns hostname of any service running within the same LocalOps environment. 
+`hosts` here is a helper function we support today that can bring the internal dns hostname of any service running
+within the same LocalOps environment.
 
-For current example, run Temporal chart and Postgres chart as services within your LocalOps environemnt. And provide the following in Temporal chart's values.yaml configuration.
+For current example, run Temporal chart and Postgres chart as services within your LocalOps environemnt. And provide the
+following in Temporal chart's values.yaml configuration.
 
 ```yaml
 default:
@@ -68,25 +80,27 @@ default:
 
 </Update>
 
-
 <Update label="Aug 29, 2025">
 
 ## Run any Docker Image as service
 
-You can now spin up a service using any pre-built docker image. 
+You can now spin up a service using any pre-built docker image.
 
-While creating a new service, just pick Docker Image as source and provide 
+While creating a new service, just pick Docker Image as source and provide
+
 1. Docker registry url
-2. Docker image name 
+2. Docker image name
 
-And trigger a new deployment. You can pick a specific version to run, while triggering new deployment. Default version/tag: `latest`.
+And trigger a new deployment. You can pick a specific version to run, while triggering new deployment. Default
+version/tag: `latest`.
 
 All options supported in a traditional service are supported in Docker image services also. You can:
+
 1. Run it as `web`, `worker`, `internal` service, `job` or `cron`.
-3. Configure environment variables and secrets
-3. Specific resource requirements like CPU and Memory 
-3. Run any number of copies of the container to scale it based on load
-4. Attach custom domain if the service is of type `web`.
+2. Configure environment variables and secrets
+3. Specific resource requirements like CPU and Memory
+4. Run any number of copies of the container to scale it based on load
+5. Attach custom domain if the service is of type `web`.
 
 Read announcement on our [blog here](https://localops.co/blog/run-any-docker-image-as-a-service)
 
@@ -96,25 +110,30 @@ Read announcement on our [blog here](https://localops.co/blog/run-any-docker-ima
 
 ## Ephemeral database, queues, cache and workers for Preview environments
 
-You can now spin up temporary copies of databases, cache and queue servers for every PR you test using preview environments. 
+You can now spin up temporary copies of databases, cache and queue servers for every PR you test using preview
+environments.
 
 ### Supported services:
 
 Databases:
+
 1. MySQL
 2. Postgres
 
 Cache services:
+
 1. Redis
-2. Memcache 
+2. Memcache
 
 Queues:
+
 1. RabbitMQ
 
 Email us at help@localops.co if you need support for more services.
 
-Read announcement on our [blog post](https://localops.co/blog/ephemeral-db-cache-queues-workers-for-preview-environments)
-Learn more from [documentation](https://docs.localops.co/use-cases/ephemeral#isolated-database%2C-cache%2C-queues-and-workers)
+Read announcement on our
+[blog post](https://localops.co/blog/ephemeral-db-cache-queues-workers-for-preview-environments) Learn more from
+[documentation](https://docs.localops.co/use-cases/ephemeral#isolated-database%2C-cache%2C-queues-and-workers)
 
 </Update>
 
@@ -122,19 +141,24 @@ Learn more from [documentation](https://docs.localops.co/use-cases/ephemeral#iso
 
 ## New UI, 1-click service deployments and more
 
-We shipped a brand new UI this week. It is based out of a consisent and modern design language which allows devs to navigate between environments & services faster. And we believe it looks way more cleaner and sexier than ever.
+We shipped a brand new UI this week. It is based out of a consisent and modern design language which allows devs to
+navigate between environments & services faster. And we believe it looks way more cleaner and sexier than ever.
 
-It does come in light and dark themes so you can pick what you prefer. Sign in to LocalOps again and let us know what you think! 
+It does come in light and dark themes so you can pick what you prefer. Sign in to LocalOps again and let us know what
+you think!
 
 ![Light](./images/light-ui.png)
 
 ![Dark](./images/dark-ui.png)
 
-### 1 click service deployments: 
+### 1 click service deployments:
 
-From now, you can trigger a new deployment directly from the same place where you create the service. Earlier, this was a separate step after the service is created. This minor change allows devs to spin up the new service instantly without having to perform any other step. 
+From now, you can trigger a new deployment directly from the same place where you create the service. Earlier, this was
+a separate step after the service is created. This minor change allows devs to spin up the new service instantly without
+having to perform any other step.
 
-Plus we took this opportunity to make a ton of bug fixes throughout the console that makes the overall experience far more stable than ever. 
+Plus we took this opportunity to make a ton of bug fixes throughout the console that makes the overall experience far
+more stable than ever.
 
 </Update>
 

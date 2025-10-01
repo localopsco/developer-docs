@@ -2,22 +2,23 @@
 title: Run Docker Images
 ---
 
-You now spin up a service using any pre-built public docker image. 
+You now spin up a service using any pre-built public docker image.
 
-While creating a new service, just pick Docker Image as source and provide 
+While creating a new service, just pick Docker Image as source and provide
+
 1. Docker registry url
-2. Docker image name 
+2. Docker image name
 
-And trigger a new manual deployment anytime. 
+And trigger a new manual deployment anytime.
 
 You can pick a specific version to run, while triggering new deployment. Default version/tag would be `latest`.
 
-All options supported in a traditional service are supported in Docker image services also. 
+All options supported in a traditional service are supported in Docker image services also.
 
 So you can:
 
 1. Run it as `web`, `worker`, `internal` service, `job` or `cron`.
 2. Configure environment variables and secrets
-3. Specific resource requirements like CPU and Memory 
+3. Specific resource requirements like CPU and Memory
 4. Run any number of copies of the container to scale it based on load
 5. Attach custom domain if the service is of type `web`.

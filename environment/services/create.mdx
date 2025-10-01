@@ -13,7 +13,7 @@ To create a new service, sign in to your LocalOps account and follow these steps
 6. Provide secrets necessary to run your container
 7. Click "Create service"
 
-### Source repo & branch name:
+## Source repo & branch name:
 
 If you have [connected your GitHub org/account](/accounts/connect-github), you will be able to pick a repository and its
 corresponding branch name here. When your devs push to this branch, a new deployment will automatically get triggered.
@@ -24,7 +24,7 @@ corresponding branch name here. When your devs push to this branch, a new deploy
   to deploy new changes.
 </Tip>
 
-### Dockerfile location
+## Dockerfile location
 
 You can specify the file location within your repository where we can find the Dockerfile. If the Dockerfile is present
 in a non-root directory, you can specify the name of the directory here. Example values - (empty) or `build` or `worker`
@@ -35,11 +35,11 @@ This is optional. Default is `` - empty string, which means Dockerfile will be e
 This is to accommodate the case of mono-repos where you might have more than one component's codebases in the same git
 repo.
 
-### Run command
+## Run command
 
 You can specify the run command as well. If your Dockerfile has a `CMD` directive, then that will get used by default.
-If you specific a differnet run command here in the form, it will be used instad of the `CMD` directive specified in the
-DOckerfile.
+If you specific a different run command here in the form, it will be used instead of the `CMD` directive specified in
+the Dockerfile.
 
 This is also done to accomodate the case of mono-repos where you might have more than one component's codebase in the
 same git repo. You can have scripts of jobs/crons in the same repo. In these cases, you can use the same `Dockerfile`
@@ -47,12 +47,47 @@ but a different `CMD` to run for your service.
 
 This is optional. Default is - `CMD` that is specified in your Dockerfile.
 
-### Number of containers
+### How CMD works in Dockerfile
+
+The CMD instruction specifies the default command to run when a container is started from the Docker image. If no
+command is specified during the container startup (i.e., in the docker run command), this default is used. CMD can be
+overridden by supplying command-line arguments to docker run.
+
+CMD is useful for setting default commands and easily overridden parameters. It is often used in images as a way of
+defining default run parameters and can be overridden from the command line when the container is run.
+
+For example, by default, you might want a web server to start, but users could override this to run a shell instead:
+
+```
+CMD ["python", "-DFOREGROUND"]
+```
+
+### Overriding CMD in LocalOps
+
+You can configure the service with `node start.js` to get a node process started instead of starting python server.
+
+### Difference between CMD and ENTRYPOINT
+
+The ENTRYPOINT instruction sets the default executable for the container. Any arguments supplied to the docker run
+command are appended to the ENTRYPOINT command.
+
+<Note>
+  Use ENTRYPOINT when you need your container to always run the same base command, and you want to allow users to append
+  additional commands at the end. One caveat is that ENTRYPOINT can be overridden on the docker run command line by
+  supplying the --entrypoint flag.
+</Note>
+
+ENTRYPOINT is particularly useful for turning a container into a standalone executable. For example, suppose you are
+packaging a custom script that requires arguments (e.g., “my_script extra_args”). In that case, you can use ENTRYPOINT
+to always run the script process (“my_script”) and then allow the image users to specify the “extra_args” on the docker
+run command line. You can do the following:
+
+## Number of containers
 
 Specify the number of copies of your codebase / containers to run. You can define any number from 1 to 99 to support
 your traffic.
 
-### CPU and memory requirements for each container
+## CPU and memory requirements for each container
 
 Define the minimum CPU and memory requirements to run each container. Service containers will be scheduled to run on the
 underlying compute servers as appropriate.
@@ -61,12 +96,12 @@ You can also define the max CPU and max memory here. When any container crosses 
 
 <Tip>Specifying max CPU and max Memory is a neat trick to catch memory leaks and restart containers</Tip>
 
-### Other details
+## Other details
 
 You can fill out other service specific details like Port (for internal or web service), Cron schedule (for cron
 service), and so on.
 
-### How to deploy
+## How to deploy
 
 Containers of the service won't start to run until you make a new deployment. Click on "Deploy" button on the top right
 corner to start a manual deployments. Otherwise, if you push new commits to the configured branch above, a new

@@ -12,7 +12,7 @@ In your service configuration `ops.json`, you can define
 - Managed cloud depdendencies like S3
 - Cron jobs
 - Sidecar containers
-- Init jobs 
+- Init jobs
 - more..
 
 ## How it Works
@@ -25,90 +25,104 @@ In your service configuration `ops.json`, you can define
 
 Here is the order in which resources/declarations defined in ops.json are provisioned during a deployment:
 
-1. Dependencies defined in `dependencies` are provisioned first. [See here](/environment/services/ops-json#automatic-provisioning-of-cloud-resources)
-2. Dependencies defined in `previews.dependencies` are provisioned in the order defined. [See here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews)
-3. Jobs defined in `init` array are executed in order. These jobs must start and finish one after the other successfully. [See here](/environment/services/ops-json#init-jobs)
+1. Dependencies defined in `dependencies` are provisioned first.
+   [See here](/environment/services/ops-json#automatic-provisioning-of-cloud-resources)
+2. Dependencies defined in `previews.dependencies` are provisioned in the order defined.
+   [See here](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews)
+3. Jobs defined in `init` array are executed in order. These jobs must start and finish one after the other
+   successfully. [See here](/environment/services/ops-json#init-jobs)
 4. Main service is run.
 5. Cron jobs defined in `cron` are started. [See here](/environment/services/ops-json#configuring-cron-service)
 6. Workers in `previews.workers` are started. [See here](/environment/services/ops-json#isolated-workers)
 
-#2 and #3 are run only in Pull request preview sevices. 
+#2 and #3 are run only in Pull request preview sevices.
 
-## Init Jobs 
+## Init Jobs
 
-Applicable and run only for a [web](/environment/services/web) service. 
+Applicable and run only for a [web](/environment/services/web) service.
 
 Say you want to run a db migration before a service is started. Just add the job inside `init` key like below:
 
 ```json
 {
-    "init": [
-        {
-            "id": "migrate",
-            "prefix": "migrate",
-            "cmd": "python3 manage.py migrate",
-            "env": {
-                "var": "value"
-            }
-        }
-    ]
+  "init": [
+    {
+      "id": "migrate",
+      "prefix": "migrate",
+      "cmd": "python3 manage.py migrate",
+      "env": {
+        "var": "value"
+      }
+    }
+  ]
 }
 ```
 
 Configuration for each `init` job:
-1. `id` - Unique identifier to identify this resource within the environment 
-2. `prefix` - String that will be used as prefix in the name of the resource 
-3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
-4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit in your branch/PR.
-5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for this service in LocalOps console UI will also be injected into the job. 
+
+1. `id` - Unique identifier to identify this resource within the environment
+2. `prefix` - String that will be used as prefix in the name of the resource
+3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use
+   the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
+4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
+   in your branch/PR.
+5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
+   this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
+   this service in LocalOps console UI will also be injected into the job.
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
-Note that `init` is an array. So you can add any number of these jobs. They will be run in the order you have declared here.
+Note that `init` is an array. So you can add any number of these jobs. They will be run in the order you have declared
+here.
 
-```json 
+```json
 {
-    "init": [
-        {
-            "id": "migrate",
-            "prefix": "migrate",
-            "cmd": "python3 manage.py migrate",
-            "env": {
-                "var": "value"
-            }
-        },
-        {
-            "id": "seeddb",
-            "prefix": "seeddb",
-            "cmd": "python3 manage.py seed",
-            "env": {
-                "var": "value"
-            }
-        },
-        {
-            "id": "adhoc",
-            "prefix": "adhoc",
-            "image": "alpine/curl:8.14.1",
-            "cmd": "curl -fsSL https://www.google.com/",
-            "env": {
-                "var": "value"
-            }
-        }
-    ]
+  "init": [
+    {
+      "id": "migrate",
+      "prefix": "migrate",
+      "cmd": "python3 manage.py migrate",
+      "env": {
+        "var": "value"
+      }
+    },
+    {
+      "id": "seeddb",
+      "prefix": "seeddb",
+      "cmd": "python3 manage.py seed",
+      "env": {
+        "var": "value"
+      }
+    },
+    {
+      "id": "adhoc",
+      "prefix": "adhoc",
+      "image": "alpine/curl:8.14.1",
+      "cmd": "curl -fsSL https://www.google.com/",
+      "env": {
+        "var": "value"
+      }
+    }
+  ]
 }
 ```
 
-#### Environment variables 
-Environment variables passed here are not the only ones passed into the job. Following set are injected into the job automatically, in the order mentioned here:
-1. Any variable you have added in LocalOps console UI are passed to the job. 
-2. In addition, any cloud `dependencies` > `exports` variables you declared using below and 
+#### Environment variables
+
+Environment variables passed here are not the only ones passed into the job. Following set are injected into the job
+automatically, in the order mentioned here:
+
+1. Any variable you have added in LocalOps console UI are passed to the job.
+2. In addition, any cloud `dependencies` > `exports` variables you declared using below and
 3. Other preview service `previews.depdendencies` > `exports` variables are added too.
 4. Variables in `env` above init job config
 
 Variables defined in the set #4 overrides the ones defined in say, #3 above.
 
 #### Order and errors
-Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails and the main `web` service won't start. 
+
+Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails
+and the main `web` service won't start.
 
 ## Automatic provisioning of cloud resources
 
@@ -228,7 +242,7 @@ const upload = async () => {
       Key: 'hello.txt',
       Body: 'Hello there!',
       ContentType: 'text/plain',
-    })
+    }),
   );
   console.log('✅ Uploaded!');
 };
@@ -317,89 +331,95 @@ Following configurations are disabled in Pull request preview environments:
 
 ## Ephemeral databases and services for pull request previews
 
-LocalOps can spin up a preview environment / preview service / ephemeral copy for your service when a pull request is raised at the configured target branch of a service.
+LocalOps can spin up a preview environment / preview service / ephemeral copy for your service when a pull request is
+raised at the configured target branch of a service.
 
-For each of these preview services, you can spin up isolated set of databases, caches, queues and workers that are created and deleted when the PR is opened and closed/merged. 
+For each of these preview services, you can spin up isolated set of databases, caches, queues and workers that are
+created and deleted when the PR is opened and closed/merged.
 
 Following resources can be created this way:
-1. Databases - Postgres / MySQL 
+
+1. Databases - Postgres / MySQL
 2. Cache services - Redis / Memcache
-3. Queues  - RabbitMQ
-4. Workers - using your code or any public docker image 
+3. Queues - RabbitMQ
+4. Workers - using your code or any public docker image
 
 Each of these can be declared under a top-level key called `previews`, like below:
 
 ```json
 {
-    "previews": {
-        "dependencies": {
-            "db": [
-                {
-                    "id": "db",
-                    "prefix": "db",
-                    "engine": "postgres",
-                    "version": "17.5",
-                    "exports": {
-                        "DB_HOST": "$host",
-                        "DB_PORT": "$port",
-                        "DB_USER": "$user",
-                        "DB_NAME": "$db",
-                        "DB_PASS": "$pass"
-                    }
-                }
-            ],
-            "cache": [
-                {
-                    "id": "redis",
-                    "prefix": "redis",
-                    "engine": "redis",
-                    "version": "8.0.3",
-                    "exports": {
-                        "REDIS_HOST": "$host",
-                        "REDIS_PORT": "$port"
-                    }
-                }
-            ],
-            "queues": [
-                {
-                    "id": "rabbitmq",
-                    "prefix": "rabbitmq",
-                    "engine": "rabbitmq",
-                    "version": "4",
-                    "exports": {
-                        "QUEUE_HOST": "$host",
-                        "QUEUE_PORT": "$port",
-                        "QUEUE_VHOST": "$vhost",
-                        "QUEUE_USER": "$user",
-                        "QUEUE_PASS": "$pass"
-                    }
-                }
-            ]
+  "previews": {
+    "dependencies": {
+      "db": [
+        {
+          "id": "db",
+          "prefix": "db",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DB_HOST": "$host",
+            "DB_PORT": "$port",
+            "DB_USER": "$user",
+            "DB_NAME": "$db",
+            "DB_PASS": "$pass"
+          }
+        }
+      ],
+      "cache": [
+        {
+          "id": "redis",
+          "prefix": "redis",
+          "engine": "redis",
+          "version": "8.0.3",
+          "exports": {
+            "REDIS_HOST": "$host",
+            "REDIS_PORT": "$port"
+          }
+        }
+      ],
+      "queues": [
+        {
+          "id": "rabbitmq",
+          "prefix": "rabbitmq",
+          "engine": "rabbitmq",
+          "version": "4",
+          "exports": {
+            "QUEUE_HOST": "$host",
+            "QUEUE_PORT": "$port",
+            "QUEUE_VHOST": "$vhost",
+            "QUEUE_USER": "$user",
+            "QUEUE_PASS": "$pass"
+          }
+        }
+      ]
+    },
+    "workers": [
+      {
+        "id": "worker",
+        "prefix": "worker",
+        "cmd": "node server.js",
+        "env": {
+          "variable": "value"
         },
-        "workers": [
-            {
-                "id": "worker",
-                "prefix": "worker",
-                "cmd": "node server.js",
-                "env": {
-                    "variable": "value"
-                },
-                "count": 2
-            }
-        ]
-    }
+        "count": 2
+      }
+    ]
+  }
 }
 ```
 
 ### Isolated databases
 
 You can spin up any number of these databases for each PR, with any publicly available version:
-1. Postgres 
-2. Mysql 
 
-LocalOps automatically provisions, configures and runs these databases in your environment, just by declaring the name, database and version in your `ops.json`. 
+1. Postgres
+2. Mysql
 
-In the `ops.json`, just define a key called `db` under `previews` > `dependencies` like below and add your database dependencies as an array.
+LocalOps automatically provisions, configures and runs these databases in your environment, just by declaring the name,
+database and version in your `ops.json`.
+
+In the `ops.json`, just define a key called `db` under `previews` > `dependencies` like below and add your database
+dependencies as an array.
 
 Example:
 
@@ -441,33 +461,48 @@ Example:
 ```
 
 Configuration for each `db`:
-1. `id` - Unique identifier to identify this resource within the environment 
-2. `prefix` - String that will be used as prefix in the name of the resource 
+
+1. `id` - Unique identifier to identify this resource within the environment
+2. `prefix` - String that will be used as prefix in the name of the resource
 3. `engine` - `mysql` or `postgres`
-4. `version` - any public version of [mysql](https://hub.docker.com/_/mysql) or [postgres](https://hub.docker.com/_/postgres) available in docker hub
-5. `exports` - Information of the database resource can be exported to be used within your service. Define a set of key value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are interpreted as follows. 
+4. `version` - any public version of [mysql](https://hub.docker.com/_/mysql) or
+   [postgres](https://hub.docker.com/_/postgres) available in docker hub
+5. `exports` - Information of the database resource can be exported to be used within your service. Define a set of key
+   value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are
+   interpreted as follows.
 
 Export values:
-1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private. 
-2. `$port` - DNS port of the resource. For eg., you will see $port set as `3306` for MySQL and `5432` for Postgres. 
-3. `$db` - Database name to use from your code to read/write data. LocalOps creates a default database for you when provisioning the database server. 
-4. `$user` - Username to use while authenticating into the database. LocalOps creates a default user for you when provisioning the database server and you can use this variable to get its value injected in your environment variable. 
-5. `$pass` - Password to use while authenticating into the database. LocalOps creates this for you and passes it to you via this var. 
+
+1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private.
+2. `$port` - DNS port of the resource. For eg., you will see $port set as `3306` for MySQL and `5432` for Postgres.
+3. `$db` - Database name to use from your code to read/write data. LocalOps creates a default database for you when
+   provisioning the database server.
+4. `$user` - Username to use while authenticating into the database. LocalOps creates a default user for you when
+   provisioning the database server and you can use this variable to get its value injected in your environment
+   variable.
+5. `$pass` - Password to use while authenticating into the database. LocalOps creates this for you and passes it to you
+   via this var.
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
-<Warning> All databases are ephemeral databases only. No persistent storage is configured, as they are created for previewing pull requests only. </Warning>
-
+<Warning>
+  {' '}
+  All databases are ephemeral databases only. No persistent storage is configured, as they are created for previewing
+  pull requests only.{' '}
+</Warning>
 
 ### Isolated cache servers
 
 You can spin up any number of these caching servers for each PR, with any publicly available version:
-1. Redis 
-2. Memcache 
 
-LocalOps automatically provisions, configures and runs these servers in your environment, just by declaring the name, engine and version in your `ops.json`. 
+1. Redis
+2. Memcache
 
-In the `ops.json`, just define a key called `cache` under `previews` > `dependencies` like below and add your caching dependencies as an array.
+LocalOps automatically provisions, configures and runs these servers in your environment, just by declaring the name,
+engine and version in your `ops.json`.
+
+In the `ops.json`, just define a key called `cache` under `previews` > `dependencies` like below and add your caching
+dependencies as an array.
 
 Example:
 
@@ -493,28 +528,40 @@ Example:
 ```
 
 Configuration for each `cache`:
-1. `id` - Unique identifier to identify this resource within the environment 
-2. `prefix` - String that will be used as prefix in the name of the resource 
+
+1. `id` - Unique identifier to identify this resource within the environment
+2. `prefix` - String that will be used as prefix in the name of the resource
 3. `engine` - `redis` or `memcache`
-4. `version` - any public version of [redis](https://hub.docker.com/_/redis) or [memcache](https://hub.docker.com/_/memcached) available in docker hub
-5. `exports` - Information of the caching server can be exported to be used within your service. Define a set of key value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are interpreted as follows. 
+4. `version` - any public version of [redis](https://hub.docker.com/_/redis) or
+   [memcache](https://hub.docker.com/_/memcached) available in docker hub
+5. `exports` - Information of the caching server can be exported to be used within your service. Define a set of key
+   value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are
+   interpreted as follows.
 
 Export values:
-1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private. 
+
+1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private.
 2. `$port` - DNS port of the resource. For eg., you will see $port set as `6379` for Redis and `11211` for Memcache.
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new worker in the next deployment. </Warning>
 
-<Warning> All caching servers are ephemeral services only. No persistent storage is configured, as they are created for previewing pull requests only. </Warning>
+<Warning>
+  {' '}
+  All caching servers are ephemeral services only. No persistent storage is configured, as they are created for
+  previewing pull requests only.{' '}
+</Warning>
 
 ### Isolated queue/messaging servers
 
 You can spin up any number of these queueing/messaging servers for each PR, with any publicly available version:
-- RabbitMQ 
 
-LocalOps automatically provisions, configures and runs these servers in your environment, just by declaring the name, engine and version in your `ops.json`. 
+- RabbitMQ
 
-In the `ops.json`, just define a key called `queues` under `previews` > `dependencies` like below and add your dependencies as an array.
+LocalOps automatically provisions, configures and runs these servers in your environment, just by declaring the name,
+engine and version in your `ops.json`.
+
+In the `ops.json`, just define a key called `queues` under `previews` > `dependencies` like below and add your
+dependencies as an array.
 
 Example:
 
@@ -543,61 +590,74 @@ Example:
 ```
 
 Configuration for each `cache`:
-1. `id` - Unique identifier to identify this resource within the environment 
-2. `prefix` - String that will be used as prefix in the name of the resource 
+
+1. `id` - Unique identifier to identify this resource within the environment
+2. `prefix` - String that will be used as prefix in the name of the resource
 3. `engine` - `rabbitmq`
 4. `version` - any public version of [rabbitmq](https://hub.docker.com/_/rabbitmq) available in docker hub
-5. `exports` - Information of the messaging/queueing server can be exported to be used within your service. Define a set of key value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are interpreted as follows. 
+5. `exports` - Information of the messaging/queueing server can be exported to be used within your service. Define a set
+   of key value pairs that will be injected as environment variables in your service. Keys will be injected as such.
+   Values are interpreted as follows.
 
 Export values:
-1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private. 
-2. `$port` - DNS port of the resource. For eg., you will see $port set as `5672` for RabbitMQ.
-3. `$vhost` - Virtual host of rabbitmq that is created for you to use. 
-4. `$user` - Username to use while authenticating into this server. LocalOps creates a default user for you when provisioning the RabbitMQ server and you can use this variable to get its value injected in your environment variable. 
-5. `$pass` - Password to use while authenticating into this server. LocalOps creates this for you and passes it to you via this variable. 
 
-Get in touch with us at help@localops.co if you want more queueing servers supported. 
+1. `$host` - DNS host of the resource, privately reachable within the cluster. All resources are private.
+2. `$port` - DNS port of the resource. For eg., you will see $port set as `5672` for RabbitMQ.
+3. `$vhost` - Virtual host of rabbitmq that is created for you to use.
+4. `$user` - Username to use while authenticating into this server. LocalOps creates a default user for you when
+   provisioning the RabbitMQ server and you can use this variable to get its value injected in your environment
+   variable.
+5. `$pass` - Password to use while authenticating into this server. LocalOps creates this for you and passes it to you
+   via this variable.
+
+Get in touch with us at help@localops.co if you want more queueing servers supported.
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
-<Warning> All queueing servers are ephemeral services only. No persistent storage is configured, as they are created for previewing pull requests only. </Warning>
+<Warning>
+  {' '}
+  All queueing servers are ephemeral services only. No persistent storage is configured, as they are created for
+  previewing pull requests only.{' '}
+</Warning>
 
-### Isolated workers
+## Configuring Processes
 
 You can spin up any number of workers for each PR using one of these methods:
-- Run any publicly available docker image from Docker hub
-- Run your existing code from the PR but with a different start command
 
-In the `ops.json`, just define a key called `workers` under `previews` like below and add your workers as an array.
+- Run any publicly available docker image from Docker hub
+- Run your existing code from with a different start command
 
 Example:
 
 ```json
 {
-  "previews": {
-    "workers": [
-      {
-        "id": "worker",
-        "prefix": "worker",
-        "image": "nginx:1.29",
-        "cmd": "node server.js",
-        "count": 2,
-        "env": {
-          "variable": "value"
-        }
+  "processes": [
+    {
+      "id": "worker",
+      "prefix": "worker",
+      "image": "nginx:1.29",
+      "cmd": "node server.js",
+      "count": 2,
+      "env": {
+        "variable": "value"
       }
-    ]
-  }
+    }
+  ]
 }
 ```
 
 Configuration for each `worker`:
-1. `id` - Unique identifier to identify this resource within the environment 
-2. `prefix` - String that will be used as prefix in the name of the resource 
-3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your PR.
-4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit in your PR.
-5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for this service in LocalOps console UI will also be injected into the worker. 
-6. `count` - Number of replicas / containers of the worker to run 
+
+1. `id` - Unique identifier to identify this resource within the environment
+2. `prefix` - String that will be used as prefix in the name of the resource
+3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use
+   the same image that was used to run your original service, which was built with the latest commit in your PR.
+4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
+   in your PR.
+5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
+   this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
+   this service in LocalOps console UI will also be injected into the worker.
+6. `count` - Number of replicas / containers of the worker to run
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
@@ -637,7 +697,6 @@ make the API calls to your service using its private Internal host name, as per 
 
 Crons only work if your service is either an "external/web serivce" or "internal" service. So that there are endpoints
 available to hit based on a schedule.
-
 
 ## Complete Example
 
