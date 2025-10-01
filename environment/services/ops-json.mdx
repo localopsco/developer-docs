@@ -622,7 +622,7 @@ Get in touch with us at help@localops.co if you want more queueing servers suppo
 
 ## Configuring Processes
 
-You can spin up any number of workers for each PR using one of these methods:
+You can spin up any number of processes inside each service
 
 - Run any publicly available docker image from Docker hub
 - Run your existing code from with a different start command
@@ -652,8 +652,7 @@ Configuration for each `worker`:
 2. `prefix` - String that will be used as prefix in the name of the resource
 3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use
    the same image that was used to run your original service, which was built with the latest commit in your PR.
-4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
-   in your PR.
+4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit in your PR. Refer to [run command in service](/environment/services/create#run-command) for more details
 5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
    this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
    this service in LocalOps console UI will also be injected into the worker.
