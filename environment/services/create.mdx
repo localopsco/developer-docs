@@ -56,15 +56,12 @@ overridden by supplying command-line arguments to docker run.
 CMD is useful for setting default commands and easily overridden parameters. It is often used in images as a way of
 defining default run parameters and can be overridden from the command line when the container is run.
 
-For example, by default, you might want a python web server to start, but also you could override this to run a node server instead:
+For example, by default, you might want a python web server to start, but also you could override this to run a node
+server instead:
 
 ```
 CMD ["python", "-DFOREGROUND"]
 ```
-
-### Overriding CMD in LocalOps
-
-You can configure the service with `node start.js` to get a node process started instead of starting python server.
 
 ### Difference between CMD and ENTRYPOINT
 
@@ -80,6 +77,11 @@ ENTRYPOINT is particularly useful for turning a container into a standalone exec
 packaging a custom script that requires arguments (e.g., “my_script extra_args”). In that case, you can use ENTRYPOINT
 to always run the script process (“my_script”) and then allow the image users to specify the “extra_args” on the docker
 run command line. You can do the following:
+
+### Overriding CMD in LocalOps
+
+You can configure the service with custom run command `node start.js` to get a node process started instead of starting
+python server.
 
 ## Number of containers
 

@@ -114,7 +114,8 @@ automatically, in the order mentioned here:
 
 1. Any variable you have added in LocalOps console UI are passed to the job.
 2. In addition, any cloud `dependencies` > `exports` variables you declared using below and
-3. If this is running as part of a preview service, preview service `previews.depdendencies` > `exports` variables are added too.
+3. If this is running as part of a preview service, preview service `previews.depdendencies` > `exports` variables are
+   added too.
 4. Variables in `env` above init job config
 
 Variables defined in the set #4 overrides the ones defined in say, #3 above.
@@ -652,7 +653,8 @@ Configuration for each `worker`:
 2. `prefix` - String that will be used as prefix in the name of the resource
 3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use
    the same image that was used to run your original service, which was built with the latest commit in your PR.
-4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit in your PR. Refer to [run command in service](/environment/services/create#run-command) for more details
+4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
+   in your PR. Refer to [run command in service](/environment/services/create#run-command) for more details
 5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
    this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
    this service in LocalOps console UI will also be injected into the worker.
