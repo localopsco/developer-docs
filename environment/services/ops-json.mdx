@@ -56,8 +56,8 @@ starting the current service. You can use init to configure them like below:
     },
     {
       "type": "service",
-      "id": "wait_for_postgres",
-      "prefix": "pg_wait",
+      "id": "wait_for_service",
+      "prefix": "service_wait",
       "service": "$svc-123",
       "health": {
         "path": "/health",
