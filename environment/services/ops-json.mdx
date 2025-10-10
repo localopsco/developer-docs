@@ -35,42 +35,71 @@ Here is the order in which resources/declarations defined in ops.json are provis
 5. Cron jobs defined in `cron` are started. [See here](/environment/services/ops-json#configuring-cron-service)
 6. Workers in `previews.workers` are started. [See here](/environment/services/ops-json#isolated-workers)
 
-<Note>
-Note: #2 and #3 are applicable and run in Pull request preview sevices
-</Note>
+<Note>Note: #2 and #3 are applicable and run in Pull request preview sevices</Note>
 
 ## Init Jobs
 
-Applicable and run only for a [web](/environment/services/web) service.
-
-Say you want to run a db migration before a service is started. Just add the job inside `init` key like below:
+Let's say you want to run a db migration before a service is started or wait for another service is started before
+starting the current service. You can use init to configure them like below:
 
 ```json
 {
   "init": [
     {
+      "type": "job",
       "id": "migrate",
       "prefix": "migrate",
       "cmd": "python3 manage.py migrate",
       "env": {
         "var": "value"
       }
+    },
+    {
+      "type": "service",
+      "id": "wait_for_postgres",
+      "prefix": "pg_wait",
+      "service": "$svc-123",
+      "health": {
+        "path": "/health",
+        "status": 200
+      }
     }
   ]
 }
 ```
 
-Configuration for each `init` job:
+Init has two types of configuration:
 
-1. `id` - Unique identifier to identify this resource within the environment
-2. `prefix` - String that will be used as prefix in the name of the resource
-3. `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use
-   the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
-4. `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
+1. `job` - Executes a command on every pod startup using the specified Docker image
+2. `service` - Waits for a dependent service to become available before starting.
+
+### Common Parameters
+
+- `type` - Type of init either `job` or `service`, defaults to `job` when not specified
+- `id` - Unique identifier to identify this resource within the environment
+- `prefix` - String that will be used as prefix in the name of the resource
+
+### Configuration for each `init` job:
+
+- `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
+- `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
    in your branch/PR.
-5. `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
-   this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
-   this service in LocalOps console UI will also be injected into the job.
+- `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for this service in LocalOps console UI will also be injected into the job.
+
+#### Run the job once accross all the pods
+
+Let's say you want to run migration for your DB or seed your data, By default all the job mentioned in the init container will be run once per every copy/pod that is created. To control the behaviour for your job to run once across all pods, you can set the `once` parameter to `true`.
+
+<Note>
+    When `once` is set, the `cmd` must be a fully qualified command not just arguments. By default kubernetes or helm doesn't support this, we override your entrypoint(if exists) in your Dockerfile with a custom entrypoint script to get the desired behaviour.
+</Note>
+
+### Configuration for each `service` job:
+
+- `name` - alias for the service
+- `health` - optional health configuration. by default will will try to hit path `GET /` and expect a `2xx` status code
+  - `path` - optional path to hit for health check. Defaults to `GET /`
+  - `status` - optional status code to expect. Defaults to `2xx`
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
@@ -109,7 +138,7 @@ here.
 }
 ```
 
-#### Environment variables
+### Environment variables
 
 Environment variables passed here are not the only ones passed into the job. Following set are injected into the job
 automatically, in the order mentioned here:
@@ -122,10 +151,9 @@ automatically, in the order mentioned here:
 
 Variables defined in the set #4 overrides the ones defined in say, #3 above.
 
-#### Order and errors
+### Order and errors
 
-Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails
-and the main `web` service won't start.
+Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails and the main `web` service won't start.
 
 ## Automatic provisioning of cloud resources
 
