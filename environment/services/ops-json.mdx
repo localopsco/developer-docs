@@ -79,7 +79,7 @@ Init has two types of configuration:
 - `id` - Unique identifier to identify this resource within the environment
 - `prefix` - String that will be used as prefix in the name of the resource
 
-### Configuration for each `init` job:
+### Configuration for `init` job:
 
 - `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
 - `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
@@ -94,7 +94,7 @@ Let's say you want to run migration for your DB or seed your data, By default al
     When `once` is set, the `cmd` must be a fully qualified command not just arguments. By default kubernetes or helm doesn't support this, we override your entrypoint(if exists) in your Dockerfile with a custom entrypoint script to get the desired behaviour.
 </Note>
 
-### Configuration for each `service` job:
+### Configuration for `service` job:
 
 - `name` - alias for the service
 - `health` - optional health configuration. by default will will try to hit path `GET /` and expect a `2xx` status code
