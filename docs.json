@@ -109,7 +109,7 @@
             ]
           },
           {
-            "group": "OnPrem",
+            "group": "No Access delivery",
             "pages": ["onprem/license-tokens"]
           },
           {
