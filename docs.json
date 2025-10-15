@@ -109,6 +109,10 @@
             ]
           },
           {
+            "group": "No Access delivery",
+            "pages": ["onprem/license-tokens"]
+          },
+          {
             "group": "CLI",
             "pages": ["cli/install-macos", "cli/install-linux", "cli/install-windows", "cli/usage"]
           },
