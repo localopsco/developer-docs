@@ -10,6 +10,7 @@ License tokens can do the following:
 ## Validation API
 
 When you create a license token, you can make use of the validation api to control your deployment.
+You can access this token in your app via `BYOC_LICENSE_TOKEN` environment variable.
 
 For example, you can bundle this api in your app and do a start up check to check if the license token is valid and run your services. You can also run a background job to check the status of the license token and stop your services if the license token is expired.
 
