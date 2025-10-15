@@ -155,6 +155,94 @@ Variables defined in the set #4 overrides the ones defined in say, #3 above.
 
 Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails and the main `web` service won't start.
 
+## Health Checks
+
+For your service, you can define health checks using any one of the following methods.
+
+### Types of Health checks:
+
+1. Shell command 
+2. HTTP check 
+3. TCP check 
+4. gRPC check 
+
+Checks will be done on each container of your service. Containers are marked as healthy if their corresponding health checks pass for at least once or for `success_threshold` times or more.
+
+You can define how often checks have to be carried out using `interval`. And you can define `delay` to tell us how long to wait to start making those checks, during the first time.
+
+If your container fails these checks beyond `failure_threshold`, the corresponding container will be restarted automatically. 
+
+### Example configurations:
+
+#### Shell command 
+
+```json 
+{
+  "health": {
+    "cmd": [
+      "/bin/sh",
+      "-c",
+      "some_executable_or_script"
+    ],
+    "delay": 5, //seconds to wait, first time
+    "interval": 5, //seconds between checks
+    "failure_threshold": 3,
+    "success_threshold": 2
+  }
+}
+```
+
+#### HTTP Check
+
+```json 
+{
+  "health": {
+    "http": {
+      "path": "/health", //optional; default: /;
+      "port": 3000
+    },
+    "delay": 5, 
+    "interval": 5,
+    "failure_threshold": 3,
+    "success_threshold": 2
+  }
+}
+```
+
+#### TCP Check
+
+```json 
+{
+  "health": {
+    "tcp": {
+      "port": 3000 //required
+    },
+    "delay": 5,
+    "interval": 5,
+    "failure_threshold": 3,
+    "success_threshold": 2
+  }
+}
+```
+
+When a socket cannot be created with your container on the defined port, health checks will fail.
+
+#### gRPC Check
+
+```json 
+{
+  "health": {
+    "grpc": {
+      "port": 2379 //required
+    },
+    "delay": 5,
+    "interval": 5,
+    "failure_threshold": 3,
+    "success_threshold": 2
+  }
+}
+```
+
 ## Automatic provisioning of cloud resources
 
 Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database
