@@ -110,7 +110,7 @@
           },
           {
             "group": "No Access delivery",
-            "pages": ["onprem/license-tokens"]
+            "pages": ["no-access-delivery/license-tokens"]
           },
           {
             "group": "CLI",
