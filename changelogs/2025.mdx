@@ -3,6 +3,42 @@ title: 2025
 description: Updates and improvements of year 2025
 mode: center
 ---
+<Update label="Oct 24, 2025">
+
+## Skip writing Dockerfiles. Custom ops.json. And more.
+
+From today, your Github repositories need not have Dockerfiles in them. 
+
+LocalOps will pull the code from Github, infer and automatically build an appropriate Docker image based on the language runtime used in the repo. All the following languages are supported as of now:
+
+1. Node
+2. Python
+3. Go
+4. PHP
+5. HTML
+6. Java
+7. Ruby
+8. Deno
+9. Rust
+10. Elixir
+11. Shell scripts
+
+If needed, a run command can be provided in the Service to specify the exact run command to use to run that service. Read more on the [announcement](https://localops.co/blog/deploy-your-service-on-any-customer-cloud-no-dockerfile-required).
+
+## Custom ops.json 
+
+LocalOps looks for `ops.json` in the root of your Git repo (See [ops.json docs](https://docs.localops.co/environment/services/ops-json)) and it can be used to configure services in advanced ways. Say, you can define cloud depndencies like s3, define cron jobs, seed/migration jobs and so on.
+
+You can now define the same json file and name it anything or place it anywhere in the repo. Just pass the location of json file in Service settings. And LocalOps will process it in usual ways.
+
+## Other updates
+
+1. Services and secrets are now sorted in the alphabetical order in UI to make them more findable when having large number of services 
+2. Several refinements in the UI
+3. Bug fixes in setting up AWS connection
+
+</Update>
+
 <Update label="Oct 16, 2025">
 
 ## Define the order of services and jobs 
