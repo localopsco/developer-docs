@@ -3,6 +3,33 @@ title: 2025
 description: Updates and improvements of year 2025
 mode: center
 ---
+<Update label="Nov 6, 2025">
+
+## Bulk Import/Update secrets
+
+When your services use lots of secrets (100s of them), it may not be ideal to add/update/delete one by one.
+
+So we introduced bulk secrets editor in serives section. Just click on __Bulk Import__ button and paste in secrets in __KEY=VALUE__ pattern.
+
+You can copy paste your .env files if secrets are maintained that way in your project. 
+
+All the following operatons can be done using this editor.
+1. Bulk import new secrets 
+2. Bulk edit and save. Just use the same editor to update existing secrets 
+3. Delete secrets in bulk
+
+## Reveal individual secrets
+
+In edit secret screen, you can now see existing values by clicking on __Reveal value__ link under Value field. This is handy when you want to debug issues in your environments by seeing current value of a secret or when you want to edit values with full context.
+
+## Cancel queued deployments
+
+Anyone can now cancel queued deployments from Deployments section. This is useful if you want to make some last minute changes before the deployment starts. Click on __Cancel__ button that appears next to each queued deployment.
+
+Reach out to us if you want to see a quick walk through of these capabilities at https://go.localops.co/tour. 
+
+</Update>
+
 <Update label="Oct 24, 2025">
 
 ## Skip writing Dockerfiles. Custom ops.json. And more.
