@@ -15,23 +15,24 @@ This guide provides user manuals, tutorials and concepts to educate your develop
 
 Here are some first steps:
 
-<CardGroup cols={2}>
-  <Card title="Connect GitHub repository" icon="code" href="/accounts/connect-github">
-    Connect your github account and repos to start deploying on every git-push.
-  </Card>
-    <Card title="Connect your cloud account" icon="cloud" href="/accounts/aws">
-    Next step is to connect your cloud account (say AWS).
-  </Card>
-  <Card title="Launch new environment" icon="container-storage" href="/environment/create">
-    Spin up a new environment (say test, staging, production etc.,)
-  </Card>
-  <Card title="Deploy a new service" icon="rocket" href="/environment/services/create">
-    Launch a new service within the environment and start pushing commits to Github to deploy.
-  </Card>
-</CardGroup>
-
-Once everything is configured, push new commits the configured branch to see automatic deployments triggered.
+<Steps>
+  <Step title="Connect GitHub repository" icon="code" >
+    Connect your github account and repos to start deploying on every git-push. [Connect github now](/accounts/connect-github)
+  </Step>
+  <Step title="Connect your cloud account" icon="cloud">
+    Next step is to connect your cloud account (say AWS). [Connect cloud account](/accounts/aws)
+  </Step>
+  <Step title="Launch new environment" icon="container-storage">
+    Spin up a new environment (say test, staging, production etc.,). [Create new environment](/environment/create)
+  </Step>
+  <Step title="Create a new service" icon="server">
+    Create a new service within the environment, and configure a branch for auto-deployment. [Create new service](/environment/services/create)
+  </Step>
+  <Step title="Deploy" icon="rocket">
+    Once everything is configured, push new commits the configured branch to see automatic deployments triggered.
 [Learn more](/environment/services/deploy).
+  </Step>
+</Steps>
 
 ### Get support
 
