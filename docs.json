@@ -111,6 +111,7 @@
               "environment/services/micro-services",
               "environment/services/secrets",
               "environment/services/custom-domain",
+              "environment/services/instrument-service",
               "environment/services/delete"
             ]
           },

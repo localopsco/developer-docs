@@ -1,0 +1,48 @@
+---
+title: Instrument your service
+---
+
+This is a guide to learn more about how you can instrument your services by exposing custom metrics that are crucial for your app/use case. Eg., `emails_received`, `emails_sent`, `emails_bounced` if you're building a transaction email service.
+
+## How to instrument your services
+
+LocalOps by default embeds prometheus in every environment. To make your service's metrics available to prometheus, follow these steps to make sure you expose an endpoint that responds with metrics values as expected by prometheus. 
+
+### 1. Use a prometheus client library in code
+
+You can do this without prometheus client library too but it is much easier if you use the library. Prometheus officially supports these client libraries:
+
+1. Go ([example](https://prometheus.io/docs/guides/go-application/))
+2. Java 
+3. Python 
+4. Rust
+
+There are unofficial community maintained libraries too for other languages. 
+
+Checkout [https://prometheus.io/docs/instrumenting/clientlibs/](https://prometheus.io/docs/instrumenting/clientlibs/) for full list. Please follow the corresponding language guide on how to make custom metrics available. 
+
+### 2. Expose an endpoint in your service like `/metrics`
+
+Define a specific endpoint like `metrics` in your service and connect the prometheus client libraries url handler functions to it. This endpoint will be called by the monitoring stack (prometheus) periodically to scrap the metrics exposed in step 1.
+
+### 3. Declare the metrics endpoint in ops.json 
+
+`ops.json` lets you define configuration specific to your service. Just declare a `metrics` key like below in `ops.json`:
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 2 # in seconds 
+    }
+}
+```
+
+`interval` is to inform prometheus how often this endpoint must be hit. Please don't keep it too low like 1 second. Your service might get too busy handling these requests instead of handling real user requests. 
+
+LocalOps will then make these metrics available in the Grafana dashboard via Prometheus, just like any other metric.
+
+## For Helm charts 
+
+Same instrument provisions will be made in the Helm charts you generate and publish. A prometheus + grafana stack when installed and configured in any target Kubernetes where your Helm chart is installed, will automatically pick up the same metrics and show in Grafana. 
+
