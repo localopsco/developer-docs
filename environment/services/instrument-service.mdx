@@ -23,7 +23,7 @@ Checkout [https://prometheus.io/docs/instrumenting/clientlibs/](https://promethe
 
 ### 2. Expose an endpoint in your service like `/metrics`
 
-Define a specific endpoint like `metrics` in your service and connect the prometheus client libraries url handler functions to it. This endpoint will be called by the monitoring stack (prometheus) periodically to scrap the metrics exposed in step 1.
+Define a specific endpoint like `/metrics` in your service and connect the prometheus client libraries url handler functions with it. This endpoint will be called by the inbuilt monitoring stack (prometheus) periodically to scrap the metrics exposed in step 1.
 
 ### 3. Declare the metrics endpoint in ops.json 
 
@@ -40,7 +40,7 @@ Define a specific endpoint like `metrics` in your service and connect the promet
 
 `interval` is to inform prometheus how often this endpoint must be hit. Please don't keep it too low like 1 second. Your service might get too busy handling these requests instead of handling real user requests. 
 
-LocalOps will then make these metrics available in the Grafana dashboard via Prometheus, just like any other metric.
+LocalOps will then make these metrics available automatically in the Grafana dashboard via Prometheus, just like any other metric.
 
 ## For Helm charts 
 
