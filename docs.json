@@ -18,12 +18,17 @@
             "pages": [
               "index",
               "howitworks",
+              "support",
+              "compatibility"
+            ]
+          },
+          {
+            "group": "Usecases",
+            "pages": [
               "use-cases/public-saas",
               "use-cases/dedicated-infrastructure",
               "use-cases/private-saas",
-              "use-cases/ephemeral",
-              "support",
-              "compatibility"
+              "use-cases/ephemeral"
             ]
           },
           {
