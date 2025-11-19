@@ -14,7 +14,8 @@
         "tab": "Documentation",
         "groups": [
           {
-            "group": "Documentation",
+            "group": "Start here",
+            "icon": "rocket",
             "pages": [
               "index",
               "howitworks",
@@ -24,15 +25,18 @@
           },
           {
             "group": "Usecases",
+            "icon": "lightbulb",
             "pages": [
               "use-cases/public-saas",
               "use-cases/dedicated-infrastructure",
-              "use-cases/private-saas",
+              "use-cases/byoc",
+              "use-cases/self-hosted",
               "use-cases/ephemeral"
             ]
           },
           {
             "group": "Guides",
+            "icon": "book",
             "pages": [
               "guides/languages/node",
               "guides/languages/python",
@@ -46,6 +50,7 @@
           },
           {
             "group": "Connections",
+            "icon": "cloud",
             "pages": [
               {
                 "group": "Cloud accounts",
@@ -60,6 +65,7 @@
           },
           {
             "group": "Environments",
+            "icon": "container-storage",
             "pages": [
               "environment/inside",
               "environment/create",
@@ -92,6 +98,7 @@
           },
           {
             "group": "Services",
+            "icon": "server",
             "pages": [
               "environment/services/create",
               "environment/services/ops-json",
@@ -122,12 +129,14 @@
           },
           {
             "group": "No Access Delivery",
+            "icon": "key",
             "pages": [
               "no-access-delivery/license-tokens"
             ]
           },
           {
             "group": "CLI",
+            "icon": "terminal",
             "pages": [
               "cli/install-macos",
               "cli/install-linux",
@@ -137,6 +146,7 @@
           },
           {
             "group": "Team",
+            "icon": "users",
             "pages": [
               "team/understanding-roles",
               "team/invite-users",
@@ -146,6 +156,7 @@
           },
           {
             "group": "Troubleshooting",
+            "icon": "bug",
             "pages": [
               "troubleshoot/create-environment",
               "troubleshoot/custom-domain"
@@ -230,16 +241,12 @@
       {
         "label": "Console",
         "href": "https://console.localops.co"
-      },
-      {
-        "label": "Create account",
-        "href": "https://console.localops.co/signup"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "See demo",
-      "href": "https://go.localops.co/tour"
+      "label": "Get started",
+      "href": "https://console.localops.co/signup"
     }
   },
   "footer": {
