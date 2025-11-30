@@ -4,7 +4,7 @@ title: Data security
 
 LocalOps takes security seriously and is committed to safeguarding your accounts and data with state of the art security controls and best practices. 
 
-**NIST & SOC2 alignment:** Our security controls align with industry standard NIST & SOC2 frameworks and span from hiring, software architecture & software development life cycle, software hosting, configuration & releases on the cloud, disaster recovery and more. 
+**NIST & SOC2 aligned:** Our security controls align with industry standard NIST & SOC2 frameworks and span from hiring, software architecture & software development life cycle, software hosting, configuration & releases on the cloud, disaster recovery and more. 
 
 LocalOps serves some of the finest growing startups & businesses across US, India & other parts of the world. This document provides an overview and introduction to security controls implemented throughout its platform. 
 
@@ -62,6 +62,19 @@ The following security controls are in place to safeguard data in the LocalOps p
 9. **Multi-Factor Authentication (MFA):** All access to servers is safeguarded by MFA.
 10. **Command Auditing and Logging:** All commands used in the hosting environment are audited and logged.
 
+## Incident response plan
+
+Alert rules are configured in all parts of the software stack to detect issues and escalate anomalies to the team. 
+
+**Recovery Time Objective (RTO):** Services are recovered within 24 hours. 
+
+1. **Communication/escalation:** Internal & instant communication tools are active all the time, to communicate, escalate and recover from incidents.
+2. **Clear assignments:** Clear assignments are done within the team to own and recover from specific issues
+3. **RCAs:** Root cause analysis is carried out by the assignee(s)
+4. **Review/approval:** Fixes are made to software, configuration or infrastructure after internal review & approval from the owners of the system(s).
+5. **Post mortems:** Post mortems are conducted post the incident to prevent similar issues in future 
+
+
 ## Disaster recovery procedures
 
 LocalOps has outlined clear disaster recovery procedures to recover services during major incidents. These procedures are also tested regularly.
@@ -71,8 +84,6 @@ LocalOps has outlined clear disaster recovery procedures to recover services dur
 3. **Backup Frequency & Security:** Backups are taken and transferred securely to S3, every hour.
 4. **Backup Retention:** All backups are maintained for 30 days.
 5. **Recovery Point Objective (RPO):** Data is restored from the most recent backup that is less than or up to 60mins old.
-6. **Recovery Time Objective (RTO):** All services can be recovered within 24 hours if there is a major incident.
-7. **Incident Communication:** Internal communication tools (Slack) and backup communication tools are active all the time to escalate and recover from issues as soon as possible.
 
 ## Product security
 
