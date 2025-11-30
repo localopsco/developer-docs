@@ -69,7 +69,7 @@ Alert rules are configured in all parts of the software stack to detect issues a
 **Recovery Time Objective (RTO):** Services are recovered within 24 hours. 
 
 1. **Communication/escalation:** Internal & instant communication tools are active all the time, to communicate, escalate and recover from incidents.
-2. **Clear assignments:** Clear assignments are done within the team to own and recover from specific issues
+2. **Clear assignments:** Assignments are done within the team to own and recover from specific issues
 3. **RCAs:** Root cause analysis is carried out by the assignee(s)
 4. **Review/approval:** Fixes are made to software, configuration or infrastructure after internal review & approval from the owners of the system(s).
 5. **Post mortems:** Post mortems are conducted post the incident to prevent similar issues in future 
@@ -82,7 +82,7 @@ LocalOps has outlined clear disaster recovery procedures to recover services dur
 1. **Backup Storage:** All backups are stored in Amazon S3.
 2. **Geographic Redundancy:** Backups are stored in the US-east while our services are running in the US-west, to mitigate risks of regional failures in the US-west.
 3. **Backup Frequency & Security:** Backups are taken and transferred securely to S3, every hour.
-4. **Backup Retention:** All backups are maintained for 30 days.
+4. **Backup Retention:** All backups are kept for 30 days.
 5. **Recovery Point Objective (RPO):** Data is restored from the most recent backup that is less than or up to 60mins old.
 
 ## Product security
