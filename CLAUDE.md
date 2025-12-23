@@ -193,5 +193,5 @@ The documentation uses Mintlify-specific MDX components:
 
 The site includes:
 - **PostHog** - Product analytics (custom host: watermelon.localops.co)
-- **Intercom** - Customer support widget (appId: wjg6xmxh)
+- **Chatbase** - AI-powered customer support chat widget (ID: nMT5Xl30euyYsq2qhZzVm)
 - **Google Tag Manager** - Tracking (GTM-PWH8VTN6)
