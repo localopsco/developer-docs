@@ -236,17 +236,17 @@
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:help@localops.co"
-      },
-      {
         "label": "Console",
         "href": "https://console.localops.co"
+      },
+      {
+        "label": "Schedule demo",
+        "href": "https://go.localops.co/tour"
       }
     ],
     "primary": {
       "type": "button",
-      "label": "Get started",
+      "label": "Get started for free",
       "href": "https://console.localops.co/signup"
     }
   },
