@@ -1,0 +1,107 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "LocalOps API",
+    "version": "1.0.0",
+    "description": "API for programmatically managing LocalOps environments and services."
+  },
+  "servers": [
+    {
+      "url": "https://api.localops.co/v1"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/environments/{envId}/services/{serviceId}/deploy": {
+      "post": {
+        "summary": "Deploy Service",
+        "description": "Trigger a deployment for a specific service within an environment.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "title": "Deploy by Commit ID",
+                    "type": "object",
+                    "required": ["commit_id"],
+                    "properties": {
+                      "commit_id": {
+                        "type": "string",
+                        "description": "The Git commit ID to deploy"
+                      }
+                    }
+                  },
+                  {
+                    "title": "Deploy Docker Image",
+                    "type": "object",
+                    "required": ["docker_image_tag"],
+                    "properties": {
+                      "docker_image_tag": {
+                        "type": "string",
+                        "description": "The Docker image tag to deploy"
+                      }
+                    }
+                  },
+                  {
+                    "title": "Deploy Helm Chart",
+                    "type": "object",
+                    "required": ["helm_chart_version"],
+                    "properties": {
+                      "helm_chart_version": {
+                        "type": "string",
+                        "description": "The Helm chart version to deploy"
+                      }
+                    }
+                  }
+                ],
+                "example": {
+                  "commit_id": "a1b2c3d4"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deployment triggered successfully"
+          }
+        }
+      }
+    }
+  }
+}

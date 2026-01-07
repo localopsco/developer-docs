@@ -1,0 +1,39 @@
+---
+title: Getting Started
+description: Introduction to the LocalOps API
+---
+
+## Overview
+
+Welcome to the LocalOps API documentation. This API allows you to programmatically manage your environments, services,
+and resources.
+
+## Authentication
+
+All API requests require authentication using an API key. Include your API key in the request headers:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://api.localops.co/v1/environments
+```
+
+## Base URL
+
+The base URL for all API requests is:
+
+```
+https://api.localops.co/v1
+```
+
+## Response Format
+
+All API responses are returned in JSON format. Successful responses have a `200` status code, while errors return
+appropriate HTTP status codes with error details in the response body.
+
+## Errors
+
+- `401 Unauthorized`: The API key is invalid or missing.
+- `403 Forbidden`: The API key is not authorized to access the requested resource.
+- `404 Not Found`: The requested resource does not exist.
+- `429 Too Many Requests`: The API key has exceeded the rate limit.
+- `500 Internal Server Error`: An unexpected error occurred on the server.
