@@ -4,7 +4,8 @@ This file provides instructions for AI agents working on the LocalOps Developer 
 
 ## Project Overview
 
-This is a Mintlify-based documentation site for LocalOps, a cloud-native deployment platform. The site is hosted at <https://docs.localops.co> and contains comprehensive documentation for developers using the LocalOps platform.
+This is a Mintlify-based documentation site for LocalOps, a cloud-native deployment platform. The site is hosted at
+https://docs.localops.co and contains comprehensive documentation for developers using the LocalOps platform.
 
 ## Development Environment
 
@@ -98,7 +99,7 @@ singleQuote: true
 - Use language-specific syntax highlighting
 - JSON code blocks for configuration examples
 - Shell commands in bash blocks
-- Include language identifier: ```json,```bash, ```javascript
+- Include language identifier: \`\`\`json,\`\`\`bash, \`\`\`javascript
 
 ### MDX Components and Syntax
 
@@ -212,7 +213,7 @@ Use Mintlify's built-in MDX components:
 #### PostHog Analytics
 
 - API Key: phc_T54pQDyo3sFjCz7a3fm2XCCoDAt7iA0l2KM9qBKauF3
-- API Host: <https://watermelon.localops.co>
+- API Host: https://watermelon.localops.co
 
 #### Google Tag Manager
 
@@ -228,7 +229,7 @@ Use Mintlify's built-in MDX components:
 
 - Changes to `main` branch deploy automatically via GitHub App
 - No manual intervention required
-- Production URL: <https://docs.localops.co>
+- Production URL: https://docs.localops.co
 
 #### Preview Changes
 
@@ -250,5 +251,4 @@ Use Mintlify's built-in MDX components:
 - Include relevant keywords naturally
 - Optimize images for web delivery
 
-This AGENTS.md file should be updated whenever development workflows, coding standards, or project structure changes.</content>
-
+This AGENTS.md file should be updated whenever development workflows, coding standards, or project structure changes.
