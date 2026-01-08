@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "https://api.localops.co/v1"
+      "url": "https://sdk.localops.co"
     }
   ],
   "components": {
@@ -25,7 +25,7 @@
     }
   ],
   "paths": {
-    "/environments/{envId}/services/{serviceId}/deploy": {
+    "/v1/environments/{envId}/services/{serviceId}/deploy": {
       "post": {
         "summary": "Deploy Service",
         "description": "Trigger a deployment for a specific service within an environment.",
@@ -58,7 +58,9 @@
                   {
                     "title": "Deploy by Commit ID",
                     "type": "object",
-                    "required": ["commit_id"],
+                    "required": [
+                      "commit_id"
+                    ],
                     "properties": {
                       "commit_id": {
                         "type": "string",
@@ -69,7 +71,9 @@
                   {
                     "title": "Deploy Docker Image",
                     "type": "object",
-                    "required": ["docker_image_tag"],
+                    "required": [
+                      "docker_image_tag"
+                    ],
                     "properties": {
                       "docker_image_tag": {
                         "type": "string",
@@ -80,7 +84,9 @@
                   {
                     "title": "Deploy Helm Chart",
                     "type": "object",
-                    "required": ["helm_chart_version"],
+                    "required": [
+                      "helm_chart_version"
+                    ],
                     "properties": {
                       "helm_chart_version": {
                         "type": "string",
