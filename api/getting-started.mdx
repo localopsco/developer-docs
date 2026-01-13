@@ -14,7 +14,7 @@ All API requests require authentication using an API key. Include your API key i
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://api.localops.co/v1/environments
+     https://sdk.localops.co/v1/environments
 ```
 
 ## Base URL
@@ -22,7 +22,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 The base URL for all API requests is:
 
 ```
-https://api.localops.co/v1
+https://sdk.localops.co/v1
 ```
 
 ## Response Format
@@ -36,4 +36,4 @@ appropriate HTTP status codes with error details in the response body.
 - `403 Forbidden`: The API key is not authorized to access the requested resource.
 - `404 Not Found`: The requested resource does not exist.
 - `429 Too Many Requests`: The API key has exceeded the rate limit.
-- `500 Internal Server Error`: An unexpected error occurred on the server.
+- `500 Internal Server Error`: An unexpected error occurred on our servers.
