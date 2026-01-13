@@ -1,0 +1,79 @@
+---
+title: 2026
+description: Updates and improvements of year 2026
+mode: center
+---
+<Update label="Jan 13, 2026">
+
+## Bring your own registry
+
+LocalOps can now use your images from your own docker registry to deploy services in your environments. Go to the new Registries section to add any private docker registry.
+
+We support ECR & DockerHub as of today and plan to support other providers in the coming weeks. 
+
+1. Amazon Elastic Container Registry (ECR)
+2. DockerHub
+3. Google container registry
+4. Azure container registry
+5. Github packages
+
+([Talk to us](mailto:anand@localops.co) if you need us to support any other registry).
+
+## Bring your code pipeline 
+
+### Deploy using LocalOps API
+
+You can run your exisitng code build pipelines to build code and finally call LocalOps API to deploy the code to your environment. Checkout the API reference for the new /deploy api [here](https://docs.localops.co/api-reference/deploy-service).
+
+Eg., 
+
+```bash
+curl --request POST \
+  --url https://sdk.localops.co/v1/environments/{envId}/services/{serviceId}/deploy \
+  --header 'Authorization: Bearer <token>' \
+  --header 'Content-Type: application/json' \
+  --data '
+{
+  "docker_image_tag": "a1b2c3d4"
+}
+'
+```
+
+### 🍦 Deploy using LocalOps Github action
+
+To cut work, you can also embed our Github action step directly within your `.github/workflows/deploy.yml` to trigger new deployments. 
+
+Like:
+
+```yaml
+- use: localopsco/deploy-action
+  with:
+    - service: auf-d0923-8rljks-fd9o8
+    - environment: afdsfk-j092309-4laskd-jf32
+    - token: aslkjadsf-dkjfie-uriw-skjf-19823r
+    - docker_image_tag: 1.2.2
+```
+
+You can pass `docker_image_tag` or `commit_id` or `helm_chart_version` to the action to trigger new deployments.
+
+or with commit sha like:
+
+```yaml
+- use: localopsco/deploy-action
+  with:
+    - service: auf-d0923-8rljks-fd9o8
+    - environment: afdsfk-j092309-4laskd-jf32
+    - token: aslkjadsf-dkjfie-uriw-skjf-19823r
+    - commit_id: akf9a0sd98
+```
+
+## Pass ops.json as configuration 
+
+For Docker-image based services, you can now add ops.json as configuration to the service settings within LocalOps console. This will work as documented in ops.json configuration [here](https://docs.localops.co/environment/services/ops-json).
+
+</Update>
+
+For the previous year, check out [2025](/changelogs/2025)
+
+[demo]: https://go.localops.co/tour
+[signup]: https://console.localops.co/signup
