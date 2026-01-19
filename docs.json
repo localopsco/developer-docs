@@ -36,6 +36,7 @@
               "guides/languages/node",
               "guides/languages/python",
               "guides/languages/go",
+              "guides/languages/dotnet",
               "guides/spa/nextjs",
               "guides/spa/react",
               "guides/spa/angular",

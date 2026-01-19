@@ -1,0 +1,208 @@
+---
+title: .NET Framework/ASP.NET
+description: Step-by-step guide to setting up a Dockerfile for a .NET Framework application on Windows Server 2022
+---
+
+This documentation provides a step-by-step guide to setting up a Dockerfile for a web API application written using
+[ASP.NET][aspnet] and [.NET Framework][dotnet].
+
+## Prerequisites
+
+To follow this tutorial, you will need the following:
+
+- [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) with ASP.NET and web development workload.
+- [.NET Framework 4.7.2 or later](https://dotnet.microsoft.com/download/dotnet-framework) installed.
+- A basic knowledge of [C#](https://learn.microsoft.com/en-us/dotnet/csharp/) and [ASP.NET Web API][aspnet].
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) configured to use **Windows containers**.
+
+<Note>
+  This guide assumes that you have a basic knowledge of the above-mentioned technologies and tools. If you are not
+  familiar with any of them, it is highly recommended to review their official documentation and tutorials to get up to
+  speed before proceeding with this guide.
+</Note>
+
+<Warning>
+  .NET Framework applications require **Windows containers**. Make sure Docker Desktop is switched to Windows containers
+  mode. Right-click the Docker icon in the system tray and select "Switch to Windows containers" if needed.
+</Warning>
+
+## Scaffolding the .NET Framework app
+
+Create a new ASP.NET Web API project using Visual Studio:
+
+1. Open Visual Studio 2022
+2. Click "Create a new project"
+3. Select "ASP.NET Web Application (.NET Framework)"
+4. Name the project `DotNetApi` and click "Create"
+5. Select "Web API" template and ensure ".NET Framework 4.7.2" is selected
+6. Click "Create"
+
+### Hello World! example
+
+Open `Controllers/ValuesController.cs` and replace its contents with:
+
+```csharp Controllers/ValuesController.cs
+using System.Web.Http;
+
+namespace DotNetApi.Controllers
+{
+    public class ValuesController : ApiController
+    {
+        // GET api/values
+        public IHttpActionResult Get()
+        {
+            return Ok(new { message = "Hello, World!" });
+        }
+
+        // GET api/health
+        [Route("api/health")]
+        public IHttpActionResult GetHealth()
+        {
+            return Ok(new { status = "healthy" });
+        }
+    }
+}
+```
+
+Run the application by pressing F5 in Visual Studio to verify it works. You should see the API running, and navigating
+to `/api/values` will return the Hello World JSON response.
+
+## Create the Docker image
+
+Dockerizing makes the app run anywhere that supports Windows containers. This guide uses Windows Server 2022 as the
+base image.
+
+### Create [.dockerignore](https://docs.docker.com/build/building/context/#dockerignore-files)
+
+Before creating the Dockerfile, let's create a `.dockerignore` file and add the contents that should not be copied over
+to the Docker file system.
+
+```ignore .dockerignore
+**/.dockerignore
+**/Dockerfile
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/packages/
+**/.git
+**/.gitignore
+**/README.md
+*.user
+*.suo
+```
+
+Read more about [.dockerignore here](https://docs.docker.com/build/building/context/#dockerignore-files).
+
+<Note>
+  Creating a `.dockerignore` file and excluding folders like `bin/`, `obj/`, and `packages/` is important since these
+  contain build artifacts from your local machine. The build will happen inside the Docker container with the correct
+  platform settings.
+</Note>
+
+### Create Dockerfile
+
+Now, create a [Dockerfile](https://docs.docker.com/reference/dockerfile/). The Dockerfile is a text file that contains
+the instructions for Docker to build the image.
+
+The Dockerfile uses [Multi-Stage Builds](https://docs.docker.com/build/building/multi-stage/) which is the recommended
+approach for .NET Framework applications. This produces a smaller final image by separating the build environment from
+the runtime environment.
+
+<Tip>
+  Refer to the
+  [official .NET Framework Docker samples](https://github.com/microsoft/dotnet-framework-docker/tree/main/samples) to
+  learn more about containerizing .NET Framework applications.
+</Tip>
+
+```docker Dockerfile
+# Build stage - uses .NET Framework SDK on Windows Server 2022
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2022 AS build
+WORKDIR /app
+
+# Copy solution and project files
+COPY *.sln ./
+COPY DotNetApi/*.csproj ./DotNetApi/
+COPY DotNetApi/packages.config ./DotNetApi/
+
+# Restore NuGet packages
+RUN nuget restore
+
+# Copy the rest of the source code
+COPY . ./
+
+# Build the application in Release mode
+RUN msbuild DotNetApi/DotNetApi.csproj /p:Configuration=Release /p:OutputPath=/app/publish
+
+# Runtime stage - uses ASP.NET on Windows Server 2022
+FROM mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2022 AS runtime
+WORKDIR /inetpub/wwwroot
+
+# Copy the published output from the build stage
+COPY --from=build /app/publish/_PublishedWebsites/DotNetApi .
+
+# Expose port 80 (IIS default)
+EXPOSE 80
+```
+
+<Info>
+  The `mcr.microsoft.com/dotnet/framework/aspnet:4.8-windowsservercore-ltsc2022` image includes IIS and ASP.NET 4.8,
+  which is fully backward compatible with applications targeting .NET Framework 4.7.x.
+</Info>
+
+### Build Docker image
+
+Now you can build the Docker image. To build the Docker image:
+
+```powershell
+docker build -t dotnet-api:latest .
+```
+
+This command builds the `dotnet-api` image using Windows containers.
+
+<Note>
+  Windows containers do not support cross-platform builds like Linux containers. You must build Windows container images
+  on a Windows host with Docker configured to use Windows containers.
+</Note>
+
+### Run the Docker image
+
+Let's run the Docker container using the image created of the .NET Framework application with the command below.
+
+```powershell
+docker run -d --name dotnet-api -p 8080:80 dotnet-api:latest
+```
+
+- `-d`: Runs the container in detached (background) mode.
+- `--name dotnet-api`: Name of the container `dotnet-api`.
+- `-p 8080:80`: Maps port 8080 on your host to port 80 in the container (IIS default port).
+- `dotnet-api:latest` at the end is the name and tag of the image.
+
+After running the command, visit `http://localhost:8080/api/values` to see the .NET Framework application running inside
+the Docker container.
+
+To view logs from the container:
+
+```powershell
+docker logs dotnet-api
+```
+
+To stop and remove the container:
+
+```powershell
+docker stop dotnet-api
+docker rm dotnet-api
+```
+
+## Done 🎉
+
+You can now commit and push the Dockerfile to your git repo. [Create a service](/environment/services/create) now to
+point at the git repository and branch name to deploy this image.
+
+<Warning>
+  Ensure your deployment infrastructure supports Windows containers. Not all cloud providers or Kubernetes clusters
+  support Windows nodes by default.
+</Warning>
+
+[dotnet]: https://dotnet.microsoft.com/download/dotnet-framework
+[aspnet]: https://learn.microsoft.com/en-us/aspnet/web-api/
