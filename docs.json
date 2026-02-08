@@ -30,6 +30,11 @@
             ]
           },
           {
+            "group": "Migrate to AWS",
+            "icon": "arrow-right-arrow-left",
+            "pages": ["migrate-to-aws/heroku"]
+          },
+          {
             "group": "Guides",
             "icon": "book",
             "pages": [
