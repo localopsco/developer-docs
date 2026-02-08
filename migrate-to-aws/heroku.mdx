@@ -17,6 +17,7 @@ the full AWS ecosystem. LocalOps makes this migration seamless by handling the i
 - **Lower costs**: AWS infrastructure is typically 40-60% cheaper than Heroku at scale
 - **Full AWS access**: Use any AWS service (RDS, ElastiCache, S3, SQS, etc.)
 - **Production-ready**: Auto-scaling, auto-healing, monitoring, and CI/CD out of the box
+- **Built-in observability**: Open-source stack with Prometheus, Loki, and Grafana—no extra add-ons needed
 - **No vendor lock-in**: Your code runs on standard Kubernetes in your own AWS account
 
 ## Migration overview
@@ -222,6 +223,43 @@ const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@
 4. Update your DNS to point to the new LocalOps environment
 
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
+
+## Built-in observability
+
+Every LocalOps environment comes with a fully integrated open-source observability stack—no paid add-ons like Papertrail
+or New Relic required.
+
+### Prometheus + Grafana for metrics
+
+[Prometheus](https://prometheus.io/) automatically collects CPU, memory, disk, and network metrics from every node
+running your application. View and analyze metrics through pre-built [Grafana](https://grafana.com/oss/) dashboards,
+accessible from the Monitoring tab in your environment.
+
+You can filter and group metrics by:
+
+- Node
+- Pod
+- Deployment
+- Service
+- Namespace
+
+### Loki + Grafana for logs
+
+[Loki](https://grafana.com/oss/loki/) automatically collects all logs from STDOUT and STDERR across your services. No
+log drain configuration needed—just print to console and your logs are captured.
+
+Access logs through the same Grafana dashboard, with powerful filtering by Kubernetes namespace, deployment, or custom
+labels.
+
+### Custom dashboards
+
+Each environment gets its own Grafana instance with pre-built dashboards for infrastructure monitoring. You can create
+custom dashboards to visualize application-specific metrics and logs.
+
+<Info>
+  Learn more about [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics), and
+  [alerts](/environment/monitoring/alerts).
+</Info>
 
 ## Migrating other Heroku add-ons
 
