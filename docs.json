@@ -32,7 +32,12 @@
           {
             "group": "Migrate to AWS",
             "icon": "arrow-right-arrow-left",
-            "pages": ["migrate-to-aws/heroku"]
+            "pages": [
+              "migrate-to-aws/from-heroku",
+              "migrate-to-aws/from-render",
+              "migrate-to-aws/from-vercel",
+              "migrate-to-aws/from-fly"
+            ]
           },
           {
             "group": "Guides",

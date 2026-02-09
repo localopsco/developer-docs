@@ -1,0 +1,384 @@
+---
+title: Migrate from Vercel
+description: Step-by-step guide to migrate your Vercel application and database to AWS using LocalOps
+---
+
+Migrating from Vercel to AWS gives you more control over infrastructure, predictable pricing without per-request costs,
+and access to the full AWS ecosystem. LocalOps provides the same git-push deployment experience you're used to on
+Vercel.
+
+<Tip>
+  **White-glove migration**: Our engineers will migrate your Vercel app to AWS.
+  [Schedule a migration call](https://go.localops.co/heroku) and we'll handle everything for you.
+</Tip>
+
+## What you get after migration
+
+- **Same developer experience**: Push to deploy, just like Vercel
+- **Predictable costs**: No per-request pricing or surprise bills from traffic spikes
+- **Full AWS access**: Use any AWS service (RDS, ElastiCache, S3, SQS, etc.)
+- **Production-ready**: Auto-scaling, auto-healing, monitoring, and CI/CD out of the box
+- **Built-in observability**: Open-source stack with Prometheus, Loki, and Grafana—no extra cost
+- **No vendor lock-in**: Your code runs on standard Kubernetes in your own AWS account
+
+## Migration overview
+
+<Steps>
+  <Step title="Set up LocalOps environment" icon="cloud">
+    Connect your AWS account and create a new environment for your app.
+  </Step>
+  <Step title="Deploy your application" icon="rocket">
+    Connect your GitHub repo and deploy your app to LocalOps.
+  </Step>
+  <Step title="Migrate database" icon="database">
+    Export your Vercel Postgres data and import it into Amazon RDS.
+  </Step>
+  <Step title="Update DNS and go live" icon="globe">
+    Point your domain to the new environment and verify everything works.
+  </Step>
+</Steps>
+
+<Info>
+  Need help? [Schedule a migration call](https://go.localops.co/heroku) and our engineers will assist you through the
+  entire process.
+</Info>
+
+## Step 1: Set up LocalOps environment
+
+Before migrating, you need a LocalOps environment running on AWS.
+
+<Steps>
+  <Step title="Create LocalOps account" icon="user">
+    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't already.
+  </Step>
+  <Step title="Connect AWS account" icon="cloud">
+    Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
+  </Step>
+  <Step title="Create environment" icon="container-storage">
+    Create a new environment (e.g., production) in your preferred AWS region. See
+    [Create new environment](/environment/create).
+  </Step>
+  <Step title="Create service" icon="server">
+    Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
+  </Step>
+</Steps>
+
+Once your environment is ready, note down the **VPC ID** and **Private Subnet IDs** from the environment overview page.
+You'll need these to create your RDS database.
+
+## Step 2: Prepare your application
+
+### Next.js applications
+
+If you're running a Next.js app, LocalOps automatically detects and builds it. Your app will run as a Node.js server
+rather than serverless functions, which provides:
+
+- Faster cold starts
+- Persistent connections to databases
+- WebSocket support
+- No function timeout limits
+
+No code changes are typically required. LocalOps handles the build and deployment automatically.
+
+### Serverless functions
+
+If you're using Vercel Serverless Functions, convert them to standard API routes:
+
+```javascript
+// Before (Vercel serverless function)
+// api/hello.js
+export default function handler(req, res) {
+  res.status(200).json({ message: 'Hello' });
+}
+
+// After (Next.js API route - works the same)
+// pages/api/hello.js or app/api/hello/route.js
+export default function handler(req, res) {
+  res.status(200).json({ message: 'Hello' });
+}
+```
+
+Next.js API routes work identically on LocalOps without modification.
+
+### Edge functions
+
+Edge Functions need to be converted to standard API routes or middleware. Since your app runs on AWS infrastructure
+close to your users, latency differences are minimal.
+
+## Step 3: Migrate Vercel Postgres to Amazon RDS
+
+If you're using Vercel Postgres, follow these steps to migrate to Amazon RDS.
+
+### 3.1 Create a backup of your Vercel Postgres database
+
+Get your connection string from the Vercel dashboard and use `pg_dump`:
+
+```bash
+# Get connection string from Vercel dashboard
+# Project Settings > Storage > Your Database > .env.local tab
+
+# Create a backup using pg_dump
+pg_dump "$POSTGRES_URL" \
+  --format=custom \
+  --no-owner \
+  --no-acl \
+  --file=vercel_backup.dump
+```
+
+<Warning>
+  For large databases, the backup and restore process may take significant time. Plan for a maintenance window if you
+  need zero data loss during migration.
+</Warning>
+
+### 3.2 Create RDS database in your LocalOps environment VPC
+
+#### Option A: Using ops.json (Recommended)
+
+Add an `ops.json` file to the root of your repository:
+
+```json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "main-db",
+          "prefix": "myapp",
+          "engine": "postgres",
+          "version": "16.4",
+          "storage_gb": 20,
+          "instance_type": "db.t4g.small",
+          "publicly_accessible": false,
+          "exports": {
+            "DATABASE_HOST": "$address",
+            "DATABASE_NAME": "$dbName",
+            "DATABASE_USER": "$username",
+            "DATABASE_PASSWORD_ARN": "$passwordArn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy your service to provision the RDS instance automatically. See [RDS documentation](/environment/services/aws/rds)
+for all configuration options.
+
+#### Option B: Manual RDS creation
+
+1. **Login to AWS Console** in the same region as your LocalOps environment
+
+2. **Create a DB Subnet Group**:
+
+   - Navigate to RDS > Subnet groups > Create DB subnet group
+   - Select the VPC ID from your LocalOps environment
+   - Add the private subnet IDs from your LocalOps environment
+
+3. **Create RDS Instance**:
+
+   - Navigate to RDS > Create database
+   - Choose PostgreSQL
+   - Select the DB subnet group you created
+   - Set `Publicly accessible` to **No**
+   - Create a security group allowing port 5432 from `10.0.0.0/16`
+
+### 3.3 Restore backup to Amazon RDS
+
+```bash
+# From an EC2 instance in the same VPC
+pg_restore --verbose --no-owner --no-acl \
+  -h your-rds-endpoint.rds.amazonaws.com \
+  -U your-db-username \
+  -d your-database-name \
+  vercel_backup.dump
+```
+
+### 3.4 Update database connection
+
+Update your application to use the new database:
+
+```javascript
+// Before (Vercel Postgres)
+import { sql } from '@vercel/postgres';
+const result = await sql`SELECT * FROM users`;
+
+// After (standard pg client)
+import { Pool } from 'pg';
+const pool = new Pool({
+  host: process.env.DATABASE_HOST,
+  database: process.env.DATABASE_NAME,
+  user: process.env.DATABASE_USER,
+  password: await getPasswordFromSecretsManager(),
+});
+const result = await pool.query('SELECT * FROM users');
+```
+
+<Tip>
+  If you used `ops.json` to create RDS, the password is stored in AWS Secrets Manager. Use the AWS SDK to retrieve it
+  using the `DATABASE_PASSWORD_ARN` environment variable.
+</Tip>
+
+## Step 4: Migrate Vercel KV (Redis) to ElastiCache
+
+If you're using Vercel KV, migrate to Amazon ElastiCache:
+
+```json
+{
+  "dependencies": {
+    "elasticache": {
+      "clusters": [
+        {
+          "id": "cache",
+          "prefix": "myapp",
+          "engine": "redis",
+          "node_type": "cache.t4g.micro",
+          "exports": {
+            "REDIS_HOST": "$endpoint",
+            "REDIS_PORT": "$port"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Update your code to use a standard Redis client:
+
+```javascript
+// Before (Vercel KV)
+import { kv } from '@vercel/kv';
+await kv.set('key', 'value');
+
+// After (ioredis)
+import Redis from 'ioredis';
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+});
+await redis.set('key', 'value');
+```
+
+See [ElastiCache documentation](/environment/services/aws/elasti-cache) for more details.
+
+## Step 5: Migrate Vercel Blob to S3
+
+If you're using Vercel Blob, migrate to Amazon S3:
+
+```json
+{
+  "dependencies": {
+    "s3": {
+      "buckets": [
+        {
+          "id": "uploads",
+          "prefix": "myapp",
+          "exports": {
+            "S3_BUCKET": "$name",
+            "S3_REGION": "$region"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Update your code to use the AWS SDK:
+
+```javascript
+// Before (Vercel Blob)
+import { put } from '@vercel/blob';
+const blob = await put('file.txt', 'Hello World', { access: 'public' });
+
+// After (AWS SDK)
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+const s3 = new S3Client({ region: process.env.S3_REGION });
+await s3.send(
+  new PutObjectCommand({
+    Bucket: process.env.S3_BUCKET,
+    Key: 'file.txt',
+    Body: 'Hello World',
+  })
+);
+```
+
+See [S3 documentation](/environment/services/aws/s3) for more details.
+
+## Step 6: Migrate environment variables
+
+1. In Vercel dashboard, go to Project Settings > Environment Variables
+2. Export or copy each variable
+3. In LocalOps console, navigate to your service > Settings > Secrets
+4. Add each variable as a secret
+
+See [Secrets documentation](/environment/services/secrets) for more details.
+
+## Step 7: Deploy and verify
+
+1. Push your changes to trigger a deployment
+2. Check logs in the LocalOps console to verify the application starts correctly
+3. Test your application endpoints
+4. Update your DNS to point to the new LocalOps environment
+
+See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
+
+## Built-in observability
+
+Every LocalOps environment comes with a fully integrated open-source observability stack—no paid add-ons required.
+
+### Prometheus + Grafana for metrics
+
+[Prometheus](https://prometheus.io/) automatically collects CPU, memory, disk, and network metrics from every node
+running your application. View and analyze metrics through pre-built [Grafana](https://grafana.com/oss/) dashboards,
+accessible from the Monitoring tab in your environment.
+
+You can filter and group metrics by:
+
+- Node
+- Pod
+- Deployment
+- Service
+- Namespace
+
+### Loki + Grafana for logs
+
+[Loki](https://grafana.com/oss/loki/) automatically collects all logs from STDOUT and STDERR across your services. No
+log drain configuration needed—just print to console and your logs are captured.
+
+Access logs through the same Grafana dashboard, with powerful filtering by Kubernetes namespace, deployment, or custom
+labels.
+
+### Custom dashboards
+
+Each environment gets its own Grafana instance with pre-built dashboards for infrastructure monitoring. You can create
+custom dashboards to visualize application-specific metrics and logs.
+
+<Info>
+  Learn more about [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics), and
+  [alerts](/environment/monitoring/alerts).
+</Info>
+
+## Migrating Vercel features
+
+| Vercel Feature         | LocalOps Equivalent                                               |
+| ---------------------- | ----------------------------------------------------------------- |
+| Web Deployments        | [Web service](/environment/services/web)                          |
+| Serverless Functions   | API routes in your app                                            |
+| Cron Jobs              | [Cron jobs](/environment/services/cronjob)                        |
+| Vercel Postgres        | [Amazon RDS](/environment/services/aws/rds)                       |
+| Vercel KV              | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
+| Vercel Blob            | [Amazon S3](/environment/services/aws/s3)                         |
+| Vercel Analytics       | [Built-in metrics](/environment/monitoring/metrics)               |
+| Log Drains             | [Built-in logging](/environment/monitoring/logs)                  |
+
+## Get help with your migration
+
+<Tip>
+  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Vercel setup to
+  AWS—including database migration, environment variables, and custom domains.
+  [Schedule a migration call now](https://go.localops.co/heroku).
+</Tip>
+
+Have questions? Email us at [help@localops.co](mailto:help@localops.co).

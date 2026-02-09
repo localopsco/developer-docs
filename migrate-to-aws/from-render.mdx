@@ -1,0 +1,300 @@
+---
+title: Migrate from Render
+description: Step-by-step guide to migrate your Render application and Postgres database to AWS using LocalOps
+---
+
+Migrating from Render to AWS gives you more control over infrastructure, predictable pricing at scale, and access to
+the full AWS ecosystem. LocalOps makes this migration seamless by providing the same developer experience you're used
+to on Render.
+
+<Tip>
+  **White-glove migration**: Our engineers will migrate your Render app to AWS.
+  [Schedule a migration call](https://go.localops.co/heroku) and we'll handle everything for you.
+</Tip>
+
+## What you get after migration
+
+- **Same developer experience**: Push to deploy, just like Render
+- **Predictable costs**: No surprise bills from auto-scaling—AWS pricing you control
+- **Full AWS access**: Use any AWS service (RDS, ElastiCache, S3, SQS, etc.)
+- **Production-ready**: Auto-scaling, auto-healing, monitoring, and CI/CD out of the box
+- **Built-in observability**: Open-source stack with Prometheus, Loki, and Grafana—no extra cost
+- **No vendor lock-in**: Your code runs on standard Kubernetes in your own AWS account
+
+## Migration overview
+
+<Steps>
+  <Step title="Set up LocalOps environment" icon="cloud">
+    Connect your AWS account and create a new environment for your app.
+  </Step>
+  <Step title="Deploy your application" icon="rocket">
+    Connect your GitHub repo and deploy your app to LocalOps.
+  </Step>
+  <Step title="Migrate Postgres database" icon="database">
+    Export your Render Postgres data and import it into Amazon RDS.
+  </Step>
+  <Step title="Update DNS and go live" icon="globe">
+    Point your domain to the new environment and verify everything works.
+  </Step>
+</Steps>
+
+<Info>
+  Need help? [Schedule a migration call](https://go.localops.co/heroku) and our engineers will assist you through
+  the entire process.
+</Info>
+
+## Step 1: Set up LocalOps environment
+
+Before migrating, you need a LocalOps environment running on AWS.
+
+<Steps>
+  <Step title="Create LocalOps account" icon="user">
+    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't already.
+  </Step>
+  <Step title="Connect AWS account" icon="cloud">
+    Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
+  </Step>
+  <Step title="Create environment" icon="container-storage">
+    Create a new environment (e.g., production) in your preferred AWS region. See
+    [Create new environment](/environment/create).
+  </Step>
+  <Step title="Create service" icon="server">
+    Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
+  </Step>
+</Steps>
+
+Once your environment is ready, note down the **VPC ID** and **Private Subnet IDs** from the environment overview page.
+You'll need these to create your RDS database.
+
+## Step 2: Migrate Render Postgres to Amazon RDS
+
+### 2.1 Create a backup of your Render Postgres database
+
+Render provides external connection strings for Postgres databases. Use `pg_dump` to create a backup:
+
+```bash
+# Get your external connection string from Render dashboard
+# Dashboard > Your Database > Connections > External Connection String
+
+# Create a backup using pg_dump
+pg_dump "your-render-external-connection-string" \
+  --format=custom \
+  --no-owner \
+  --no-acl \
+  --file=render_backup.dump
+```
+
+Alternatively, you can create a backup from the Render dashboard:
+
+1. Navigate to your Postgres database in the Render dashboard
+2. Go to the **Backups** tab
+3. Click **Create Backup** to create a manual backup
+4. Download the backup file
+
+<Warning>
+  For large databases, the backup and restore process may take significant time. Plan for a maintenance window if you
+  need zero data loss during migration.
+</Warning>
+
+### 2.2 Create RDS database in your LocalOps environment VPC
+
+You can either use the declarative `ops.json` approach (recommended) or create the database manually.
+
+#### Option A: Using ops.json (Recommended)
+
+Add an `ops.json` file to the root of your repository:
+
+```json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "main-db",
+          "prefix": "myapp",
+          "engine": "postgres",
+          "version": "16.4",
+          "storage_gb": 20,
+          "instance_type": "db.t4g.small",
+          "publicly_accessible": false,
+          "exports": {
+            "DATABASE_HOST": "$address",
+            "DATABASE_NAME": "$dbName",
+            "DATABASE_USER": "$username",
+            "DATABASE_PASSWORD_ARN": "$passwordArn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy your service to provision the RDS instance automatically. See [RDS documentation](/environment/services/aws/rds)
+for all configuration options.
+
+#### Option B: Manual RDS creation
+
+If you prefer to create the database manually:
+
+1. **Login to AWS Console** in the same region as your LocalOps environment
+
+2. **Create a DB Subnet Group**:
+
+   - Navigate to RDS > Subnet groups > Create DB subnet group
+   - Select the VPC ID from your LocalOps environment
+   - Add the private subnet IDs from your LocalOps environment
+   - Save the subnet group
+
+3. **Create RDS Instance**:
+
+   - Navigate to RDS > Create database
+   - Choose PostgreSQL and select the same major version as your Render database
+   - Select the DB subnet group you created
+   - Configure instance size (start with `db.t4g.small` for small apps)
+   - Set `Publicly accessible` to **No**
+   - Create or select a security group that allows inbound traffic on port 5432 from `10.0.0.0/16` (your VPC CIDR)
+
+4. **Record connection details**: Note down the endpoint, username, and password
+
+### 2.3 Restore backup to Amazon RDS
+
+To restore your Render backup to RDS, you need a machine that can access both the backup file and the RDS instance.
+
+#### Option 1: Use an EC2 instance in the same VPC
+
+```bash
+# Launch a small EC2 instance in your LocalOps VPC
+# SSH into the instance and install PostgreSQL client
+
+sudo dnf install postgresql16 -y  # Amazon Linux 2023
+
+# Upload your backup file to the EC2 instance
+scp render_backup.dump ec2-user@your-ec2-ip:~/
+
+# Restore the backup to RDS
+pg_restore --verbose --no-owner --no-acl \
+  -h your-rds-endpoint.rds.amazonaws.com \
+  -U your-db-username \
+  -d your-database-name \
+  render_backup.dump
+```
+
+#### Option 2: Use AWS Database Migration Service (DMS)
+
+For larger databases or if you need continuous replication during migration, use
+[AWS DMS](https://docs.aws.amazon.com/dms/latest/userguide/Welcome.html).
+
+### 2.4 Configure database credentials in LocalOps
+
+If you manually created the RDS instance, add the database credentials as secrets in your LocalOps service:
+
+1. Navigate to your service in the LocalOps console
+2. Go to Settings > Secrets
+3. Add the following secrets:
+
+```
+DATABASE_HOST=your-rds-endpoint.rds.amazonaws.com
+DATABASE_NAME=your-database-name
+DATABASE_USER=your-db-username
+DATABASE_PASSWORD=your-db-password
+```
+
+See [Secrets documentation](/environment/services/secrets) for more details.
+
+## Step 3: Migrate environment variables
+
+Export your environment variables from Render and add them to LocalOps:
+
+1. In Render dashboard, go to your service > Environment
+2. Copy each environment variable
+3. In LocalOps console, navigate to your service > Settings > Secrets
+4. Add each variable as a secret
+
+<Tip>
+  For environment-specific variables, LocalOps lets you configure different values per environment (test, staging,
+  production) from a single service configuration.
+</Tip>
+
+## Step 4: Update your application
+
+If your application uses `DATABASE_URL` (Render's default), update it to use individual environment variables:
+
+```javascript
+// Before (Render)
+const connectionString = process.env.DATABASE_URL;
+
+// After (LocalOps)
+const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}`;
+```
+
+<Tip>
+  If you used `ops.json` to create RDS, the password is stored in AWS Secrets Manager. Use the AWS SDK to retrieve it
+  using the `DATABASE_PASSWORD_ARN` environment variable.
+</Tip>
+
+## Step 5: Deploy and verify
+
+1. Push your changes to trigger a deployment
+2. Check logs in the LocalOps console to verify the application starts correctly
+3. Test your application endpoints
+4. Update your DNS to point to the new LocalOps environment
+
+See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
+
+## Built-in observability
+
+Every LocalOps environment comes with a fully integrated open-source observability stack—no paid add-ons required.
+
+### Prometheus + Grafana for metrics
+
+[Prometheus](https://prometheus.io/) automatically collects CPU, memory, disk, and network metrics from every node
+running your application. View and analyze metrics through pre-built [Grafana](https://grafana.com/oss/) dashboards,
+accessible from the Monitoring tab in your environment.
+
+You can filter and group metrics by:
+
+- Node
+- Pod
+- Deployment
+- Service
+- Namespace
+
+### Loki + Grafana for logs
+
+[Loki](https://grafana.com/oss/loki/) automatically collects all logs from STDOUT and STDERR across your services. No
+log drain configuration needed—just print to console and your logs are captured.
+
+Access logs through the same Grafana dashboard, with powerful filtering by Kubernetes namespace, deployment, or custom
+labels.
+
+### Custom dashboards
+
+Each environment gets its own Grafana instance with pre-built dashboards for infrastructure monitoring. You can create
+custom dashboards to visualize application-specific metrics and logs.
+
+<Info>
+  Learn more about [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics), and
+  [alerts](/environment/monitoring/alerts).
+</Info>
+
+## Migrating other Render services
+
+| Render Service         | LocalOps Equivalent                                               |
+| ---------------------- | ----------------------------------------------------------------- |
+| Web Service            | [Web service](/environment/services/web)                          |
+| Background Worker      | [Workers](/environment/services/workers)                          |
+| Cron Job               | [Cron jobs](/environment/services/cronjob)                        |
+| Private Service        | [Internal service](/environment/services/internal)                |
+| Render Postgres        | [Amazon RDS](/environment/services/aws/rds)                       |
+| Render Redis           | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
+
+## Get help with your migration
+
+<Tip>
+  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Render setup
+  to AWS—including database migration, environment variables, and custom domains.
+  [Schedule a migration call now](https://go.localops.co/heroku).
+</Tip>
+
+Have questions? Email us at [help@localops.co](mailto:help@localops.co).
