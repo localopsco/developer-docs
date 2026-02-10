@@ -7,13 +7,14 @@ description: Configure services programmatically using ops.json
 
 The `ops.json` file allows you to declaratively define configuration for your services.
 
-In your service configuration `ops.json`, you can define
+Using service configuration `ops.json`, you can spin up
 
-- Managed cloud depdendencies like S3
-- Cron jobs
+- Init jobs (Seed dbs, run migrations, etc)
+- Crons
+- Health checks
+- Cloud dependencies like S3, RDS, SQS queue, etc
 - Sidecar containers
-- Init jobs
-- more..
+- and more..
 
 ## How it Works
 
