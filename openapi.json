@@ -58,9 +58,7 @@
                   {
                     "title": "Deploy by Commit ID",
                     "type": "object",
-                    "required": [
-                      "commit_id"
-                    ],
+                    "required": ["commit_id"],
                     "properties": {
                       "commit_id": {
                         "type": "string",
@@ -71,9 +69,7 @@
                   {
                     "title": "Deploy Docker Image",
                     "type": "object",
-                    "required": [
-                      "docker_image_tag"
-                    ],
+                    "required": ["docker_image_tag"],
                     "properties": {
                       "docker_image_tag": {
                         "type": "string",
@@ -84,13 +80,27 @@
                   {
                     "title": "Deploy Helm Chart",
                     "type": "object",
-                    "required": [
-                      "helm_chart_version"
-                    ],
+                    "required": ["helm_chart_version"],
                     "properties": {
                       "helm_chart_version": {
                         "type": "string",
                         "description": "The Helm chart version to deploy"
+                      }
+                    }
+                  },
+                  {
+                    "title": "Preview Deployment",
+                    "type": "object",
+                    "required": ["preview", "commit_id"],
+                    "properties": {
+                      "preview": {
+                        "type": "boolean",
+                        "enum": [true],
+                        "description": "Set to true to trigger a preview deployment"
+                      },
+                      "commit_id": {
+                        "type": "string",
+                        "description": "The Git commit ID to deploy for preview"
                       }
                     }
                   }
