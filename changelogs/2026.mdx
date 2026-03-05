@@ -3,6 +3,108 @@ title: 2026
 description: Updates and improvements of year 2026
 mode: center
 ---
+
+<Update label="March 3, 2026">
+
+## Realtime run status of services
+
+We released a major new enhancement to services today. You can now see the realtime status of all services running within each environment, without having to use LocalOps CLI or Kubectl CLI.
+
+<img src="../images/run-status.png" alt="service run status" style={{ height: "250px", width: "auto" }} />
+
+Depending on the service type, status text will be different. Here are the possible status texts:
+
+For example, for `web`, `internal` services and `worker` services, you will see the following statuses:
+
+- running (2/2)
+- degraded (1/2)
+- failing (0/2)
+- stopped 
+
+(x/y) format shows the number of replicas running (x) out of total number of replicas (y).
+
+For job services:
+
+- pending
+- succeeded
+- failed
+- timeout
+
+For cronjob services:
+
+- idle 
+- active 
+- suspended 
+
+You can see them in service tile view or within service section at the top of the page.
+
+### New "Runs" tab
+
+Lookout for the new "Runs" tab for job and cronjob services. You can see the run history and status of each run.
+
+We update statuses in near real time so you would know when you service is failing, just by looking at the status text in LocalOps console.
+
+All of these changes were made to make it easier for you to monitor and manage your services, without having to drop into shell or CLI. 
+
+</Update>
+
+<Update label="Feb 27, 2026">
+
+## New feature: Custom Node groups
+
+So far, environments have been having a single node group created, to run all the services. 
+
+Now, you can create multiple node groups to run different types of services. For each node group you can pick 
+
+<img src="../images/list-node-groups.png" alt="list node groups" style={{ height: "200px", width: "auto" }} />
+
+1. AMIs
+2. Instance types
+3. Desired count of nodes
+
+Go to the new Node groups section to create and manage node groups. 
+
+You can now create 
+
+1. Windows node groups to run windows based services (or)
+2. Linux node groups to run linux base services
+
+And while creating a service or updating a service, you can assign it to any one of the node groups. And all its replicas or containers will run in configured nodes.
+
+## Spot instances
+
+In the case of AWS evnironments, while creating node groups, you can pick between ON_DEMAND or SPOT as capacity types. 
+
+So you can create node groups of SPOT instance type and assign interruptible and idempotent services like jobs, crons, batch processing, or other. This will end up giving up to 50% savings in compute costs. 
+
+</Update>
+
+<Update label="Feb 9, 2026">
+
+## New feature:  Deployment notes
+
+While triggering new deployments, you can now pass a note text to it. And it will communicate to rest of the team about what the deployment is all about.
+
+We made other QoS updates here to ensure smooth execution of deployment pipelines.
+
+</Update>
+
+<Update label="Feb 7, 2026">
+
+## New feature: Account level resource tags
+
+All cloud resources of all environments spinned by LocalOps are attached with two standard tags. One with ID of the environment and another with name of the environment. These tags can be used in Cost explorer to analyse costs at a granular level. 
+
+We released a new feature today to accept custom tags so that you can assign your own key value pairs as tags for all resources spinned up in all environments of the account. You can use it to attach tags like:
+
+1. `bu: internal`
+2. `bu: product-1`
+3. `project: project-name` 
+
+Go to Account settings > Resource tags to start adding custom tags.
+
+</Update>
+
 <Update label="Jan 13, 2026">
 
 ## Bring your own registry

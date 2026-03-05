@@ -16,7 +16,13 @@
           {
             "group": "Start here",
             "icon": "rocket",
-            "pages": ["index", "howitworks", "support", "compatibility", "security"]
+            "pages": [
+              "index",
+              "howitworks",
+              "support",
+              "compatibility",
+              "security"
+            ]
           },
           {
             "group": "Usecases",
@@ -60,7 +66,11 @@
             "pages": [
               {
                 "group": "Cloud accounts",
-                "pages": ["accounts/aws", "accounts/azure", "accounts/gcp"]
+                "pages": [
+                  "accounts/aws",
+                  "accounts/azure",
+                  "accounts/gcp"
+                ]
               },
               "accounts/connect-github"
             ]
@@ -87,7 +97,9 @@
                 "pages": [
                   {
                     "group": "AWS",
-                    "pages": ["environment/infra-resources/aws"]
+                    "pages": [
+                      "environment/infra-resources/aws"
+                    ]
                   }
                 ]
               },
@@ -130,17 +142,30 @@
           {
             "group": "CLI",
             "icon": "terminal",
-            "pages": ["cli/install-macos", "cli/install-linux", "cli/install-windows", "cli/usage"]
+            "pages": [
+              "cli/install-macos",
+              "cli/install-linux",
+              "cli/install-windows",
+              "cli/usage"
+            ]
           },
           {
             "group": "Team",
             "icon": "users",
-            "pages": ["team/understanding-roles", "team/invite-users", "team/deactivate-user", "team/audit-logs"]
+            "pages": [
+              "team/understanding-roles",
+              "team/invite-users",
+              "team/deactivate-user",
+              "team/audit-logs"
+            ]
           },
           {
             "group": "Troubleshooting",
             "icon": "bug",
-            "pages": ["troubleshoot/create-environment", "troubleshoot/custom-domain"]
+            "pages": [
+              "troubleshoot/create-environment",
+              "troubleshoot/custom-domain"
+            ]
           },
           {
             "group": "Bring your helm charts (soon)",
@@ -156,7 +181,9 @@
               },
               {
                 "group": "Publish Helm Charts",
-                "pages": ["bring-your-helm-charts/publish/ecr"]
+                "pages": [
+                  "bring-your-helm-charts/publish/ecr"
+                ]
               },
               {
                 "group": "Tutorials",
@@ -188,7 +215,9 @@
           {
             "group": "Getting Started",
             "icon": "rocket",
-            "pages": ["api/getting-started"]
+            "pages": [
+              "api/getting-started"
+            ]
           },
           {
             "group": "Endpoints",
@@ -197,7 +226,9 @@
           {
             "group": "No Access Delivery",
             "icon": "key",
-            "pages": ["api/no-access-delivery/license-tokens"]
+            "pages": [
+              "api/no-access-delivery/license-tokens"
+            ]
           }
         ]
       }
@@ -205,8 +236,8 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Blog",
-          "href": "https://localops.co/blog",
+          "anchor": "Changelog",
+          "href": "https://docs.localops.co/changelogs/2026",
           "icon": "newspaper"
         }
       ]
@@ -217,7 +248,12 @@
       "display": "interactive"
     },
     "examples": {
-      "languages": ["curl", "python", "javascript", "go"],
+      "languages": [
+        "curl",
+        "python",
+        "javascript",
+        "go"
+      ],
       "defaults": "required",
       "prefill": true
     }
