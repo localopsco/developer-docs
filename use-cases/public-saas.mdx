@@ -1,5 +1,5 @@
 ---
-title: SaaS
+title: SaaS environments
 description: How to offer your software as a service on yourdomain.com 
 ---
 
@@ -23,12 +23,60 @@ All environments can be spun up in minutes.
 Each environment is provisioned in your own cloud account, with built-in Monitoring stack, auto-scaling, security
 hardening, and Git-based deployments configured out of the box.
 
-### Benefits
+### How LocalOps Helps
 
-- **Fast environment setup:** Fully reproducible via CLI or Git workflows.
-- **Regional compliance:** Easily deploy in GDPR-compliant EU regions.
-- **Cost efficiency:** Non-production environments auto-scale to reduce idle usage.
-- **No vendor lock-in:** Use AWS, GCP, or Azure with the same workflow.
+LocalOps provides a unified workflow to provision, manage, and automate SaaS environments across clouds:
+
+- **Standardized environments:** Define your infrastructure once and reuse it across test, staging, production, and
+  regional variants.
+- **Security best practices:** Each environment is provisioned with hardened defaults, reducing the risk of
+  misconfigurations.
+- **GitOps-compatible:** Services are deployed and updated through version-controlled workflows, ensuring consistency and
+  auditability.
+- **Region-aware provisioning:** Spin up environments in any AWS, GCP, or Azure region with the same configuration and
+  policies.
+- **Auto-healing and scaling:** Environments self-manage with auto-scaling and self-healing built in—no manual
+  intervention needed.
+- **Full-stack observability:** Every environment comes with built-in monitoring, logging, and alerting out of the box.
+
+### Overall steps to spin up a SaaS environment
+
+1. Sign up for LocalOps account
+2. Create and connect your AWS/other cloud account
+3. Spin up environments — typically test, staging, and production
+4. Deploy services that are part of your software and link their GitHub repo and branch
+5. Test the setup
+6. Repeat steps 4–5 as you iterate on your code and services
+
+#### Sign up
+
+Sign up for LocalOps at https://console.localops.co/signup
+
+#### Connect your cloud account
+
+Connect your cloud account to LocalOps to provision environments in your own infrastructure.
+
+Refer to [Connect cloud account guide](/accounts/aws)
+
+#### Spin up environments
+
+Create separate environments for each stage — test, staging, and production. For regional variants, create additional
+environments such as `prod-us` or `prod-eu`.
+
+To spin up a new environment, refer to this guide — [Create environment](/environment/create)
+
+#### Deploy services
+
+For each service in your software, create a service and deploy it in the environment.
+
+1. To create a new service, refer to [Create service guide](/environment/services/create)
+2. To make deployments on the service, refer to [Deploy service guide](/environment/services/deploy)
+3. Repeat steps 1 and 2 for each service in your app — app, workers, web, etc.
+
+#### Test the setup
+
+After adding all services, test them using the app URL. One of your services will be the main entry point of your app.
+Use its public URL to test the functionality.
 
 ### Book a Demo
 

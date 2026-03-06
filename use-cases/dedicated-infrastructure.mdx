@@ -52,6 +52,47 @@ automation.
 This approach improves customer trust, unlocks new market segments, and reduces churn risk—without bloating your DevOps
 team.
 
+### Overall steps to spin up a single tenant environment
+
+1. Sign up for LocalOps account
+2. Create and connect your AWS/other cloud account
+3. Spin up a dedicated environment per customer
+4. Deploy services that are part of your software and link their GitHub repo and branch
+5. Test the setup
+6. Repeat steps 3–5 as you onboard new customers or release updates
+
+#### Sign up
+
+Sign up for LocalOps at https://console.localops.co/signup
+
+#### Connect your cloud account
+
+Connect your cloud account to LocalOps to provision isolated customer environments in your own infrastructure.
+
+Refer to [Connect cloud account guide](/accounts/aws)
+
+#### Spin up a dedicated environment
+
+Create a separate environment for each customer. Each environment gets its own VPC, compute pool, and databases.
+
+To spin up a new environment, refer to this guide — [Create environment](/environment/create)
+
+#### Deploy services
+
+For each service in your software, create a service and deploy it in the customer environment.
+
+1. To create a new service, refer to [Create service guide](/environment/services/create)
+2. To make deployments on the service, refer to [Deploy service guide](/environment/services/deploy)
+3. Repeat steps 1 and 2 for each service in your app — app, workers, web, etc.
+
+<Tip>You can use the same GitHub repo and branch across all customer environments — LocalOps manages each environment
+independently, so updates roll out consistently without duplicating code.</Tip>
+
+#### Test the setup
+
+After adding all services, test them using the app URL. One of your services will be the main entry point of your app.
+Use its public URL to test the functionality.
+
 ### Book a Demo
 
 Interested in seeing how LocalOps can help you scale dedicated infrastructure for your customers?
