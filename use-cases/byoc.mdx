@@ -27,16 +27,18 @@ This approach is typically used to meet requirements such as:
 LocalOps provides an out-of-the-box solution for provisioning, deploying, and managing your SaaS product inside customer
 cloud accounts:
 
-- Standardized environments: Define your infrastructure once (networking, compute, storage, IAM policies) and reuse it
+- **Standardized environments:** Define your infrastructure once (networking, compute, storage, IAM policies) and reuse it
   across customers.
-- Security best practices: Each environment is provisioned with hardened defaults, reducing the risk of
+- **Security best practices:** Each environment is provisioned with hardened defaults, reducing the risk of
   misconfigurations.
-- GitOps-compatible: Your application can be deployed and updated through version-controlled workflows, ensuring
+- **GitOps-compatible:** Your application can be deployed and updated through version-controlled workflows, ensuring
   consistency and auditability.
-- Region-aware provisioning: Deploy to the customer’s region of choice while maintaining your base configuration and
+- **Region-aware provisioning:** Deploy to the customer’s region of choice while maintaining your base configuration and
   policies.
-- Auto-healing and scaling: Private environments benefit from the same self-managing capabilities as centralized
+- **Auto-healing and scaling:** Private environments benefit from the same self-managing capabilities as centralized
   environments.
+- **Full-stack observability:** Every customer environment comes with built-in monitoring, logging, and alerting—giving
+  you complete visibility into deployments running in their cloud.
 
 ### Common Use Cases
 
@@ -52,3 +54,66 @@ upgrade process.
 
 This helps reduce sales friction, meet compliance needs, and expand into regulated industries without a full rewrite of
 your infrastructure tooling.
+
+### Overall steps to offer BYOC deployments
+
+1. Sign up for LocalOps account
+2. Have the end customer connect their cloud account to LocalOps
+3. Spin up a new environment in the customer's cloud
+4. Deploy services into the customer's environment
+5. Set up a continuous deployment pipeline
+6. Repeat steps 2–5 for each new customer
+
+#### Sign up
+
+Sign up for LocalOps at https://console.localops.co/signup
+
+#### Connect the customer's cloud account
+
+The end customer needs to connect their own AWS, GCP, or Azure account to LocalOps. This grants LocalOps the permissions
+needed to provision infrastructure on their behalf, within their account.
+
+Refer to [Connect cloud account guide](/accounts/aws)
+
+<Tip>
+  Each customer gets their own isolated account connection. LocalOps never shares credentials or infrastructure across
+  customer accounts.
+</Tip>
+
+#### Spin up a new environment
+
+Once the customer's cloud account is connected, spin up a new environment inside it. This provisions the networking
+(VPC), compute cluster, and supporting infrastructure required to run your services.
+
+To spin up a new environment, refer to this guide - [create environment](/environment/create)
+
+#### Deploy services
+
+For each service in your product, create a new service in the customer's environment and link it to the relevant GitHub
+repo and branch.
+
+1. To create a new service, refer to [Create service guide](/environment/services/create)
+2. To make deployments on the service, refer to [Deploy service guide](/environment/services/deploy)
+3. Repeat steps 1 and 2 for each service in your app—API, workers, frontend, etc.
+
+<Tip>
+  Use a dedicated branch (e.g. `byoc-prod`) for customer deployments so you can control exactly what version each
+  customer runs, independent of your internal release cycle.
+</Tip>
+
+#### Set up continuous deployment
+
+With services running in the customer's environment, configure auto-deployments so that new commits to the linked branch
+trigger a build and deploy automatically. This gives you a GitOps-style pipeline to push updates to the customer's
+environment on your schedule.
+
+Each deployment is versioned, auditable, and can be rolled back at any time from the LocalOps console.
+
+Refer to [Deploy service guide](/environment/services/deploy) for more details on configuring automatic deployments.
+
+#### Talk to us
+
+Setup a tour / demo at https://go.localops.co/tour and we will teach you personally on how this can be started in your
+team.
+
+Or email us at help@localops.co and we will guide you towards next steps.
