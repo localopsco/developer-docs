@@ -3,13 +3,13 @@ title: Migrate from Render
 description: Step-by-step guide to migrate your Render application and Postgres database to AWS using LocalOps
 ---
 
-Migrating from Render to AWS gives you more control over infrastructure, predictable pricing at scale, and access to
-the full AWS ecosystem. LocalOps makes this migration seamless by providing the same developer experience you're used
-to on Render.
+Migrating from Render to AWS gives you more control over infrastructure, predictable pricing at scale, and access to the
+full AWS ecosystem. LocalOps makes this migration seamless by providing the same developer experience you're used to on
+Render.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Render app to AWS.
-  [Schedule a migration call](https://go.localops.co/render) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Render app to AWS. [Schedule a migration
+  call](https://go.localops.co/render) and we'll handle everything for you.
 </Tip>
 
 ## What you get after migration
@@ -39,8 +39,8 @@ to on Render.
 </Steps>
 
 <Info>
-  Need help? [Schedule a migration call](https://go.localops.co/render) and our engineers will assist you through
-  the entire process.
+  Need help? [Schedule a migration call](https://go.localops.co/render) and our engineers will assist you through the
+  entire process.
 </Info>
 
 ## Step 1: Set up LocalOps environment
@@ -55,8 +55,8 @@ Before migrating, you need a LocalOps environment running on AWS.
     Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See
-    [Create new environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
+    environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
     Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
@@ -140,14 +140,12 @@ If you prefer to create the database manually:
 1. **Login to AWS Console** in the same region as your LocalOps environment
 
 2. **Create a DB Subnet Group**:
-
    - Navigate to RDS > Subnet groups > Create DB subnet group
    - Select the VPC ID from your LocalOps environment
    - Add the private subnet IDs from your LocalOps environment
    - Save the subnet group
 
 3. **Create RDS Instance**:
-
    - Navigate to RDS > Create database
    - Choose PostgreSQL and select the same major version as your Render database
    - Select the DB subnet group you created
@@ -280,21 +278,21 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Migrating other Render services
 
-| Render Service         | LocalOps Equivalent                                               |
-| ---------------------- | ----------------------------------------------------------------- |
-| Web Service            | [Web service](/environment/services/web)                          |
-| Background Worker      | [Workers](/environment/services/workers)                          |
-| Cron Job               | [Cron jobs](/environment/services/cronjob)                        |
-| Private Service        | [Internal service](/environment/services/internal)                |
-| Render Postgres        | [Amazon RDS](/environment/services/aws/rds)                       |
-| Render Redis           | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
+| Render Service    | LocalOps Equivalent                                          |
+| ----------------- | ------------------------------------------------------------ |
+| Web Service       | [Web service](/environment/services/web)                     |
+| Background Worker | [Workers](/environment/services/workers)                     |
+| Cron Job          | [Cron jobs](/environment/services/cronjob)                   |
+| Private Service   | [Internal service](/environment/services/internal)           |
+| Render Postgres   | [Amazon RDS](/environment/services/aws/rds)                  |
+| Render Redis      | [Amazon ElastiCache](/environment/services/aws/elasti-cache) |
 
 ## Get help with your migration
 
 <Tip>
-  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Render setup
-  to AWS—including database migration, environment variables, and custom domains.
-  [Schedule a migration call now](https://go.localops.co/render).
+  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Render setup to
+  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  now](https://go.localops.co/render).
 </Tip>
 
 Have questions? Email us at [help@localops.co](mailto:help@localops.co).

@@ -3,16 +3,17 @@ title: 2025
 description: Updates and improvements of year 2025
 mode: center
 ---
+
 <Update label="Nov 17, 2025">
 
 ## ✨ .Net support
 
-LocalOps can now build docker images for .Net codebase without requiring a Dockerfile in the corresponding git repo. 
+LocalOps can now build docker images for .Net codebase without requiring a Dockerfile in the corresponding git repo.
 
-Windows developers can now connect their Github repo and deploy on any AWS/GCP/Azure cloud/On-prem without writing Dockerfile, Terraform scripts or Pulumi scripts.
+Windows developers can now connect their Github repo and deploy on any AWS/GCP/Azure cloud/On-prem without writing
+Dockerfile, Terraform scripts or Pulumi scripts.
 
 Take a demo at https://go.localops.co/tour to learn more.
-
 
 </Update>
 
@@ -22,24 +23,29 @@ Take a demo at https://go.localops.co/tour to learn more.
 
 When your services use lots of secrets (100s of them), it may not be ideal to add/update/delete one by one.
 
-So we introduced bulk secrets editor in serives section. Just click on __Bulk Import__ button and paste in secrets in __KEY=VALUE__ pattern.
+So we introduced bulk secrets editor in serives section. Just click on **Bulk Import** button and paste in secrets in
+**KEY=VALUE** pattern.
 
-You can copy paste your .env files if secrets are maintained that way in your project. 
+You can copy paste your .env files if secrets are maintained that way in your project.
 
 All the following operatons can be done using this editor.
-1. Bulk import new secrets 
-2. Bulk edit and save. Just use the same editor to update existing secrets 
+
+1. Bulk import new secrets
+2. Bulk edit and save. Just use the same editor to update existing secrets
 3. Delete secrets in bulk
 
 ## Reveal individual secrets
 
-In edit secret screen, you can now see existing values by clicking on __Reveal value__ link under Value field. This is handy when you want to debug issues in your environments by seeing current value of a secret or when you want to edit values with full context.
+In edit secret screen, you can now see existing values by clicking on **Reveal value** link under Value field. This is
+handy when you want to debug issues in your environments by seeing current value of a secret or when you want to edit
+values with full context.
 
 ## Cancel queued deployments
 
-Anyone can now cancel queued deployments from Deployments section. This is useful if you want to make some last minute changes before the deployment starts. Click on __Cancel__ button that appears next to each queued deployment.
+Anyone can now cancel queued deployments from Deployments section. This is useful if you want to make some last minute
+changes before the deployment starts. Click on **Cancel** button that appears next to each queued deployment.
 
-Reach out to us if you want to see a quick walk through of these capabilities at https://go.localops.co/tour. 
+Reach out to us if you want to see a quick walk through of these capabilities at https://go.localops.co/tour.
 
 </Update>
 
@@ -47,9 +53,10 @@ Reach out to us if you want to see a quick walk through of these capabilities at
 
 ## Skip writing Dockerfiles. Custom ops.json. And more.
 
-From today, your Github repositories need not have Dockerfiles in them. 
+From today, your Github repositories need not have Dockerfiles in them.
 
-LocalOps will pull the code from Github, infer and automatically build an appropriate Docker image based on the language runtime used in the repo. All the following languages are supported as of now:
+LocalOps will pull the code from Github, infer and automatically build an appropriate Docker image based on the language
+runtime used in the repo. All the following languages are supported as of now:
 
 1. Node
 2. Python
@@ -63,17 +70,22 @@ LocalOps will pull the code from Github, infer and automatically build an approp
 10. Elixir
 11. Shell scripts
 
-If needed, a specific run command can be provided in the Service to override the default run command. Take a demo at https://go.localops.co/tour to learn more.
+If needed, a specific run command can be provided in the Service to override the default run command. Take a demo at
+https://go.localops.co/tour to learn more.
 
-## Custom ops.json 
+## Custom ops.json
 
-LocalOps looks for `ops.json` in the root of your Git repo (See [ops.json docs](https://docs.localops.co/environment/services/ops-json)) and it can be used to configure services in advanced ways. Say, you can define cloud depndencies like s3, define cron jobs, seed/migration jobs and so on.
+LocalOps looks for `ops.json` in the root of your Git repo (See
+[ops.json docs](https://docs.localops.co/environment/services/ops-json)) and it can be used to configure services in
+advanced ways. Say, you can define cloud depndencies like s3, define cron jobs, seed/migration jobs and so on.
 
-You can now define the same json file and name it anything or place it anywhere in the repo. Just pass the location of json file in Service settings. And LocalOps will process it in usual ways.
+You can now define the same json file and name it anything or place it anywhere in the repo. Just pass the location of
+json file in Service settings. And LocalOps will process it in usual ways.
 
 ## Other updates
 
-1. Services and secrets are now sorted in the alphabetical order in UI to make them more findable when having large number of services 
+1. Services and secrets are now sorted in the alphabetical order in UI to make them more findable when having large
+   number of services
 2. Several refinements in the UI
 3. Bug fixes in setting up AWS connection
 
@@ -81,64 +93,80 @@ You can now define the same json file and name it anything or place it anywhere 
 
 <Update label="Oct 16, 2025">
 
-## Define the order of services and jobs 
+## Define the order of services and jobs
 
-Each service can now define the list of components that it depends on, so that it will wait for those dependencies to come up before its containers start. This will allow devs to define the order in which services have to boot up, in any cloud environment.
+Each service can now define the list of components that it depends on, so that it will wait for those dependencies to
+come up before its containers start. This will allow devs to define the order in which services have to boot up, in any
+cloud environment.
 
-These dependencies can be provided in `ops.json`. Checkout [Init documentation](https://docs.localops.co/environment/services/ops-json#init-jobs) to learn more.
+These dependencies can be provided in `ops.json`. Checkout
+[Init documentation](https://docs.localops.co/environment/services/ops-json#init-jobs) to learn more.
 
-## Setup health checks for services 
+## Setup health checks for services
 
-Each service can now get a in-environment health check. If they fail, corresponding replica/container will restart automatically.
+Each service can now get a in-environment health check. If they fail, corresponding replica/container will restart
+automatically.
 
-This health check can be defined in `ops.json` - the usual service configuration file you'd maintain in the respective Git repo.
+This health check can be defined in `ops.json` - the usual service configuration file you'd maintain in the respective
+Git repo.
 
-Checkout [Health check documentation](https://docs.localops.co/environment/services/ops-json#health-checks) to learn more.
+Checkout [Health check documentation](https://docs.localops.co/environment/services/ops-json#health-checks) to learn
+more.
 
-## Document secrets 
+## Document secrets
 
-In each secret, a description can now be added and that will be show in the secrets section, right next to each secret. 
+In each secret, a description can now be added and that will be show in the secrets section, right next to each secret.
 
-In addition, the same description is shown as comment right above the exposed secrets in `Values.yaml` of the private helm charts generated by LocalOps. 
+In addition, the same description is shown as comment right above the exposed secrets in `Values.yaml` of the private
+helm charts generated by LocalOps.
 
-This will help end users of the Helm chart understand the meaning of each value in Values.yaml and help them configure chart installations. 
+This will help end users of the Helm chart understand the meaning of each value in Values.yaml and help them configure
+chart installations.
 
-You can generate private helm charts and distribute it to your enterprise customers, from within LocalOps. We shipped quite a few refinements to handle day to day workflows.
+You can generate private helm charts and distribute it to your enterprise customers, from within LocalOps. We shipped
+quite a few refinements to handle day to day workflows.
 
 ## See total and active Helm chart installations
 
-You can now track how many Helm chart installations have your customers done and how many such installations continue running/to be active. 
+You can now track how many Helm chart installations have your customers done and how many such installations continue
+running/to be active.
 
 This information is shown for each license token in license tokens section. And next to each chart verion.
 
 ## Deprecate or delete helm charts
 
-Helm charts can be marked as deprecated or deleted from within LocalOps console at any time. This is to help developer teams have control over the charts they like to offer and support. 
+Helm charts can be marked as deprecated or deleted from within LocalOps console at any time. This is to help developer
+teams have control over the charts they like to offer and support.
 
 </Update>
-
 
 <Update label="Sep 26, 2025">
 
 ## Generate Private Helm charts with 1-click
 
-From the services you see running in your environment, you can now generate a new helm chart from within LocalOps, with 1-click. 
+From the services you see running in your environment, you can now generate a new helm chart from within LocalOps, with
+1-click.
 
 Go to environment dashboard, click on three dots on the top right. And click "Generate Helm Chart".
 
-## Generate License tokens to distribute Private helm charts 
+## Generate License tokens to distribute Private helm charts
 
-Your users can install your service using the private helm chart generated from the environment. To do so, they have to provide license tokens. 
+Your users can install your service using the private helm chart generated from the environment. To do so, they have to
+provide license tokens.
 
-Generate license tokens for each of your customers, from "License Tokens" section. Give each token a name and share it with relevant customer.
+Generate license tokens for each of your customers, from "License Tokens" section. Give each token a name and share it
+with relevant customer.
 
-Charts and Docker Images won't download for users if the license token is invalid. Plus, you can call our license token validation API (set it behind your custom domain in account settings) from code to identify if the token expired. So that you can stop services as appropriate for that customer.
+Charts and Docker Images won't download for users if the license token is invalid. Plus, you can call our license token
+validation API (set it behind your custom domain in account settings) from code to identify if the token expired. So
+that you can stop services as appropriate for that customer.
 
 Learn more in [documentation](https://docs.localops.co/no-access-delivery/license-tokens).
 
 ### byoc.yourcompany.com
 
-For the charts you generate, you can generate a Installation guide for your customers at byoc.yourcompany.com. Just turn on Installation URL for the chart and set a custom domain in Account settings.
+For the charts you generate, you can generate a Installation guide for your customers at byoc.yourcompany.com. Just turn
+on Installation URL for the chart and set a custom domain in Account settings.
 
 Take a demo at https://go.localops.co/tour to learn more.
 
@@ -346,7 +374,8 @@ service is deployed.
 }
 ```
 
-Read our [documentation](https://docs.localops.co/environment/services/ops-json). Take a demo at https://go.localops.co/tour to learn more.
+Read our [documentation](https://docs.localops.co/environment/services/ops-json). Take a demo at
+https://go.localops.co/tour to learn more.
 
 </Update>
 

@@ -1,2 +1,6 @@
 [tools]
 "npm:mint" = "latest"
+"npm:oxfmt" = "latest"
+
+[tasks.format]
+run = "oxfmt ."

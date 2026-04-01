@@ -82,17 +82,24 @@ Init has two types of configuration:
 
 ### Configuration for `init` job:
 
-- `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the same image that was used to run your original service, which was built with the latest commit in your branch/PR.
+- `image` - Image name with tag/version. Eg., `nginx:1.29`. This is optional. If the `image` is not provided, we use the
+  same image that was used to run your original service, which was built with the latest commit in your branch/PR.
 - `cmd` - start command. Used on the `image` you provide in this config or the image LocalOps built using latest commit
-   in your branch/PR.
-- `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for this service in LocalOps console UI will also be injected into the job.
+  in your branch/PR.
+- `env` - Pass any environment variable necessary to run this image. In addition, when you don't provide an `image` in
+  this config, the image LocalOps built using latest commit in the PR will be used and all the secrets you added for
+  this service in LocalOps console UI will also be injected into the job.
 
 #### Run the job once accross all the pods
 
-Let's say you want to run migration for your DB or seed your data, By default all the job mentioned in the init container will be run once per every copy/pod that is created. To control the behaviour for your job to run once across all pods, you can set the `once` parameter to `true`.
+Let's say you want to run migration for your DB or seed your data, By default all the job mentioned in the init
+container will be run once per every copy/pod that is created. To control the behaviour for your job to run once across
+all pods, you can set the `once` parameter to `true`.
 
 <Note>
-    When `once` is set, the `cmd` must be a fully qualified command not just arguments. By default kubernetes or helm doesn't support this, we override your entrypoint(if exists) in your Dockerfile with a custom entrypoint script to get the desired behaviour.
+  When `once` is set, the `cmd` must be a fully qualified command not just arguments. By default kubernetes or helm
+  doesn't support this, we override your entrypoint(if exists) in your Dockerfile with a custom entrypoint script to get
+  the desired behaviour.
 </Note>
 
 ### Configuration for `service` job:
@@ -154,7 +161,8 @@ Variables defined in the set #4 overrides the ones defined in say, #3 above.
 
 ### Order and errors
 
-Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails and the main `web` service won't start.
+Jobs are run in the order defined in the array. If any of the init jobs fail to complete successfully, deployment fails
+and the main `web` service won't start.
 
 ## Health Checks
 
@@ -167,11 +175,14 @@ For your service, you can define health checks using any one of the following me
 3. TCP check
 4. gRPC check
 
-Checks will be done on each container of your service. Containers are marked as healthy if their corresponding health checks pass for at least once.
+Checks will be done on each container of your service. Containers are marked as healthy if their corresponding health
+checks pass for at least once.
 
-You can define how often checks have to be carried out using `interval`. And you can define `delay` to tell us how long to wait to start making those checks, during the first time.
+You can define how often checks have to be carried out using `interval`. And you can define `delay` to tell us how long
+to wait to start making those checks, during the first time.
 
-If your container fails these checks beyond `failure_threshold`, the corresponding container will be restarted automatically.
+If your container fails these checks beyond `failure_threshold`, the corresponding container will be restarted
+automatically.
 
 ### Example configurations:
 
@@ -180,11 +191,7 @@ If your container fails these checks beyond `failure_threshold`, the correspondi
 ```json
 {
   "health": {
-    "cmd": [
-      "/bin/sh",
-      "-c",
-      "some_executable_or_script"
-    ],
+    "cmd": ["/bin/sh", "-c", "some_executable_or_script"],
     "delay": 5, //seconds to wait, first time
     "interval": 5, //seconds between checks
     "failure_threshold": 3
@@ -218,7 +225,7 @@ If your container fails these checks beyond `failure_threshold`, the correspondi
     },
     "delay": 5,
     "interval": 5,
-    "failure_threshold": 3,
+    "failure_threshold": 3
   }
 }
 ```
@@ -583,7 +590,9 @@ Configuration for each `db`:
 3. `engine` - `mysql` or `postgres`
 4. `version` - any public version of [mysql](https://hub.docker.com/_/mysql) or
    [postgres](https://hub.docker.com/_/postgres) available in docker hub
-5. `exports` - Information of the database resource can be exported to be used within your service. Define a set of key value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are interpreted as follows.
+5. `exports` - Information of the database resource can be exported to be used within your service. Define a set of key
+   value pairs that will be injected as environment variables in your service. Keys will be injected as such. Values are
+   interpreted as follows.
 
 Export values:
 

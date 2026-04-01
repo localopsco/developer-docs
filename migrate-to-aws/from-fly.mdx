@@ -7,8 +7,8 @@ Migrating from Fly.io to AWS gives you access to the full AWS ecosystem, better 
 pricing. LocalOps provides a similar developer experience with git-push deployments and automatic scaling.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Fly.io app to AWS.
-  [Schedule a migration call](https://go.localops.co/fly) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Fly.io app to AWS. [Schedule a migration
+  call](https://go.localops.co/fly) and we'll handle everything for you.
 </Tip>
 
 ## What you get after migration
@@ -54,8 +54,8 @@ Before migrating, you need a LocalOps environment running on AWS.
     Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See
-    [Create new environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
+    environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
     Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
@@ -75,13 +75,13 @@ If you have a Dockerfile, LocalOps will use it automatically. No changes needed.
 
 Your `fly.toml` configuration maps to LocalOps concepts:
 
-| fly.toml                | LocalOps Equivalent                                               |
-| ----------------------- | ----------------------------------------------------------------- |
-| `[http_service]`        | [Web service](/environment/services/web)                          |
-| `[processes]`           | [Workers](/environment/services/workers)                          |
-| `[[services]]`          | [Internal service](/environment/services/internal)                |
-| `[env]`                 | Environment variables in service settings                         |
-| `[[vm]]` size           | Resource configuration in service settings                        |
+| fly.toml         | LocalOps Equivalent                                |
+| ---------------- | -------------------------------------------------- |
+| `[http_service]` | [Web service](/environment/services/web)           |
+| `[processes]`    | [Workers](/environment/services/workers)           |
+| `[[services]]`   | [Internal service](/environment/services/internal) |
+| `[env]`          | Environment variables in service settings          |
+| `[[vm]]` size    | Resource configuration in service settings         |
 
 ### Health checks
 
@@ -179,13 +179,11 @@ for all configuration options.
 1. **Login to AWS Console** in the same region as your LocalOps environment
 
 2. **Create a DB Subnet Group**:
-
    - Navigate to RDS > Subnet groups > Create DB subnet group
    - Select the VPC ID from your LocalOps environment
    - Add the private subnet IDs from your LocalOps environment
 
 3. **Create RDS Instance**:
-
    - Navigate to RDS > Create database
    - Choose PostgreSQL and select the same major version as your Fly database
    - Select the DB subnet group you created
@@ -350,22 +348,22 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Migrating Fly.io features
 
-| Fly.io Feature         | LocalOps Equivalent                                               |
-| ---------------------- | ----------------------------------------------------------------- |
-| Machines (web)         | [Web service](/environment/services/web)                          |
-| Machines (worker)      | [Workers](/environment/services/workers)                          |
-| Fly Postgres           | [Amazon RDS](/environment/services/aws/rds)                       |
-| Upstash Redis          | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
-| Tigris Object Storage  | [Amazon S3](/environment/services/aws/s3)                         |
-| Fly Metrics            | [Built-in metrics](/environment/monitoring/metrics)               |
-| Fly Logs               | [Built-in logging](/environment/monitoring/logs)                  |
+| Fly.io Feature        | LocalOps Equivalent                                          |
+| --------------------- | ------------------------------------------------------------ |
+| Machines (web)        | [Web service](/environment/services/web)                     |
+| Machines (worker)     | [Workers](/environment/services/workers)                     |
+| Fly Postgres          | [Amazon RDS](/environment/services/aws/rds)                  |
+| Upstash Redis         | [Amazon ElastiCache](/environment/services/aws/elasti-cache) |
+| Tigris Object Storage | [Amazon S3](/environment/services/aws/s3)                    |
+| Fly Metrics           | [Built-in metrics](/environment/monitoring/metrics)          |
+| Fly Logs              | [Built-in logging](/environment/monitoring/logs)             |
 
 ## Get help with your migration
 
 <Tip>
   **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Fly.io setup to
-  AWS—including database migration, environment variables, and custom domains.
-  [Schedule a migration call now](https://go.localops.co/fly).
+  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  now](https://go.localops.co/fly).
 </Tip>
 
 Have questions? Email us at [help@localops.co](mailto:help@localops.co).

@@ -8,8 +8,8 @@ and access to the full AWS ecosystem. LocalOps provides the same git-push deploy
 Vercel.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Vercel app to AWS.
-  [Schedule a migration call](https://go.localops.co/vercel) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Vercel app to AWS. [Schedule a migration
+  call](https://go.localops.co/vercel) and we'll handle everything for you.
 </Tip>
 
 ## What you get after migration
@@ -55,8 +55,8 @@ Before migrating, you need a LocalOps environment running on AWS.
     Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See
-    [Create new environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
+    environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
     Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
@@ -170,13 +170,11 @@ for all configuration options.
 1. **Login to AWS Console** in the same region as your LocalOps environment
 
 2. **Create a DB Subnet Group**:
-
    - Navigate to RDS > Subnet groups > Create DB subnet group
    - Select the VPC ID from your LocalOps environment
    - Add the private subnet IDs from your LocalOps environment
 
 3. **Create RDS Instance**:
-
    - Navigate to RDS > Create database
    - Choose PostgreSQL
    - Select the DB subnet group you created
@@ -300,7 +298,7 @@ await s3.send(
     Bucket: process.env.S3_BUCKET,
     Key: 'file.txt',
     Body: 'Hello World',
-  })
+  }),
 );
 ```
 
@@ -362,23 +360,23 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Migrating Vercel features
 
-| Vercel Feature         | LocalOps Equivalent                                               |
-| ---------------------- | ----------------------------------------------------------------- |
-| Web Deployments        | [Web service](/environment/services/web)                          |
-| Serverless Functions   | API routes in your app                                            |
-| Cron Jobs              | [Cron jobs](/environment/services/cronjob)                        |
-| Vercel Postgres        | [Amazon RDS](/environment/services/aws/rds)                       |
-| Vercel KV              | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
-| Vercel Blob            | [Amazon S3](/environment/services/aws/s3)                         |
-| Vercel Analytics       | [Built-in metrics](/environment/monitoring/metrics)               |
-| Log Drains             | [Built-in logging](/environment/monitoring/logs)                  |
+| Vercel Feature       | LocalOps Equivalent                                          |
+| -------------------- | ------------------------------------------------------------ |
+| Web Deployments      | [Web service](/environment/services/web)                     |
+| Serverless Functions | API routes in your app                                       |
+| Cron Jobs            | [Cron jobs](/environment/services/cronjob)                   |
+| Vercel Postgres      | [Amazon RDS](/environment/services/aws/rds)                  |
+| Vercel KV            | [Amazon ElastiCache](/environment/services/aws/elasti-cache) |
+| Vercel Blob          | [Amazon S3](/environment/services/aws/s3)                    |
+| Vercel Analytics     | [Built-in metrics](/environment/monitoring/metrics)          |
+| Log Drains           | [Built-in logging](/environment/monitoring/logs)             |
 
 ## Get help with your migration
 
 <Tip>
   **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Vercel setup to
-  AWS—including database migration, environment variables, and custom domains.
-  [Schedule a migration call now](https://go.localops.co/vercel).
+  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  now](https://go.localops.co/vercel).
 </Tip>
 
 Have questions? Email us at [help@localops.co](mailto:help@localops.co).

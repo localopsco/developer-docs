@@ -2,78 +2,116 @@
 title: Data security
 ---
 
-LocalOps takes security seriously and is committed to safeguarding your accounts and data with state of the art security controls and best practices. 
+LocalOps takes security seriously and is committed to safeguarding your accounts and data with state of the art security
+controls and best practices.
 
-**NIST & SOC2 aligned:** Our security controls align with industry standard NIST & SOC2 frameworks and span from hiring, software architecture & software development life cycle, software hosting, configuration & releases on the cloud, disaster recovery and more. 
+**NIST & SOC2 aligned:** Our security controls align with industry standard NIST & SOC2 frameworks and span from hiring,
+software architecture & software development life cycle, software hosting, configuration & releases on the cloud,
+disaster recovery and more.
 
-LocalOps serves some of the finest growing startups & businesses across US, India & other parts of the world. This document provides an overview and introduction to security controls implemented throughout its platform. 
+LocalOps serves some of the finest growing startups & businesses across US, India & other parts of the world. This
+document provides an overview and introduction to security controls implemented throughout its platform.
 
 <Tip>
-Download a PDF version of this doc <a href="https://drive.google.com/file/d/1gveW5KkpB4LA_px7aPxlq1zMrawjrGc8/view?usp=drive_link" target="_blank">here</a>. Or export it in any format from <a href="https://docs.google.com/document/d/1ZuwoTlJ3nki4789TK34DAY9__A7-ElceM9_4fkihKSs/edit?usp=drive_link" target="_blank">here</a>. 
+  Download a PDF version of this doc{' '}
+  <a href="https://drive.google.com/file/d/1gveW5KkpB4LA_px7aPxlq1zMrawjrGc8/view?usp=drive_link" target="_blank">
+    here
+  </a>
+  . Or export it in any format from{' '}
+  <a
+    href="https://docs.google.com/document/d/1ZuwoTlJ3nki4789TK34DAY9__A7-ElceM9_4fkihKSs/edit?usp=drive_link"
+    target="_blank"
+  >
+    here
+  </a>
+  .
 </Tip>
 
 <Info>
-  This document covers LocalOps SaaS version. 
-  
-  You can also run LocalOps in your cloud account for more privacy/control. Your team can manage the instance (self-hosted) or we can manage them remotely for you (BYOC). Talk with us at help@localops.co / https://go.localops.co/tour and we can get it running in just a few days.
+  This document covers LocalOps SaaS version. You can also run LocalOps in your cloud account for more privacy/control.
+  Your team can manage the instance (self-hosted) or we can manage them remotely for you (BYOC). Talk with us at
+  help@localops.co / https://go.localops.co/tour and we can get it running in just a few days.
 </Info>
 
 ## Secure cloud infrastructure
 
-LocalOps hosts its platform and services in Amazon Web Services, in the US Oregon region. 
+LocalOps hosts its platform and services in Amazon Web Services, in the US Oregon region.
 
-AWS is ISO 27001, PCI DSS Service provider Level 1 and SOC2 compliant cloud provider. 
+AWS is ISO 27001, PCI DSS Service provider Level 1 and SOC2 compliant cloud provider.
 
-<div style={{ display: "flex", gap: "20px", alignItems: "center", marginBottom: "20px" }}>
-  <img src="./images/soc2.png" alt="SOC2" style={{ height: "80px", width: "auto" }} />
-  <img src="./images/hipaa.png" alt="HIPAA" style={{ height: "80px", width: "auto" }} />
-  <img src="./images/iso27001.png" alt="ISO27001" style={{ height: "80px", width: "auto" }} />
-  <img src="./images/pci.png" alt="PCI" style={{ height: "80px", width: "auto" }} />
+<div style={{ display: 'flex', gap: '20px', alignItems: 'center', marginBottom: '20px' }}>
+  <img src="./images/soc2.png" alt="SOC2" style={{ height: '80px', width: 'auto' }} />
+  <img src="./images/hipaa.png" alt="HIPAA" style={{ height: '80px', width: 'auto' }} />
+  <img src="./images/iso27001.png" alt="ISO27001" style={{ height: '80px', width: 'auto' }} />
+  <img src="./images/pci.png" alt="PCI" style={{ height: '80px', width: 'auto' }} />
 </div>
 
-- **High Availability and Redundancy:** All systems are designed with high availability and redundancy, as certified by independent third party auditors and certifications.
-- **24/7 Physical Access Security:** Physical access is safeguarded 24/7 with CCTV surveillance and strict access control policies.
-- **Network, Compute, and Storage Redundancy:** Assets in the network, compute, and storage layers have high redundancy and availability built in.
-- **Environmental Safeguards:** Backup power, HVAC systems, fire suppression equipment, flood prevention, and other controls are implemented to safeguard against natural and environmental risks.
-- **Business Continuity and Disaster Recovery:** Business continuity and disaster recovery procedures are in place to provide quick turnaround and resolutions during disruptions.
+- **High Availability and Redundancy:** All systems are designed with high availability and redundancy, as certified by
+  independent third party auditors and certifications.
+- **24/7 Physical Access Security:** Physical access is safeguarded 24/7 with CCTV surveillance and strict access
+  control policies.
+- **Network, Compute, and Storage Redundancy:** Assets in the network, compute, and storage layers have high redundancy
+  and availability built in.
+- **Environmental Safeguards:** Backup power, HVAC systems, fire suppression equipment, flood prevention, and other
+  controls are implemented to safeguard against natural and environmental risks.
+- **Business Continuity and Disaster Recovery:** Business continuity and disaster recovery procedures are in place to
+  provide quick turnaround and resolutions during disruptions.
 
-LocalOps leverages all these security controls in hosting its platform at AWS. See more details about data center security controls implemented in AWS at https://aws.amazon.com/trust-center/data-center/our-controls/ 
+LocalOps leverages all these security controls in hosting its platform at AWS. See more details about data center
+security controls implemented in AWS at https://aws.amazon.com/trust-center/data-center/our-controls/
 
 ## Secure software development
 
 LocalOps follows secure software development cycle practices while building its platform.
 
-1. **Version Control:** Code versions are managed using Git and hosted privately in Github. Git is the same version control system used by the Linux community in building Linux Kernel which powers most of the internet.
+1. **Version Control:** Code versions are managed using Git and hosted privately in Github. Git is the same version
+   control system used by the Linux community in building Linux Kernel which powers most of the internet.
 2. **Environment Isolation:** Development, staging and production environments are isolated from each other.
-3. **Peer & Automated Code Reviews:** All new features and changes are reviewed by peer engineers and/or AI code review tools to detect errors and security vulnerabilities early in the cycle.
-4. **Pre-Release Testing:** All new changes are tested in development and staging environments before getting released in production.
-5. **Automated Testing:** Automated tests are run before every release to ensure releases are free of common bugs and vulnerabilities.
+3. **Peer & Automated Code Reviews:** All new features and changes are reviewed by peer engineers and/or AI code review
+   tools to detect errors and security vulnerabilities early in the cycle.
+4. **Pre-Release Testing:** All new changes are tested in development and staging environments before getting released
+   in production.
+5. **Automated Testing:** Automated tests are run before every release to ensure releases are free of common bugs and
+   vulnerabilities.
 6. **No Production Data in Development:** No production data is used during development or testing.
-7. **Dependency Vulnerability Monitoring:** We use third party tools like Github Dependabot to continuously monitor for vulnerabilities on third party libraries used in the application.
-8. **OWASP Vulnerability Mitigations:** Frameworks & libraries used by our application have built-in mitigations for common OWASP vulnerabilities such as SQLi, XSS, CSRF and others.
+7. **Dependency Vulnerability Monitoring:** We use third party tools like Github Dependabot to continuously monitor for
+   vulnerabilities on third party libraries used in the application.
+8. **OWASP Vulnerability Mitigations:** Frameworks & libraries used by our application have built-in mitigations for
+   common OWASP vulnerabilities such as SQLi, XSS, CSRF and others.
 
 ## Secure software hosting
 
 All our services are hosted and maintained in AWS, by following the below security controls:
 
-1. **Secure networks:** Production environment is hosted in its own logically isolated virtual private network (VPC and subnets).
-2. **Private server hosting:** All servers are hosted in private subnets of the VPC, except for those servers that accept requests from clients.
-3. **Firewall rules:** Strong firewall rules are implemented to allow only required ports in each of the compute instances that host LocalOps services.
+1. **Secure networks:** Production environment is hosted in its own logically isolated virtual private network (VPC and
+   subnets).
+2. **Private server hosting:** All servers are hosted in private subnets of the VPC, except for those servers that
+   accept requests from clients.
+3. **Firewall rules:** Strong firewall rules are implemented to allow only required ports in each of the compute
+   instances that host LocalOps services.
 4. **Redundancy:** Servers are hosted in multiple AZs (Availability Zones) for redundancy.
 5. **Uptime monitoring:** Service uptime is monitored using third party tools.
 6. **Secure deployments:** New software changes are built & deployed securely and automatically by our CI/CD setup.
-7. **Resource monitoring:** All servers are monitored for their resource consumption and alerts are set up for any anomalies.
-8. **Traffic security:** HTTP/HTTPS Traffic to the software is safeguarded against bots, malicious actors & DDoS attacks using Cloudflare CDN and CloudFront CDN.
+7. **Resource monitoring:** All servers are monitored for their resource consumption and alerts are set up for any
+   anomalies.
+8. **Traffic security:** HTTP/HTTPS Traffic to the software is safeguarded against bots, malicious actors & DDoS attacks
+   using Cloudflare CDN and CloudFront CDN.
 
 ## Secure customer data
 
 The following security controls are in place to safeguard data in the LocalOps platform:
-1. **Isolated Virtual Machines:** Software is hosted in isolated VMs provided by AWS Elastic Compute Cloud. AWS ensures that no two VMs share common memory space. VMs are fully scrubbed after deletion.
+
+1. **Isolated Virtual Machines:** Software is hosted in isolated VMs provided by AWS Elastic Compute Cloud. AWS ensures
+   that no two VMs share common memory space. VMs are fully scrubbed after deletion.
 2. **Secure Firewall Rules:** Secure firewall rules are implemented to allow only authorized access.
-3. **Encryption in Transit:** Encryption is turned on during transit. Data transmitted from the application UI to our web servers is encrypted using HTTPS/TLS 1.2, RSA, and 2048-bit keys at all times.
-4. **Encryption at Rest:** Encryption is turned on at rest. All data is encrypted before it is stored in AWS disk volumes.
-5. **Encrypted Backups:** Backups are encrypted before they get stored in Amazon S3, and are automatically deleted by AWS after 30 days.
-6. **Protection Against OWASP Vulnerabilities:** Incoming HTTP traffic is secured against OWASP vulnerabilities using Cloudflare CDN, CloudFront CDN, and the web framework we use to build services.
+3. **Encryption in Transit:** Encryption is turned on during transit. Data transmitted from the application UI to our
+   web servers is encrypted using HTTPS/TLS 1.2, RSA, and 2048-bit keys at all times.
+4. **Encryption at Rest:** Encryption is turned on at rest. All data is encrypted before it is stored in AWS disk
+   volumes.
+5. **Encrypted Backups:** Backups are encrypted before they get stored in Amazon S3, and are automatically deleted by
+   AWS after 30 days.
+6. **Protection Against OWASP Vulnerabilities:** Incoming HTTP traffic is secured against OWASP vulnerabilities using
+   Cloudflare CDN, CloudFront CDN, and the web framework we use to build services.
 7. **Strict Internal Authentication:** All internal data services have strict authentication turned on.
 8. **Restricted SSH Access:** SSH access is enabled only for a select few authorized personnel in the company.
 9. **Multi-Factor Authentication (MFA):** All access to servers is safeguarded by MFA.
@@ -81,45 +119,56 @@ The following security controls are in place to safeguard data in the LocalOps p
 
 ## Incident response plan
 
-Alert rules are configured in all parts of the software stack to detect issues and escalate anomalies to the team. 
+Alert rules are configured in all parts of the software stack to detect issues and escalate anomalies to the team.
 
-**Recovery Time Objective (RTO):** Services are recovered within 24 hours. 
+**Recovery Time Objective (RTO):** Services are recovered within 24 hours.
 
-1. **Communication/escalation:** Internal & instant communication tools are active all the time, to communicate, escalate and recover from incidents.
+1. **Communication/escalation:** Internal & instant communication tools are active all the time, to communicate,
+   escalate and recover from incidents.
 2. **Clear assignments:** Assignments are done within the team to own and recover from specific issues
 3. **RCAs:** Root cause analysis is carried out by the assignee(s)
-4. **Review/approval:** Fixes are made to software, configuration or infrastructure after internal review & approval from the owners of the system(s).
-5. **Post mortems:** Post mortems are conducted post the incident to prevent similar issues in future 
-
+4. **Review/approval:** Fixes are made to software, configuration or infrastructure after internal review & approval
+   from the owners of the system(s).
+5. **Post mortems:** Post mortems are conducted post the incident to prevent similar issues in future
 
 ## Disaster recovery procedures
 
-LocalOps has outlined clear disaster recovery procedures to recover services during major incidents. These procedures are also tested regularly.
+LocalOps has outlined clear disaster recovery procedures to recover services during major incidents. These procedures
+are also tested regularly.
 
 1. **Backup Storage:** All backups are stored in Amazon S3.
-2. **Geographic Redundancy:** Backups are stored in the US-east while our services are running in the US-west, to mitigate risks of regional failures in the US-west.
+2. **Geographic Redundancy:** Backups are stored in the US-east while our services are running in the US-west, to
+   mitigate risks of regional failures in the US-west.
 3. **Backup Frequency & Security:** Backups are taken and transferred securely to S3, every hour.
 4. **Backup Retention:** All backups are kept for 30 days.
-5. **Recovery Point Objective (RPO):** Data is restored from the most recent backup that is less than or up to 60mins old.
+5. **Recovery Point Objective (RPO):** Data is restored from the most recent backup that is less than or up to 60mins
+   old.
 
 ## Product security
 
-Within LocalOps platform and services, all the following security controls are implemented to protect your account logins and data.
+Within LocalOps platform and services, all the following security controls are implemented to protect your account
+logins and data.
 
-1. **Passwordless Logins:** Logins don’t accept passwords at all to eliminate all vulnerabilities that arise out of weak passwords.
-2. **Two-Factor Authentication (2FA) & OAuth:** 2FA is the default sign in method for all users using email-based login. Otherwise, OAuth logins powered by Google or Github secure the login process.
+1. **Passwordless Logins:** Logins don’t accept passwords at all to eliminate all vulnerabilities that arise out of weak
+   passwords.
+2. **Two-Factor Authentication (2FA) & OAuth:** 2FA is the default sign in method for all users using email-based login.
+   Otherwise, OAuth logins powered by Google or Github secure the login process.
 3. **Session Expiry:** All login sessions expire automatically in 24 hours.
-4. **Role-Based Access Control (RBAC):** Users can be assigned roles using our RBAC module to restrict them from accessing all of the account and data.
+4. **Role-Based Access Control (RBAC):** Users can be assigned roles using our RBAC module to restrict them from
+   accessing all of the account and data.
 5. **Audit Logging:** Audit logs record actions taken by users in your LocalOps account.
 
 ## Organization security
 
-1. **Employee Screening:** All employees go through relevant reference checks, background checks, and verification before they are onboarded.
-2. **NDA and Confidentiality:** All new hires are required to sign a Non-Disclosure Agreement (NDA) as part of their employment contract.
+1. **Employee Screening:** All employees go through relevant reference checks, background checks, and verification
+   before they are onboarded.
+2. **NDA and Confidentiality:** All new hires are required to sign a Non-Disclosure Agreement (NDA) as part of their
+   employment contract.
 3. **Mandatory 2FA:** Two-Factor Authentication (2FA) is mandatory for all access to all software tools we use.
-4. **Security Awareness Training:** The team receives training and orientation on different security vulnerabilities that can occur in code, product, infrastructure, and in general at work—including phishing—to raise awareness and protect all their software access.
+4. **Security Awareness Training:** The team receives training and orientation on different security vulnerabilities
+   that can occur in code, product, infrastructure, and in general at work—including phishing—to raise awareness and
+   protect all their software access.
 5. **Access Auditing:** All access is audited within the organization.
 
-For any questions around our security controls, please ping the slack help channel you’re onboarded to or send an email to security@localops.co. 
-
-
+For any questions around our security controls, please ping the slack help channel you’re onboarded to or send an email
+to security@localops.co.

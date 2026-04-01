@@ -79,12 +79,16 @@ description: Brief description for SEO and navigation
 
 ### Formatting and Style
 
-#### Prettier Configuration (.prettierrc.yml)
+#### Oxfmt Configuration (.oxfmt.json)
 
-```yaml
-printWidth: 120
-proseWrap: always
-singleQuote: true
+```json
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [],
+  "printWidth": 120,
+  "proseWrap": "always",
+  "singleQuote": true
+}
 ```
 
 #### Markdown Conventions
@@ -185,7 +189,7 @@ Use Mintlify's built-in MDX components:
 - Never commit secrets or sensitive information
 - All images go in appropriate subdirectories under `images/`
 - Update navigation in `docs.json` for new pages
-- Format all files with Prettier before committing
+- Format all files with Oxfmt before committing
 
 ### VS Code Configuration
 
@@ -193,7 +197,7 @@ Use Mintlify's built-in MDX components:
 
 ```json
 {
-  "recommendations": ["esbenp.prettier-vscode"]
+  "recommendations": ["oxc.oxc-vscode"]
 }
 ```
 
@@ -202,7 +206,7 @@ Use Mintlify's built-in MDX components:
 ```json
 {
   "[mdx]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "editor.formatOnSave": true
 }

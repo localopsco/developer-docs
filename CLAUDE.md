@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the **LocalOps Developer Documentation** site, built with **Mintlify**. LocalOps is a cloud-native deployment platform that enables developers to offer SaaS, BYOC (Bring Your Own Cloud), On-Prem, and Self-hosted versions of their services.
+This is the **LocalOps Developer Documentation** site, built with **Mintlify**. LocalOps is a cloud-native deployment
+platform that enables developers to offer SaaS, BYOC (Bring Your Own Cloud), On-Prem, and Self-hosted versions of their
+services.
 
 Documentation site: https://docs.localops.co
 
@@ -37,6 +39,7 @@ All content is **MDX format** (Markdown + JSX). Directory structure mirrors the 
 ### Core Platform Concepts
 
 **ops.json** is the central declarative configuration file users add to their repos. It defines:
+
 - Init jobs, health checks (shell/HTTP/TCP/gRPC), cloud resources (S3, RDS, ElastiCache, SQS, SNS)
 - Ephemeral environment dependencies, workers, cron jobs
 
@@ -61,7 +64,7 @@ description: Brief description for SEO
 
 - **Internal links**: Use relative paths without extensions: `[text](/environment/services/ops-json)`
 - **Navigation**: Update `docs.json` when adding new pages
-- **Formatting**: Prettier enforces 120 char lines, prose wrap, single quotes
+- **Formatting**: Oxfmt enforces 120 char lines, prose wrap, single quotes
 
 ### Mintlify Components
 

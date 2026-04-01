@@ -8,11 +8,13 @@ mode: center
 
 ## Custom CIDRs for environments
 
-While creating new environments, you can now specify custom CIDR block for your environments. This will be used to create VPCs and subnets in your cloud accounts and will give more control over your network configurations.
+While creating new environments, you can now specify custom CIDR block for your environments. This will be used to
+create VPCs and subnets in your cloud accounts and will give more control over your network configurations.
 
-In the Create environment page, you can click on "Advanced options" to see the new field for custom CIDR block. You can specify any valid CIDR block that you want for your environment.
+In the Create environment page, you can click on "Advanced options" to see the new field for custom CIDR block. You can
+specify any valid CIDR block that you want for your environment.
 
-<img src="../images/create-env-cidr.png" alt="service run status" style={{ height: "350px", width: "auto" }} />
+<img src="../images/create-env-cidr.png" alt="service run status" style={{ height: '350px', width: 'auto' }} />
 
 </Update>
 
@@ -20,9 +22,10 @@ In the Create environment page, you can click on "Advanced options" to see the n
 
 ## Realtime run status of services
 
-We released a major new enhancement to services today. You can now see the realtime status of all services running within each environment, without having to use LocalOps CLI or Kubectl CLI.
+We released a major new enhancement to services today. You can now see the realtime status of all services running
+within each environment, without having to use LocalOps CLI or Kubectl CLI.
 
-<img src="../images/run-status.png" alt="service run status" style={{ height: "250px", width: "auto" }} />
+<img src="../images/run-status.png" alt="service run status" style={{ height: '250px', width: 'auto' }} />
 
 Depending on the service type, status text will be different. Here are the possible status texts:
 
@@ -31,7 +34,7 @@ For example, for `web`, `internal` services and `worker` services, you will see 
 - running (2/2)
 - degraded (1/2)
 - failing (0/2)
-- stopped 
+- stopped
 
 (x/y) format shows the number of replicas running (x) out of total number of replicas (y).
 
@@ -44,9 +47,9 @@ For job services:
 
 For cronjob services:
 
-- idle 
-- active 
-- suspended 
+- idle
+- active
+- suspended
 
 You can see them in service tile view or within service section at the top of the page.
 
@@ -54,9 +57,11 @@ You can see them in service tile view or within service section at the top of th
 
 Lookout for the new "Runs" tab for job and cronjob services. You can see the run history and status of each run.
 
-We update statuses in near real time so you would know when you service is failing, just by looking at the status text in LocalOps console.
+We update statuses in near real time so you would know when you service is failing, just by looking at the status text
+in LocalOps console.
 
-All of these changes were made to make it easier for you to monitor and manage your services, without having to drop into shell or CLI. 
+All of these changes were made to make it easier for you to monitor and manage your services, without having to drop
+into shell or CLI.
 
 </Update>
 
@@ -64,38 +69,41 @@ All of these changes were made to make it easier for you to monitor and manage y
 
 ## New feature: Custom Node groups
 
-So far, environments have been having a single node group created, to run all the services. 
+So far, environments have been having a single node group created, to run all the services.
 
-Now, you can create multiple node groups to run different types of services. For each node group you can pick 
+Now, you can create multiple node groups to run different types of services. For each node group you can pick
 
 1. AMIs
 2. Instance types
 3. Desired count of nodes
 
-<img src="../images/list-node-groups.png" alt="list node groups" style={{ height: "200px", width: "auto" }} />
+<img src="../images/list-node-groups.png" alt="list node groups" style={{ height: '200px', width: 'auto' }} />
 
-Go to the new Node groups section to create and manage node groups. 
+Go to the new Node groups section to create and manage node groups.
 
-You can now create 
+You can now create
 
 1. Windows node groups to run windows based services (or)
 2. Linux node groups to run linux base services
 
-And while creating a service or updating a service, you can assign it to any one of the node groups. And all its replicas or containers will run in configured nodes.
+And while creating a service or updating a service, you can assign it to any one of the node groups. And all its
+replicas or containers will run in configured nodes.
 
 ## Spot instances
 
-In the case of AWS evnironments, while creating node groups, you can pick between ON_DEMAND or SPOT as capacity types. 
+In the case of AWS evnironments, while creating node groups, you can pick between ON_DEMAND or SPOT as capacity types.
 
-So you can create node groups of SPOT instance type and assign interruptible and idempotent services like jobs, crons, batch processing, or other. This will end up giving up to 50% savings in compute costs. 
+So you can create node groups of SPOT instance type and assign interruptible and idempotent services like jobs, crons,
+batch processing, or other. This will end up giving up to 50% savings in compute costs.
 
 </Update>
 
 <Update label="Feb 9, 2026">
 
-## New feature:  Deployment notes
+## New feature: Deployment notes
 
-While triggering new deployments, you can now pass a note text to it. And it will communicate to rest of the team about what the deployment is all about.
+While triggering new deployments, you can now pass a note text to it. And it will communicate to rest of the team about
+what the deployment is all about.
 
 We made other QoS updates here to ensure smooth execution of deployment pipelines.
 
@@ -105,13 +113,16 @@ We made other QoS updates here to ensure smooth execution of deployment pipeline
 
 ## New feature: Account level resource tags
 
-All cloud resources of all environments spinned by LocalOps are attached with two standard tags. One with ID of the environment and another with name of the environment. These tags can be used in Cost explorer to analyse costs at a granular level. 
+All cloud resources of all environments spinned by LocalOps are attached with two standard tags. One with ID of the
+environment and another with name of the environment. These tags can be used in Cost explorer to analyse costs at a
+granular level.
 
-We released a new feature today to accept custom tags so that you can assign your own key value pairs as tags for all resources spinned up in all environments of the account. You can use it to attach tags like:
+We released a new feature today to accept custom tags so that you can assign your own key value pairs as tags for all
+resources spinned up in all environments of the account. You can use it to attach tags like:
 
 1. `bu: internal`
 2. `bu: product-1`
-3. `project: project-name` 
+3. `project: project-name`
 
 Go to Account settings > Resource tags to start adding custom tags.
 
@@ -121,9 +132,10 @@ Go to Account settings > Resource tags to start adding custom tags.
 
 ## Bring your own registry
 
-LocalOps can now use your images from your own docker registry to deploy services in your environments. Go to the new Registries section to add any private docker registry.
+LocalOps can now use your images from your own docker registry to deploy services in your environments. Go to the new
+Registries section to add any private docker registry.
 
-We support ECR & DockerHub as of today and plan to support other providers in the coming weeks. 
+We support ECR & DockerHub as of today and plan to support other providers in the coming weeks.
 
 1. Amazon Elastic Container Registry (ECR)
 2. DockerHub
@@ -133,13 +145,15 @@ We support ECR & DockerHub as of today and plan to support other providers in th
 
 ([Talk to us](mailto:anand@localops.co) if you need us to support any other registry).
 
-## Bring your code pipeline 
+## Bring your code pipeline
 
 ### Deploy using LocalOps API
 
-You can run your exisitng code build pipelines to build code and finally call LocalOps API to deploy the code to your environment. Checkout the API reference for the new /deploy api [here](https://docs.localops.co/api-reference/deploy-service).
+You can run your exisitng code build pipelines to build code and finally call LocalOps API to deploy the code to your
+environment. Checkout the API reference for the new /deploy api
+[here](https://docs.localops.co/api-reference/deploy-service).
 
-Eg., 
+Eg.,
 
 ```bash
 curl --request POST \
@@ -155,7 +169,8 @@ curl --request POST \
 
 ### 🍦 Deploy using LocalOps Github action
 
-To cut work, you can also embed our Github action step directly within your `.github/workflows/deploy.yml` to trigger new deployments. 
+To cut work, you can also embed our Github action step directly within your `.github/workflows/deploy.yml` to trigger
+new deployments.
 
 Like:
 
@@ -181,9 +196,11 @@ or with commit sha like:
     - commit_id: akf9a0sd98
 ```
 
-## Pass ops.json as configuration 
+## Pass ops.json as configuration
 
-For Docker-image based services, you can now add ops.json as configuration to the service settings within LocalOps console. This will work as documented in ops.json configuration [here](https://docs.localops.co/environment/services/ops-json).
+For Docker-image based services, you can now add ops.json as configuration to the service settings within LocalOps
+console. This will work as documented in ops.json configuration
+[here](https://docs.localops.co/environment/services/ops-json).
 
 </Update>
 

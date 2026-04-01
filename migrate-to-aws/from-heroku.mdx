@@ -7,8 +7,8 @@ Migrating from Heroku to AWS gives you more control over infrastructure, better 
 the full AWS ecosystem. LocalOps makes this migration seamless by handling the infrastructure complexity for you.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Heroku app to AWS.
-  [Schedule a migration call](https://go.localops.co/heroku) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Heroku app to AWS. [Schedule a migration
+  call](https://go.localops.co/heroku) and we'll handle everything for you.
 </Tip>
 
 ## What you get after migration
@@ -38,8 +38,8 @@ the full AWS ecosystem. LocalOps makes this migration seamless by handling the i
 </Steps>
 
 <Info>
-  Need help? [Schedule a migration call](https://go.localops.co/heroku) and our engineers will assist you through
-  the entire process.
+  Need help? [Schedule a migration call](https://go.localops.co/heroku) and our engineers will assist you through the
+  entire process.
 </Info>
 
 ## Step 1: Set up LocalOps environment
@@ -54,8 +54,8 @@ Before migrating, you need a LocalOps environment running on AWS.
     Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See
-    [Create new environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
+    environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
     Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
@@ -136,14 +136,12 @@ If you prefer to create the database manually:
 1. **Login to AWS Console** in the same region as your LocalOps environment
 
 2. **Create a DB Subnet Group**:
-
    - Navigate to RDS > Subnet groups > Create DB subnet group
    - Select the VPC ID from your LocalOps environment
    - Add the private subnet IDs from your LocalOps environment
    - Save the subnet group
 
 3. **Create RDS Instance**:
-
    - Navigate to RDS > Create database
    - Choose PostgreSQL and select the same major version as your Heroku database
    - Select the DB subnet group you created
@@ -263,21 +261,21 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Migrating other Heroku add-ons
 
-| Heroku Add-on          | AWS Equivalent                                                    |
-| ---------------------- | ----------------------------------------------------------------- |
-| Heroku Redis           | [Amazon ElastiCache](/environment/services/aws/elasti-cache)      |
-| Heroku Postgres        | [Amazon RDS](/environment/services/aws/rds)                       |
-| CloudAMQP              | [Amazon SQS](/environment/services/aws/sqs)                       |
-| Papertrail / Logentries| [Built-in logging](/environment/monitoring/logs)                  |
-| New Relic / Scout      | [Built-in metrics](/environment/monitoring/metrics)               |
-| Scheduler              | [Cron jobs](/environment/services/cronjob)                        |
+| Heroku Add-on           | AWS Equivalent                                               |
+| ----------------------- | ------------------------------------------------------------ |
+| Heroku Redis            | [Amazon ElastiCache](/environment/services/aws/elasti-cache) |
+| Heroku Postgres         | [Amazon RDS](/environment/services/aws/rds)                  |
+| CloudAMQP               | [Amazon SQS](/environment/services/aws/sqs)                  |
+| Papertrail / Logentries | [Built-in logging](/environment/monitoring/logs)             |
+| New Relic / Scout       | [Built-in metrics](/environment/monitoring/metrics)          |
+| Scheduler               | [Cron jobs](/environment/services/cronjob)                   |
 
 ## Get help with your migration
 
 <Tip>
-  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Heroku setup
-  to AWS—including database migration, environment variables, and custom domains.
-  [Schedule a migration call now](https://go.localops.co/heroku).
+  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Heroku setup to
+  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  now](https://go.localops.co/heroku).
 </Tip>
 
 Have questions? Email us at [help@localops.co](mailto:help@localops.co).

@@ -3,30 +3,35 @@ title: Self hosted
 description: How to offer self-hosted version of your service to enterprise
 ---
 
-For teams offering self-hosted versions of their software, building & maintaining different version for their service, while allowing customers to consume them at their own cadence can be challenging.
+For teams offering self-hosted versions of their software, building & maintaining different version for their service,
+while allowing customers to consume them at their own cadence can be challenging.
 
-While SaaS model keeps all users on the latest version, enterprise companies have their own security policies to define how software must be procured, installed, configured, managed and updated. 
+While SaaS model keeps all users on the latest version, enterprise companies have their own security policies to define
+how software must be procured, installed, configured, managed and updated.
 
-LocalOps makes distributing self-hosted versions easy for your team, with a modern/Git-ops style distribution pipeline to build, generate and release pre-packaged versions of your service as Kubernetes helm charts. All while not writing Dockerfiles, Yaml Specs, Terraform or Pulumi scripts.
+LocalOps makes distributing self-hosted versions easy for your team, with a modern/Git-ops style distribution pipeline
+to build, generate and release pre-packaged versions of your service as Kubernetes helm charts. All while not writing
+Dockerfiles, Yaml Specs, Terraform or Pulumi scripts.
 
 ### Overall steps to offer self-hosted version
 
-1. Sign up for LocalOps account 
-2. Create and connect your AWS/other cloud account 
-3. Spin up a new environment 
-4. Deploy services that are part of your software and link their github repo and branch (you could name this branch as `self-hosted`, spun from your `prod` branch.)
-5. Test the setup 
-6. Generate a new private helm chart from the running services 
+1. Sign up for LocalOps account
+2. Create and connect your AWS/other cloud account
+3. Spin up a new environment
+4. Deploy services that are part of your software and link their github repo and branch (you could name this branch as
+   `self-hosted`, spun from your `prod` branch.)
+5. Test the setup
+6. Generate a new private helm chart from the running services
 7. Distribute your private helm chart to customer, safely using license tokens
-8. Repeat steps 4-7 as you make new changes to your code and services. 
+8. Repeat steps 4-7 as you make new changes to your code and services.
 
-#### Sign up 
+#### Sign up
 
 Sign up for LocalOps at https://console.localops.co/signup
 
-#### Connect your cloud account 
+#### Connect your cloud account
 
-Connect your cloud account to LocalOps to create a test environment and test services. 
+Connect your cloud account to LocalOps to create a test environment and test services.
 
 Refer to [Connect cloud account guide](/accounts/aws)
 
@@ -36,37 +41,50 @@ To spin up a new environment, refer to this guide - [create environment](http://
 
 #### Deploy services
 
-For each service you have in your software, spin up a new service and deploy them in environment. 
+For each service you have in your software, spin up a new service and deploy them in environment.
 
 1. To create a new service, refer to [Create service guide](/environment/services/create)
-2. To make deployments on the service, refer to [Deploy service guide](http://localhost:3000/environment/services/deploy)
+2. To make deployments on the service, refer to
+   [Deploy service guide](http://localhost:3000/environment/services/deploy)
 3. Repeat steps 1 and 2, for each service you have in your app - app, workers, web, etc.,
 
-<Tip>While using a Github repo and branch for each service, it is ideal to create a new branch called `self-hosted` or something similar and then use that for the services you spin up. Because you can then manage all self-hosted version code in its own branch.</Tip>
+<Tip>
+  While using a Github repo and branch for each service, it is ideal to create a new branch called `self-hosted` or
+  something similar and then use that for the services you spin up. Because you can then manage all self-hosted version
+  code in its own branch.
+</Tip>
 
 #### Test the setup
 
-After adding all services, test them using the app url. One of our services will be the main entry point of your app. Use its public url to test the functionality.
+After adding all services, test them using the app url. One of our services will be the main entry point of your app.
+Use its public url to test the functionality.
 
-#### Generate private helm charts 
+#### Generate private helm charts
 
-Visit environment dashboard. On the top far right, click on "Generate chart". Give it a new name and new version number and click on generate. 
+Visit environment dashboard. On the top far right, click on "Generate chart". Give it a new name and new version number
+and click on generate.
 
-This will generate a Kubernetes helm chart for you and it can be used by your customers to install your service in their Kubernetes cluster. 
+This will generate a Kubernetes helm chart for you and it can be used by your customers to install your service in their
+Kubernetes cluster.
 
-Chat with us from below or email us at help@localops.co and we will guide you here. 
+Chat with us from below or email us at help@localops.co and we will guide you here.
 
 #### Distribute private helm charts
 
-Visit helm charts section (see left sidebar) in LocalOps console. And click on the chart you just generated. Turn on Installation page url and you will see a new url to send it to your customers. 
+Visit helm charts section (see left sidebar) in LocalOps console. And click on the chart you just generated. Turn on
+Installation page url and you will see a new url to send it to your customers.
 
-<Tip>In account settings, be sure to set a custom domain. So that your installation url will see your brand domain. </Tip>
+<Tip>
+  In account settings, be sure to set a custom domain. So that your installation url will see your brand domain.{' '}
+</Tip>
 
 In License tokens section, create a new license token, specific to each customer.
 
-Distribute both installation url and license token to your customer. They can use these to securely & privately pull and install your service as Kubernetes helm chart.
+Distribute both installation url and license token to your customer. They can use these to securely & privately pull and
+install your service as Kubernetes helm chart.
 
-Voila! You just offered your service as a self-hosted version. They can consume the chart and its updates in their cadence from now.
+Voila! You just offered your service as a self-hosted version. They can consume the chart and its updates in their
+cadence from now.
 
 #### Talk to us:
 
