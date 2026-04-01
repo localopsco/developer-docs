@@ -5,6 +5,51 @@ mode: center
 ---
 
 <Update label="March 6, 2026">
+## Switch organizations/teams & New CLI update
+
+If you run multiple products and multiple engineering teams handling their own qa, uat and production environments, you
+will love this update.
+
+**Switch organizations:**
+
+Users can now belong to multiple organizations using their same login / email address. And they can easily switch
+between the organizations from the top left menu like this:
+
+<img src="./images/2026/switch-org.png" alt="switch organization" style={{ height: '350px', width: '100%' }} />
+
+Each organization can have unique environments like this:
+
+- Github org
+- ECR Registries
+- Environments
+  - qa
+  - uat
+  - production
+- Deployments
+
+**Enhanced CLI Login:**
+
+LocalOps CLI now use [device auth](https://datatracker.ietf.org/doc/html/rfc8628) for more seamless and secure login. To
+login, just type this in your terminal:
+
+```bash
+ops login
+```
+
+<img src="./images/2026/cli-device-auth.png" alt="cli device auth" style={{ height: '450px', width: '100%' }} />
+
+And you will get a link to click and open the browser. If you’re already logged in to LocalOps console
+(console.localops.co), we will show up the authorization form that CLI is requesting to use your current login. Once you
+authorize, boom! You can access LocalOps services via CLI
+
+<img src="./images/2026/cli-device-auth-web.png" alt="cli device auth" style={{ height: '450px', width: '100%' }} />
+
+You will need to update the CLI version to v3.0.0 to get this update. Checkout [cli](/cli) docs for installing the
+correct CLI for your OS.
+
+</Update>
+
+<Update label="March 6, 2026">
 
 ## Custom CIDRs for environments
 
@@ -14,7 +59,7 @@ create VPCs and subnets in your cloud accounts and will give more control over y
 In the Create environment page, you can click on "Advanced options" to see the new field for custom CIDR block. You can
 specify any valid CIDR block that you want for your environment.
 
-<img src="../images/create-env-cidr.png" alt="service run status" style={{ height: '350px', width: 'auto' }} />
+<img src="../images/create-env-cidr.png" alt="env cidr" style={{ height: '350px', width: 'auto' }} />
 
 </Update>
 
