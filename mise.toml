@@ -1,4 +1,5 @@
 [tools]
+node = "24.14.1"
 "npm:mint" = "latest"
 "npm:oxfmt" = "latest"
 
