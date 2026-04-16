@@ -5,9 +5,9 @@ version = "24.14.1"
 backend = "core:node"
 
 [[tools."npm:mint"]]
-version = "4.2.468"
+version = "4.2.507"
 backend = "npm:mint"
 
 [[tools."npm:oxfmt"]]
-version = "0.43.0"
+version = "0.44.0"
 backend = "npm:oxfmt"

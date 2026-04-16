@@ -4,6 +4,46 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="April 9, 2026">
+
+## Organization SSO (SAML 2.0)
+
+We’ve introduced Single Sign-On (SSO) via SAML 2.0, allowing teams to manage access through their preferred identity
+providers. This feature simplifies user onboarding and enhances security by centralizing authentication.
+
+<img src="./images/2026/sso-saml-2.0.png" alt="saml 2.0" style={{ height: '400px', width: '100%' }} />
+
+Any SAML2.0 compliant identity provider is supported through this SAML2.0.
+
+- Okta
+- Microsoft Entra ID
+- Google Workspace SSO
+- OneLogin
+- Auth0
+
+**Availability: Now available for all Business Plan customers**
+
+> What’s Next: OIDC (OpenID Connect) support is currently in development and will be released soon.
+
+#### Improved CLI Organization Management
+
+Users who belong to multiple organizations can now explicitly select their active organization directly within the
+Command Line Interface (CLI). This ensures that commands and deployments are always targeted at the correct environment
+without manual configuration overrides.
+
+#### Simplified Manual Deployments
+
+To streamline the redeployment process, we’ve added a new option in the manual deployment section. You can now quickly
+select and use the last successfully deployed Docker or Helm images, reducing the risk of version mismatch during quick
+fixes or rollbacks.
+
+#### Security Improvements
+
+We’ve strengthened the security of our OAuth device authorization flow to further using stricter state validation and
+session integrity.
+
+</Update>
+
 <Update label="March 31, 2026">
 ## Switch organizations/teams & New CLI update
 
@@ -15,7 +55,7 @@ will love this update.
 Users can now belong to multiple organizations using their same login / email address. And they can easily switch
 between the organizations from the top left menu like this:
 
-<img src="./images/2026/switch-org.png" alt="switch organization" style={{ height: '350px', width: '100%' }} />
+<img src="./images/2026/switch-org.png" alt="switch organization" style={{ height: '400px', width: '100%' }} />
 
 Each organization can have unique environments like this:
 
