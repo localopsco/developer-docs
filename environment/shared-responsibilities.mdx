@@ -2,12 +2,18 @@
 title: Shared responsibilities
 ---
 
-With app made by developers (you), cloud resources provisioned by LocalOps and cloud infrastructure as such provided by
+<img
+  width="300"
+  height="700"
+  src="./images/shared-responsibilities.png"
+  alt="Shared responsibilities model"
+/>
+
+With services deployed by developers (you), cloud resources provisioned by LocalOps in the environment and cloud infrastructure as such provided by
 cloud provider, it is essential to understand who manages what.
 
-- You, the developer bring your app and are responsible to manage app-side issues.
-- LocalOps provisions cloud resources programmatically and are responsible to configure them to run your app.
-- Cloud provider supplies the cloud resources and are responsible for availability of the underlying physical
+- You, the developer bring your services and are responsible to manage its app-side issues.
+- LocalOps provisions cloud resources programmatically and is responsible to configure them to run your services.
+- Your cloud provider supplies the cloud resources and are responsible for availability of the underlying physical server
   infrastructure.
 
-![Responsibility model](./images/localops-responsibilities.png)
