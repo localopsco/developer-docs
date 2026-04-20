@@ -91,6 +91,7 @@
                   }
                 ]
               },
+              "environment/security",
               "environment/shared-responsibilities",
               "environment/delete",
               "environment/eject"

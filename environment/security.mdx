@@ -1,0 +1,91 @@
+---
+title: Security controls
+description: Built-in security controls in every LocalOps environment including encryption, IAM roles, and network isolation
+---
+
+Every LocalOps environment comes with security controls built in from the moment it is created. There is no additional
+configuration needed to enable these controls -- they are part of the default environment setup.
+
+## Encryption at rest
+
+All data stored within an environment is encrypted at rest using cloud-native encryption mechanisms.
+
+On AWS, every EBS (Elastic Block Store) volume attached to compute instances in the environment is encrypted by default.
+This includes volumes attached to Kubernetes nodes, database instances, and any dynamically provisioned persistent
+volumes. Encryption is handled using AWS-managed keys (SSE-EBS), ensuring that all data written to disk is automatically
+encrypted before storage and decrypted when read by an authorized instance.
+
+This applies to:
+
+- EBS volumes attached to EC2 instances running your Kubernetes workloads
+- EBS volumes backing persistent volume claims (PVCs) in Kubernetes
+- Volumes attached to managed database instances (e.g., RDS)
+
+No application-level changes are needed. Encryption is transparent to your services and has no impact on performance.
+
+## Encryption in transit
+
+All traffic entering the environment from the internet is encrypted in transit using TLS.
+
+LocalOps automatically generates and manages SSL/TLS certificates for every environment. When a service is exposed via a
+load balancer, a valid SSL certificate is provisioned and attached automatically. This ensures that all HTTP traffic
+entering the environment is encrypted over HTTPS without any manual certificate management.
+
+This covers:
+
+- **External traffic:** All inbound traffic from the internet to your services is terminated at the load balancer with a
+  valid TLS certificate
+- **Certificate lifecycle:** Certificates are auto-generated and auto-renewed, eliminating the risk of expired
+  certificates causing outages
+- **Custom domains:** When you attach a custom domain to a service, LocalOps provisions a certificate for that domain
+  automatically
+
+## Keyless role-based access to cloud resources
+
+Services running in a LocalOps environment access cloud resources (such as S3 buckets, SQS queues, or RDS databases)
+using pre-configured IAM roles -- not static access keys.
+
+LocalOps sets up IAM roles scoped to each environment and associates them with your workloads using cloud-native
+identity mechanisms (e.g., IAM Roles for Service Accounts on AWS EKS). This means:
+
+- **No static credentials:** Your services never need AWS access keys or secret keys. There are no long-lived credentials
+  to rotate, leak, or manage.
+- **Automatic credential injection:** The cloud provider's SDK automatically picks up temporary credentials from the
+  environment. No configuration is needed in your application code.
+- **Least-privilege scoping:** IAM roles are scoped to only the cloud resources declared in your environment. A service
+  can only access the resources it is supposed to.
+
+This approach follows the principle of keyless authentication -- your services prove their identity through the
+infrastructure they run on, not through secrets they carry.
+
+## Network isolation with private and public subnets
+
+Every environment is provisioned with a dedicated VPC (Virtual Private Cloud) that is divided into private and public
+subnets. Services are hosted in private subnets by default, meaning they have no public IP address and are not directly
+reachable from the internet.
+
+**Private subnets** host:
+
+- Kubernetes nodes running your application workloads
+- Managed databases and caches (e.g., RDS, ElastiCache)
+- Internal services that do not need to be publicly accessible
+
+**Public subnets** host:
+
+- Load balancers that receive inbound traffic from the internet
+- NAT gateways that allow private subnet resources to make outbound connections
+- Internet gateways
+
+A service is only exposed to the internet when you explicitly configure it as a
+[web service](/environment/services/web) with a load balancer. All other services, including
+[internal services](/environment/services/internal), [workers](/environment/services/workers), and
+[cron jobs](/environment/services/cronjob), remain private and unreachable from outside the VPC.
+
+This default-private architecture ensures that your attack surface is minimized. Only the services you choose to expose
+are accessible, and all exposure happens through a managed load balancer with TLS termination.
+
+<Info>
+  These security controls apply to every environment regardless of the deployment mode -- whether it is a production
+  environment, a staging environment, or an [ephemeral PR preview](/use-cases/ephemeral) environment. For more details on
+  the shared responsibility model, see [Shared responsibilities](/environment/shared-responsibilities).
+</Info>
