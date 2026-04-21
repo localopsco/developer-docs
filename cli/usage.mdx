@@ -58,3 +58,44 @@ For example, to see all cluster resources:
 ```sh
 kubectl get all --all-namespaces
 ```
+
+### Monitor pods with k9s
+
+[k9s](https://k9scli.io/) is a terminal-based UI that makes it easy to monitor and manage Kubernetes resources. After
+setting up your kubeconfig with `ops update-kubeconfig`, simply launch k9s:
+
+```sh
+k9s
+```
+
+k9s will automatically use the current Kubernetes context set by `ops update-kubeconfig`. From the k9s interface you can:
+
+- View all pods and their status in real time
+- Watch logs by selecting a pod and pressing `l`
+- Filter resources by namespace using `/` to search
+- Delete, describe, or edit resources interactively
+
+<Tip>
+  Install k9s via Homebrew with `brew install derailed/k9s/k9s` on macOS, or see the [k9s installation
+  guide](https://k9scli.io/topics/install/) for other platforms.
+</Tip>
+
+### Shell into a pod
+
+To get a shell inside a running pod, first identify the pod name:
+
+```sh
+kubectl get pods --all-namespaces
+```
+
+Find your service's pod from the list, then exec into it:
+
+```sh
+kubectl exec -it <pod-name> -n <namespace> -- /bin/sh
+```
+
+<Note>
+  Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails, try `/bin/bash`.
+</Note>
+
+You can also use k9s to get a shell — select a pod and press `s` to open a shell session directly.
