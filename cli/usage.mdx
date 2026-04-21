@@ -53,7 +53,13 @@ To get `env-id`, visit your environment dashboard and see "Shell" tab.
 After `update-kubeconfig` command succeeds, you can use any kubectl command to inspect pods, deployments, jobs and
 everything else running in your LocalOps environment.
 
-For example, to see all cluster resources:
+All your services are deployed in the `app-services` namespace. To see only your service pods:
+
+```sh
+kubectl get pods -n app-services
+```
+
+To see all cluster resources across all namespaces:
 
 ```sh
 kubectl get all --all-namespaces
@@ -68,7 +74,14 @@ setting up your kubeconfig with `ops update-kubeconfig`, simply launch k9s:
 k9s
 ```
 
-k9s will automatically use the current Kubernetes context set by `ops update-kubeconfig`. From the k9s interface you can:
+k9s will automatically use the current Kubernetes context set by `ops update-kubeconfig`. To launch k9s directly in the
+`app-services` namespace where your services run:
+
+```sh
+k9s -n app-services
+```
+
+From the k9s interface you can:
 
 - View all pods and their status in real time
 - Watch logs by selecting a pod and pressing `l`
@@ -82,16 +95,16 @@ k9s will automatically use the current Kubernetes context set by `ops update-kub
 
 ### Shell into a pod
 
-To get a shell inside a running pod, first identify the pod name:
+To get a shell inside a running pod, first identify the pod name in the `app-services` namespace:
 
 ```sh
-kubectl get pods --all-namespaces
+kubectl get pods -n app-services
 ```
 
-Find your service's pod from the list, then exec into it:
+Then exec into the pod:
 
 ```sh
-kubectl exec -it <pod-name> -n <namespace> -- /bin/sh
+kubectl exec -it <pod-name> -n app-services -- /bin/sh
 ```
 
 <Note>
