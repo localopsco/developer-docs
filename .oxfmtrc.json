@@ -1,6 +1,8 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": ["chatbase-widget.js"],
+  "ignorePatterns": [
+    "crisp-widget.js"
+  ],
   "printWidth": 120,
   "proseWrap": "always",
   "singleQuote": true
