@@ -4,6 +4,49 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="May 13, 2026">
+
+## Instrument services with internal /metrics endpoint
+
+You can record custom metrics and expose them to in-built prometheus monitoring stack via `/metrics` endpoint. Just add an ops.json file in your repository and declare "metrics" configuration as documented here - [Instrument services](https://docs.localops.co/environment/services/instrument-service) to get started.
+
+```
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+This can include:
+- language run time metrics - NodeJS event loop metrics, JVM metrics, etc.,
+- connection and request metrics like "tcp_connections_open"
+- business metrics like "number_of_payments"
+- transactional metrics like "number_of_emails_sent"
+
+<Note>Pro tip - Checkout the language specific guides to learn how you can unveil advanced metrics & dashaboards in just few mins of setup (eg: [See this Java guide](https://docs.localops.co/environment/services/instrument/java))</Note>
+
+## Request timeouts 
+
+Set timeouts for TCP connections or requests handled by your services. Default timeout 60s may not be suitable for realtime applications with long running connections. Start declaring custom timeout values in ops.json as specificed in developer docs - [Request timeouts](https://docs.localops.co/environment/services/ops-json#request-timeouts).
+
+### Private IPs passed as environment vars 
+
+`POD_IP` and `HOST_IP` are now injected in each service as environment variables. So if your application requires its own IP address, you can fetch and utilize in your business logic. 
+
+Learn more about [built-in environment vars](https://docs.localops.co/environment/services/secrets#built-in-secrets) like these.
+
+### Other UI enhancements and fixes
+1. Saving secrets triggers a "Write secrets" op to keep track of secret updates
+2. While creating new service, search for repositories using the new search bar in the repository picker 
+3. Bug fixes in Member invite workflow 
+4. Bug fixes in preview environments
+5. Other fixes in slack and ms teams notificaitons 
+
+</Update>
+
 <Update label="April 18, 2026">
 
 ## Projects revampled
