@@ -261,11 +261,11 @@ APIs).
 }
 ```
 
-| Field                | Description                                                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `send_timeout`       | Maximum time (in seconds) to wait between successive write operations when sending a response to the client. The connection is closed if the client stops reading.       |
-| `read_timeout`       | Maximum time (in seconds) to wait between successive read operations when receiving a request from the client. The connection is closed if the client stops sending.     |
-| `connection_timeout` | Maximum time (in seconds) to wait while establishing a connection with the upstream service (your container) before giving up.                                           |
+| Field                | Description                                                                                                                                                          | Default |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
+| `send_timeout`       | Maximum time (in seconds) to wait between successive write operations when sending a response to the client. The connection is closed if the client stops reading.   | `60`    |
+| `read_timeout`       | Maximum time (in seconds) to wait between successive read operations when receiving a request from the client. The connection is closed if the client stops sending. | `60`    |
+| `connection_timeout` | Maximum time (in seconds) to wait while establishing a connection with the upstream service (your container) before giving up.                                       | `60`    |
 
 <Note>The maximum allowed value for each of these timeouts is `3600` seconds (1 hour).</Note>
 
