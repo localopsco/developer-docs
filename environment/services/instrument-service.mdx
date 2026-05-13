@@ -3,8 +3,10 @@ title: Instrument your service
 ---
 
 This is a guide to learn more about how you can instrument your services by exposing custom metrics that are crucial for
-your app/use case. Eg., `emails_received`, `emails_sent`, `emails_bounced` if you're building a transaction email
-service.
+your app/use case. 
+
+For example, you can record `emails_received`, `emails_sent`, `emails_bounced` if you're building a transaction email
+service. Or you can record `tcp_connections` if you're building realtime services.
 
 ## How to instrument your services
 
@@ -20,6 +22,8 @@ officially supports these client libraries:
 2. Java
 3. Python
 4. Rust
+5. Erlang
+6. NodeJS
 
 There are unofficial community maintained libraries too for other languages.
 
@@ -41,7 +45,8 @@ metrics exposed in step 1.
 {
     "metrics": {
         "endpoint": "/metrics",
-        "interval": 2 # in seconds
+        "interval": 5 # scan internal in seconds,
+        "port": 9090
     }
 }
 ```
