@@ -247,6 +247,28 @@ When a socket cannot be created with your container on the defined port, health 
 }
 ```
 
+## Request timeouts
+
+You can tune how long the platform keeps client connections to your service open. This is useful for real-time
+applications that rely on long-lived TCP connections (eg., websockets, server-sent events, long polling, streaming
+APIs).
+
+```json
+{
+  "send_timeout": 600,
+  "read_timeout": 600,
+  "connection_timeout": 300
+}
+```
+
+| Field                | Description                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `send_timeout`       | Maximum time (in seconds) to wait between successive write operations when sending a response to the client. The connection is closed if the client stops reading.       |
+| `read_timeout`       | Maximum time (in seconds) to wait between successive read operations when receiving a request from the client. The connection is closed if the client stops sending.     |
+| `connection_timeout` | Maximum time (in seconds) to wait while establishing a connection with the upstream service (your container) before giving up.                                           |
+
+<Note>The maximum allowed value for each of these timeouts is `3600` seconds (1 hour).</Note>
+
 ## Automatic provisioning of cloud resources
 
 Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database
