@@ -124,8 +124,20 @@
               "environment/services/micro-services",
               "environment/services/secrets",
               "environment/services/custom-domain",
-              "environment/services/instrument-service",
               "environment/services/delete"
+            ]
+          },
+          {
+            "group": "Instrument services",
+            "icon": "chart-line",
+            "pages": [
+              "environment/services/instrument-service",
+              "environment/services/instrument/java",
+              "environment/services/instrument/python",
+              "environment/services/instrument/nodejs",
+              "environment/services/instrument/golang",
+              "environment/services/instrument/dotnet",
+              "environment/services/instrument/erlang"
             ]
           },
           {

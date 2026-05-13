@@ -1,0 +1,78 @@
+---
+title: Golang
+description: Expose Go runtime, process, and custom Prometheus metrics from a Go service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting a Go service using the official
+[`client_golang`](https://github.com/prometheus/client_golang) library.
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the dependency
+
+```bash
+go get github.com/prometheus/client_golang/prometheus
+go get github.com/prometheus/client_golang/prometheus/promauto
+go get github.com/prometheus/client_golang/prometheus/promhttp
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+The default registry automatically exports Go runtime metrics (`go_*` — goroutines, GC pauses, heap, etc.) and process
+metrics (`process_*` — CPU, memory, open FDs).
+
+```go
+package main
+
+import (
+    "net/http"
+
+    "github.com/prometheus/client_golang/prometheus"
+    "github.com/prometheus/client_golang/prometheus/promauto"
+    "github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var emailsSent = promauto.NewCounterVec(
+    prometheus.CounterOpts{
+        Name: "emails_sent_total",
+        Help: "Total number of emails sent",
+    },
+    []string{"status"},
+)
+
+func main() {
+    emailsSent.WithLabelValues("success").Inc()
+
+    http.Handle("/metrics", promhttp.Handler())
+    http.ListenAndServe(":9090", nil)
+}
+```
+
+<Tip>
+If your service already serves HTTP on another port, you can mount `promhttp.Handler()` on your existing mux at
+`/metrics` instead of starting a separate listener. Just point `ops.json`'s `port` at your main app port.
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+## 4. Visualize with a community dashboard
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [Go Runtime Metrics](https://grafana.com/grafana/dashboards/14061) | `14061` | Built by Grafana Labs specifically for the Prometheus Go Client Library — recommended starting point. |
+| [Go Processes](https://grafana.com/grafana/dashboards/6671) | `6671` | Long-running community dashboard. Memory used, file descriptors, GC details, per-process status. |
+| [Go Metrics](https://grafana.com/grafana/dashboards/10826) | `10826` | Kubernetes-oriented Go runtime dashboard, useful if you deploy via Helm. |
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID, and select your LocalOps Prometheus
+data source. You'll instantly see goroutine counts, GC pause times, heap allocations, and CPU usage. Your custom
+application metrics (`emails_sent_total`, etc.) can be charted alongside.

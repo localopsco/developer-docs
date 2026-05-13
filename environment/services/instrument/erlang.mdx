@@ -1,0 +1,77 @@
+---
+title: Erlang
+description: Expose BEAM VM and custom Prometheus metrics from an Erlang service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting an Erlang service using
+[`prometheus.erl`](https://github.com/prometheus-erl/prometheus.erl) plus
+[`prometheus_httpd`](https://github.com/prometheus-erl/prometheus_httpd) for the metrics endpoint.
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the dependencies
+
+In `rebar.config`:
+
+```erlang
+{deps, [
+    {prometheus, "4.11.0"},
+    {prometheus_httpd, "2.1.11"}
+]}.
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+`prometheus_httpd:start/1` exposes `/metrics` and, with default collectors enabled, includes BEAM VM metrics (memory,
+schedulers, processes, atom table, ETS, ports).
+
+```erlang
+-module(metrics_app).
+-export([start/0]).
+
+start() ->
+    ok = application:ensure_started(prometheus),
+    ok = application:ensure_started(prometheus_httpd),
+
+    prometheus_counter:declare([
+        {name, emails_sent_total},
+        {help, "Total number of emails sent"},
+        {labels, [status]}
+    ]),
+
+    prometheus_httpd:start([{port, 9090}]),
+
+    prometheus_counter:inc(emails_sent_total, [success]).
+```
+
+<Tip>
+For Elixir applications, use [`PromEx`](https://github.com/akoutmos/prom_ex) instead — it bundles BEAM, Phoenix, Ecto,
+Oban, and Plug instrumentation with pre-built Grafana dashboards you can import as part of its setup.
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+## 4. Visualize with a community dashboard
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [Erlang-Memory-Allocators](https://grafana.com/grafana/dashboards/18694) | `18694` | BEAM memory allocator breakdown. |
+| [Erlang-Distribution](https://grafana.com/grafana/dashboards/17907) | `17907` | Erlang distribution (inter-node) traffic metrics. |
+
+The canonical collection of BEAM dashboards is the
+[`prometheus-erl/beam-dashboards`](https://github.com/prometheus-erl/beam-dashboards) repository — it contains JSON
+dashboards covering memory, schedulers, processes, ETS, and more, that you can import directly into Grafana.
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID (or upload the JSON), and select
+your LocalOps Prometheus data source. You'll see scheduler utilization, run queues, memory by allocator type, process
+counts, and ETS table stats. Your custom application metrics (`emails_sent_total`, etc.) can be charted alongside.

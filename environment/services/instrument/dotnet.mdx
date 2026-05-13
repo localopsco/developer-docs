@@ -1,0 +1,71 @@
+---
+title: .NET
+description: Expose .NET runtime and custom Prometheus metrics from a .NET service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting a .NET service using [`prometheus-net`](https://github.com/prometheus-net/prometheus-net),
+the most widely adopted .NET Prometheus client.
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the dependency
+
+```bash
+dotnet add package prometheus-net
+dotnet add package prometheus-net.AspNetCore
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+`prometheus-net` automatically registers .NET runtime metrics (GC, JIT, thread pool, exceptions) and process metrics.
+`KestrelMetricServer` starts a standalone metrics endpoint on a dedicated port.
+
+```csharp
+using Prometheus;
+
+var emailsSent = Metrics.CreateCounter(
+    "emails_sent_total",
+    "Total number of emails sent",
+    new CounterConfiguration
+    {
+        LabelNames = new[] { "status" },
+    });
+
+var server = new KestrelMetricServer(port: 9090);
+server.Start();
+
+emailsSent.WithLabels("success").Inc();
+
+// Keep the process alive (e.g., in a console app)
+await Task.Delay(Timeout.Infinite);
+```
+
+<Tip>
+If you're already running ASP.NET Core, use `app.UseMetricServer()` and `app.UseHttpMetrics()` to expose `/metrics`
+on your main app port — `UseHttpMetrics` also automatically tracks HTTP request durations, status codes, and route
+labels. Just point `ops.json` at your main app port.
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+## 4. Visualize with a community dashboard
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [prometheus-net](https://grafana.com/grafana/dashboards/10427) | `10427` | Pre-built dashboard for the default metrics exposed by `prometheus-net` / `Prometheus.AspNetCore`. |
+| [ASP.NET Core - controller summary (Prometheus)](https://grafana.com/grafana/dashboards/10915) | `10915` | Visualizes ASP.NET Core HTTP metrics provided by the `prometheus-net` middleware (per-controller request rates, durations). |
+| [Dotnet Runtime Metrics](https://grafana.com/grafana/dashboards/23179) | `23179` | .NET runtime metrics dashboard supporting both .NET 9+ built-in metrics and `OpenTelemetry.Instrumentation.Runtime`. |
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID, and select your LocalOps Prometheus
+data source. You'll instantly see GC heap usage, JIT activity, thread pool stats, exception rates, and HTTP request
+throughput. Your custom application metrics (`emails_sent_total`, etc.) can be charted alongside.

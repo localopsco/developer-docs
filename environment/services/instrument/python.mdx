@@ -1,0 +1,81 @@
+---
+title: Python
+description: Expose process, runtime, and custom Prometheus metrics from a Python service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting a Python service using the official
+[`prometheus_client`](https://github.com/prometheus/client_python) library.
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the dependency
+
+```bash
+pip install prometheus-client
+```
+
+Or in `requirements.txt`:
+
+```
+prometheus-client>=0.20.0
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+`start_http_server` spins up a dedicated HTTP server on the given port that serves `/metrics`. The default registry
+already includes process metrics (CPU, memory, open FDs) and Python runtime metrics (GC stats, threads).
+
+```python
+import time
+from prometheus_client import Counter, start_http_server
+
+emails_sent = Counter(
+    'emails_sent_total',
+    'Total number of emails sent',
+    ['status'],
+)
+
+if __name__ == '__main__':
+    start_http_server(9090)
+    while True:
+        emails_sent.labels(status='success').inc()
+        time.sleep(1)
+```
+
+<Tip>
+For ASGI apps (FastAPI, Starlette), use [`prometheus-fastapi-instrumentator`](https://github.com/trallnag/prometheus-fastapi-instrumentator)
+to mount `/metrics` on your main app port. For Django, use [`django-prometheus`](https://github.com/korfuri/django-prometheus).
+For Flask, use [`prometheus-flask-exporter`](https://github.com/rycus86/prometheus_flask_exporter).
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+## 4. Visualize with a community dashboard
+
+Python doesn't have a single canonical community dashboard like JVM or Node.js, but the metrics exposed by the default
+registry (`process_*` and `python_*`) are well-supported by generic process dashboards.
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [Prometheus Stats](https://grafana.com/grafana/dashboards/2) | `2` | Generic dashboard for `process_*` metrics (CPU, memory, FDs) that work for any Python service using `prometheus_client`. |
+| [Node Exporter Full](https://grafana.com/grafana/dashboards/1860) | `1860` | Host-level metrics if you also want OS-level context for your Python service. |
+
+For a Python-app-specific dashboard with panels for requests/sec, latency percentiles, error rates, app uptime, and
+interpreter version, see [pilosus/prometheus-client-python-app-grafana-dashboard](https://github.com/pilosus/prometheus-client-python-app-grafana-dashboard)
+on GitHub — it's a JSON dashboard you can import directly.
+
+You can also browse [grafana.com/grafana/dashboards](https://grafana.com/grafana/dashboards/?search=python) for more
+Python-related community dashboards.
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID (or upload the JSON), and select
+your LocalOps Prometheus data source.

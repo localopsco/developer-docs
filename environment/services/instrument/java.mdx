@@ -1,0 +1,112 @@
+---
+title: Java
+description: Expose JVM and custom Prometheus metrics from a Java service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting a Java service using the official
+[Prometheus Java client library](https://prometheus.github.io/client_java/) (`client_java` v1.x).
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the Prometheus client dependency
+
+Add these dependencies to your `pom.xml` (Maven):
+
+```xml
+<dependency>
+    <groupId>io.prometheus</groupId>
+    <artifactId>prometheus-metrics-core</artifactId>
+    <version>1.3.6</version>
+</dependency>
+<dependency>
+    <groupId>io.prometheus</groupId>
+    <artifactId>prometheus-metrics-instrumentation-jvm</artifactId>
+    <version>1.3.6</version>
+</dependency>
+<dependency>
+    <groupId>io.prometheus</groupId>
+    <artifactId>prometheus-metrics-exporter-httpserver</artifactId>
+    <version>1.3.6</version>
+</dependency>
+```
+
+Or with Gradle (`build.gradle`):
+
+```groovy
+implementation 'io.prometheus:prometheus-metrics-core:1.3.6'
+implementation 'io.prometheus:prometheus-metrics-instrumentation-jvm:1.3.6'
+implementation 'io.prometheus:prometheus-metrics-exporter-httpserver:1.3.6'
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+Register default JVM metrics, define your own custom counters/gauges, and start an HTTP server that exposes them on
+`/metrics`:
+
+```java
+import io.prometheus.metrics.core.metrics.Counter;
+import io.prometheus.metrics.exporter.httpserver.HTTPServer;
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics;
+
+public class App {
+
+    static final Counter emailsSent = Counter.builder()
+        .name("emails_sent_total")
+        .help("Total number of emails sent")
+        .labelNames("status")
+        .register();
+
+    public static void main(String[] args) throws Exception {
+        // Register out-of-the-box JVM metrics (memory, GC, threads, classloader, etc.)
+        JvmMetrics.builder().register();
+
+        // Start the metrics HTTP server on port 9090
+        HTTPServer.builder()
+            .port(9090)
+            .buildAndStart();
+
+        // Increment your custom metric anywhere in your code
+        emailsSent.labelValues("success").inc();
+    }
+}
+```
+
+This starts a separate HTTP server on port `9090` that responds to `GET /metrics` in Prometheus exposition format —
+including JVM metrics like `jvm_memory_used_bytes`, `jvm_gc_pause_seconds`, `jvm_threads_live_threads`, plus your
+custom `emails_sent_total`.
+
+<Tip>
+If you're using Spring Boot, the typical approach is Spring Boot Actuator + Micrometer's Prometheus registry. Add
+`io.micrometer:micrometer-registry-prometheus` and set `management.endpoints.web.exposure.include=prometheus` in
+`application.properties`. The `/actuator/prometheus` endpoint is then exposed on your main service port.
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+Prometheus will now scrape `http://<your-service>:9090/metrics` every 15 seconds and make every metric — JVM and custom
+— available in Grafana.
+
+## 4. Visualize JVM metrics with a community dashboard
+
+Instead of building JVM dashboards from scratch, import a battle-tested community dashboard from
+[grafana.com/grafana/dashboards](https://grafana.com/grafana/dashboards).
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [JVM (Micrometer)](https://grafana.com/grafana/dashboards/4701) | `4701` | Most popular JVM dashboard. Built for Micrometer but most panels work with `client_java` v1.x since metric names like `jvm_memory_used_bytes` and `jvm_threads_live_threads` overlap. |
+| [JVM (Micrometer) — alternative](https://grafana.com/grafana/dashboards/8898) | `8898` | Alternative JVM dashboard, also Micrometer-based. |
+| [JVM SpringBoot3](https://grafana.com/grafana/dashboards/22108) | `22108` | For Spring Boot 3.x apps using Actuator + Micrometer. |
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID, and select your LocalOps Prometheus
+data source. You'll instantly see heap/non-heap memory, GC activity, thread counts, classloader stats, and more. Your
+custom application metrics (`emails_sent_total`, etc.) can be charted alongside in the same or a separate dashboard.

@@ -1,0 +1,76 @@
+---
+title: Node.js
+description: Expose Node.js runtime and custom Prometheus metrics from a Node.js service running on LocalOps, and visualize them with a community Grafana dashboard.
+---
+
+A complete walkthrough of instrumenting a Node.js service using the popular
+[`prom-client`](https://github.com/siimon/prom-client) library.
+
+See the [overview](/environment/services/instrument-service) for the general approach.
+
+## 1. Add the dependency
+
+```bash
+npm install prom-client
+```
+
+## 2. Register custom metrics and expose `/metrics`
+
+`collectDefaultMetrics` enables Node.js runtime metrics (event loop lag, heap size, GC duration, active handles, etc.).
+
+```javascript
+const http = require('http');
+const client = require('prom-client');
+
+const register = new client.Registry();
+client.collectDefaultMetrics({ register });
+
+const emailsSent = new client.Counter({
+    name: 'emails_sent_total',
+    help: 'Total number of emails sent',
+    labelNames: ['status'],
+    registers: [register],
+});
+
+http.createServer(async (req, res) => {
+    if (req.url === '/metrics') {
+        res.setHeader('Content-Type', register.contentType);
+        res.end(await register.metrics());
+        return;
+    }
+    res.statusCode = 404;
+    res.end();
+}).listen(9090);
+
+emailsSent.labels('success').inc();
+```
+
+<Tip>
+For Express apps, you can mount the metrics handler directly on your main app port using
+[`express-prom-bundle`](https://github.com/jochen-schweizer/express-prom-bundle) — it also automatically tracks HTTP
+request durations, status codes, and route labels.
+</Tip>
+
+## 3. Declare the metrics endpoint in `ops.json`
+
+```json
+{
+    "metrics": {
+        "endpoint": "/metrics",
+        "interval": 15,
+        "port": 9090
+    }
+}
+```
+
+## 4. Visualize with a community dashboard
+
+| Dashboard | ID | Notes |
+| --- | --- | --- |
+| [NodeJS Application Dashboard](https://grafana.com/grafana/dashboards/11159) | `11159` | The most widely used dashboard for `prom-client` — event loop lag, heap, GC, handles, HTTP request rate. |
+| [NodeJS Applications Dashboard](https://grafana.com/grafana/dashboards/19062) | `19062` | Modern alternative requiring Grafana >= 10.0, supports the full set of `prom-client` default metrics. |
+| [NodeJS Applications and Logs Dashboard](https://grafana.com/grafana/dashboards/20371) | `20371` | Combines `prom-client` metrics with Loki logs for unified observability. |
+
+To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID, and select your LocalOps Prometheus
+data source. You'll instantly see heap usage, event loop lag, GC pauses, active handles, and more. Your custom
+application metrics (`emails_sent_total`, etc.) can be charted alongside.
