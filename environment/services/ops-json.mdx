@@ -271,6 +271,18 @@ APIs).
 
 <Note>These timeouts apply only to `web` (external) and `internal` service types, as they govern incoming HTTP requests routed through the ingress.</Note>
 
+## SSL passthrough
+
+By default, the environment's nginx ingress terminates TLS for incoming traffic and forwards plain HTTP to your service. If your service needs to handle TLS termination itself (eg., for mTLS, custom certificate handling, or protocols that require end-to-end TLS), set `ssl_passthrough` to `true`:
+
+```json
+{
+  "ssl_passthrough": true
+}
+```
+
+When `ssl_passthrough` is enabled, the ingress forwards the raw TLS connection to your container without decrypting it. For this to work, set your service's port to `443` so the ingress can route HTTPS traffic directly to it. Your container must present a valid TLS certificate on that port.
+
 ## Automatic provisioning of cloud resources
 
 Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database

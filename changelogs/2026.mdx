@@ -4,6 +4,20 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="May 14, 2026">
+
+## SSL passthrough
+
+Services can now handle TLS termination themselves instead of letting the environment's nginx ingress decrypt traffic. Set `ssl_passthrough` to `true` in `ops.json` and configure your service's port to `443` so the ingress forwards raw TLS connections directly to your container. Useful for mTLS, custom certificate handling, or any protocol requiring end-to-end TLS. See [SSL passthrough](https://docs.localops.co/environment/services/ops-json#ssl-passthrough) for details.
+
+```json
+{
+  "ssl_passthrough": true
+}
+```
+
+</Update>
+
 <Update label="May 13, 2026">
 
 ## Instrument services with internal /metrics endpoint
