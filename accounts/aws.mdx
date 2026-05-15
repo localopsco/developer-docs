@@ -94,12 +94,36 @@ above to establish a connection with your AWS account.
 
 ### Permissions required
 
-LocalOps requires Administrator access in the AWS account you connect. This is automatically setup when you follow the
-1-click setup process outlined above.
+It is ideal to give LocalOps Administrator access in the AWS account you connect. This is automatically setup when you
+follow the 1-click setup process outlined above.
 
 If you require LocalOps to work with lesser permissions, contact us at help@localops.co to discuss your next steps. You
 may have to manually set up LocalOps in your cloud with a specific set of permissions, although we don't see this as
-future proof as we would expand our automation capabilities at LocalOps continuously.
+future proof as we would expand our automation capabilities at LocalOps continuously. At a minimum, the following
+permissions are needed in the AWS account to provision and operate the environment.
+
+| AWS Service | Access | Resources / Actions |
+| --- | --- | --- |
+| **VPC** | Read+Write | VPC, public/private Subnets, Internet Gateway, NAT Gateway, Elastic IPs, Route Tables |
+| **EC2** | Read+Write | Security Groups, Launch Templates, EBS volumes, Instances (via EKS-managed node groups) |
+| **EKS** | Read+Write | Cluster, Node Groups, Addons (vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver), Access Entries, Access Policy Associations |
+| **IAM** | Read+Write | Roles, Policies, RolePolicyAttachments, OpenID Connect Provider, PassRole |
+| **STS** | Read | `AssumeRole`, `AssumeRoleWithWebIdentity` (for IRSA) |
+| **KMS** | Read+Write | Customer-managed key for EKS secrets encryption (ENCRYPT_DECRYPT) |
+
+#### Optional managed services
+
+These permissions are only required if the corresponding service is declared as a
+[cloud dependency in `ops.json`](/environment/services/ops-json#automatic-provisioning-of-cloud-resources).
+
+| AWS Service | Access | Resources / Actions |
+| --- | --- | --- |
+| **S3** | Read+Write | Buckets and objects (Get/Put/Delete/List) |
+| **RDS** | Read+Write | DB Instances (Postgres/MySQL), Subnet Groups, enhanced-monitoring Role, final snapshots |
+| **ElastiCache** | Read+Write | Redis / Memcache Clusters, Subnet Groups |
+| **SNS** | Read+Write | Topics (create, publish, subscribe) |
+| **SQS** | Read+Write | Queues (standard + FIFO; Send/Receive/Delete/GetAttr) |
+| **Secrets Manager** | Read | `GetSecretValue`, `DescribeSecret` — for RDS-managed master user secrets |
 
 <Warning>
 After connecting the AWS account, DO NOT:
