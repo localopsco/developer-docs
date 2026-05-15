@@ -92,39 +92,6 @@ For this to work:
 In the steps outlined in "Create a new connection" section, a cloudformation stack is created. This stack does #1 and #2
 above to establish a connection with your AWS account.
 
-### Permissions required
-
-It is ideal to give LocalOps Administrator access in the AWS account you connect. This is automatically setup when you
-follow the 1-click setup process outlined above.
-
-If you require LocalOps to work with lesser permissions, contact us at help@localops.co to discuss your next steps. You
-may have to manually set up LocalOps in your cloud with a specific set of permissions, although we don't see this as
-future proof as we would expand our automation capabilities at LocalOps continuously. At a minimum, the following
-permissions are needed in the AWS account to provision and operate the environment.
-
-| AWS Service | Access | Resources / Actions |
-| --- | --- | --- |
-| **VPC** | Read+Write | VPC, public/private Subnets, Internet Gateway, NAT Gateway, Elastic IPs, Route Tables |
-| **EC2** | Read+Write | Security Groups, Launch Templates, EBS volumes, Instances (via EKS-managed node groups) |
-| **EKS** | Read+Write | Cluster, Node Groups, Addons (vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver), Access Entries, Access Policy Associations |
-| **IAM** | Read+Write | Roles, Policies, RolePolicyAttachments, OpenID Connect Provider, PassRole |
-| **STS** | Read | `AssumeRole`, `AssumeRoleWithWebIdentity` (for IRSA) |
-| **KMS** | Read+Write | Customer-managed key for EKS secrets encryption (ENCRYPT_DECRYPT) |
-
-#### Optional managed services
-
-These permissions are only required if the corresponding service is declared as a
-[cloud dependency in `ops.json`](/environment/services/ops-json#automatic-provisioning-of-cloud-resources).
-
-| AWS Service | Access | Resources / Actions |
-| --- | --- | --- |
-| **S3** | Read+Write | Buckets and objects (Get/Put/Delete/List) |
-| **RDS** | Read+Write | DB Instances (Postgres/MySQL), Subnet Groups, enhanced-monitoring Role, final snapshots |
-| **ElastiCache** | Read+Write | Redis / Memcache Clusters, Subnet Groups |
-| **SNS** | Read+Write | Topics (create, publish, subscribe) |
-| **SQS** | Read+Write | Queues (standard + FIFO; Send/Receive/Delete/GetAttr) |
-| **Secrets Manager** | Read | `GetSecretValue`, `DescribeSecret` — for RDS-managed master user secrets |
-
 <Warning>
 After connecting the AWS account, DO NOT:
 
@@ -135,6 +102,52 @@ Remove/modify the IAM role or policy. Again, changes here will break the connect
 account.
 
 </Warning>
+
+## Permissions required
+
+It is ideal to give LocalOps Administrator access in the AWS account you connect. This is automatically setup when you
+follow the 1-click setup process outlined above.
+
+If you require LocalOps to work with lesser permissions, contact us at help@localops.co to discuss your next steps. You
+may have to manually set up LocalOps in your cloud with a specific set of permissions, although we don't see this as
+future proof as we would expand our automation capabilities at LocalOps continuously.
+
+### Required
+
+At a minimum, the following permissions are needed in the AWS account to bring up and operate the
+[core environment](/environment/inside).
+
+| AWS Service | Access | Purpose |
+| --- | --- | --- |
+| **VPC** | Read+Write | Network isolation for the environment (VPC, public/private Subnets, Internet Gateway, NAT Gateway, Elastic IPs, Route Tables) |
+| **EC2** | Read+Write | Compute and storage backing the Kubernetes nodes (Security Groups, Launch Templates, EBS volumes, Instances via EKS-managed node groups) |
+| **EKS** | Read+Write | Managed Kubernetes cluster that runs your services (Cluster, Node Groups, Addons — vpc-cni, coredns, kube-proxy, aws-ebs-csi-driver — Access Entries, Access Policy Associations) |
+| **IAM** | Read+Write | Roles and policies used by the cluster, nodes and workloads (Roles, Policies, RolePolicyAttachments, OpenID Connect Provider, PassRole) |
+| **STS** | Read | Issue short-term credentials for LocalOps and IRSA workloads (`AssumeRole`, `AssumeRoleWithWebIdentity`) |
+| **KMS** | Read+Write | Encryption key for EKS secrets at rest (customer-managed key, ENCRYPT_DECRYPT) |
+| **SSM Parameter Store** | Read+Write | Stores service secrets consumed by your workloads (Parameters) |
+
+<Note>
+  **You're in full control**
+
+  You are in full control of LocalOps's access to the AWS account. You can disconnect access at any time by deleting
+  the CloudFormation stack (see [Deleting connections](#deleting-connections)) and reconnect it only when changes need
+  to be made to the environment. While disconnected, your already-deployed workloads continue to run untouched —
+  LocalOps simply cannot make any further changes to the AWS account until access is restored.
+</Note>
+
+### Optional
+
+These permissions are only required if the corresponding service is declared as a
+[cloud dependency in `ops.json`](/environment/services/ops-json#automatic-provisioning-of-cloud-resources).
+
+| AWS Service | Access | Purpose |
+| --- | --- | --- |
+| **S3** | Read+Write | Object storage for service assets and data (Buckets and objects — Get/Put/Delete/List) |
+| **RDS** | Read+Write | Managed relational databases for services (DB Instances — Postgres/MySQL — Subnet Groups, enhanced-monitoring Role, final snapshots) |
+| **ElastiCache** | Read+Write | Managed in-memory cache for services (Redis / Memcache Clusters, Subnet Groups) |
+| **SNS** | Read+Write | Pub/sub messaging for services (Topics — create, publish, subscribe) |
+| **SQS** | Read+Write | Message queues for services (standard + FIFO Queues — Send/Receive/Delete/GetAttr) |
 
 ## Deleting connections
 
