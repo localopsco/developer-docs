@@ -4,6 +4,33 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="May 19, 2026">
+
+## Valkey support for ElastiCache
+
+ElastiCache clusters declared in `ops.json` can now use `valkey` as the engine, alongside `redis` and `memcache`. Pick a supported version from the [AWS Valkey versions list](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/supported-engine-versions-valkey.html). See [ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
+
+```json
+{
+  "dependencies": {
+    "elasticache": {
+      "clusters": [
+        {
+          "id": "test123",
+          "prefix": "testdep123",
+          "engine": "valkey",
+          "version": "8.0",
+          "instance_type": "cache.t4g.small",
+          "num_nodes": 1
+        }
+      ]
+    }
+  }
+}
+```
+
+</Update>
+
 <Update label="May 14, 2026">
 
 ## SSL passthrough

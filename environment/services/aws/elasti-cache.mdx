@@ -1,10 +1,10 @@
 ---
-title: Elasticache Redis & Memcache
-description: Provision AWS Elastic Cache clusters - Redis/Memcache
+title: Elasticache Redis, Valkey & Memcache
+description: Provision AWS Elastic Cache clusters - Redis/Valkey/Memcache
 ---
 
-Your service(s) may want to store/access data in a Redis/Memcache instance. This guide will show you steps to create and
-access Amazon ElastiCache cluster that offers fully managed Redis/Memcache databases.
+Your service(s) may want to store/access data in a Redis/Valkey/Memcache instance. This guide will show you steps to
+create and access Amazon ElastiCache cluster that offers fully managed Redis/Valkey/Memcache databases.
 
 ## Declarative & Automatic using `ops.json`:
 
@@ -49,10 +49,11 @@ Arguments you can add in each cluster object above:
    replace the original cluster with new one.
 2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your cluster. Changing this string will
    replace the original cluster with new cluster.
-3. `engine` - Provide either `redis` or `memcache`. Default: ``. If you leave this out, we will skip creating the
+3. `engine` - Provide `redis`, `valkey` or `memcache`. Default: ``. If you leave this out, we will skip creating the
    cluster.
-4. `version` - Pick a version for your redis or memcache database. Ensure Elastic Cache supports it, by referring to
-   [AWS docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html).
+4. `version` - Pick a version for your redis, valkey or memcache database. Ensure Elastic Cache supports it, by
+   referring to [AWS docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/engine-versions.html). For Valkey,
+   see the [supported Valkey versions](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/supported-engine-versions-valkey.html).
 5. `instance_type` - Specify any class of instance in the following groups - "cache.\*". Refer to
    [AWS docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/CacheNodes.SupportedTypes.html) for available
    sizes. If you leave this out, we will skip creating the cluster.
