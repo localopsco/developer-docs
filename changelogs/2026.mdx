@@ -4,6 +4,22 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="May 21, 2026">
+
+## ✋ Improvements and bug fixes
+
+We have shipped a handful of bug fixes and small enhancements today to make day-to-day operations smoother. These are the kind of polish that adds up over time. Read on for the highlights.
+
+#### <Icon icon="square" iconType="solid" color="#dc2626" /> Stop and start services on demand
+
+Each service dashboard now has a **Stop** button in the top right corner. Use it to scale down a service's replica/container count to `0` on demand, without deleting the service or its configuration. Click start button to bring it back up.
+
+#### Consistent image tag on redeploys
+
+After updating secrets or scaling settings, users can trigger a new deployment. For docker image based services, this deployment was previously pulling the image with the `latest` tag. It now uses the exact image tag from the previous deployment, so redeploys stay consistent with what was last running.
+
+</Update>
+
 <Update label="May 19, 2026">
 
 ## Valkey support for ElastiCache
