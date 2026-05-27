@@ -27,6 +27,12 @@ And add ElastiCache clusters as a dependency, like below.
           "version": "7.0",
           "instance_type": "cache.t4g.small",
           "num_nodes": 1,
+          "parameters": [
+            {
+              "name": "maxmemory-policy",
+              "value": "volatile-lru"
+            }
+          ],
           "exports": {
             "MY_ELASTICACHE_CLUSTER_NAME": "$name",
             "MY_ELASTICACHE_CLUSTER_ARN": "$arn",
@@ -60,7 +66,19 @@ Arguments you can add in each cluster object above:
 6. `num_nodes` - The initial number of cache nodes that the cache cluster will have. For Redis, this value must be 1.
    For Memcached, this value must be between 1 and 40. If this number is reduced on subsequent runs, the highest
    numbered nodes will be removed.
-7. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+7. `parameters` - Optional list of cache parameter group settings to apply to the cluster. Each entry is an object with
+   the following keys:
+   - `name` - Name of the parameter (e.g., `maxmemory-policy`). Must be a valid parameter for the chosen `engine` and
+     `version`. Refer to the
+     [Redis/Valkey parameter docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/ParameterGroups.Redis.html)
+     or
+     [Memcached parameter docs](https://docs.aws.amazon.com/AmazonElastiCache/latest/mem-ug/ParameterGroups.Memcached.html)
+     for available names.
+   - `value` - Value to set for the parameter. Always specified as a string.
+
+   When `parameters` is provided, LocalOps creates a dedicated cache parameter group for the cluster and attaches it.
+   Adding, updating or removing entries on subsequent deployments updates the parameter group in-place.
+8. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
    the properties of the ElastiCache cluster provisioned. See below for available properties.
 
 <Warning>Changing `id` or `prefix` string will delete & replace the original ElastiCache cluster with new one.</Warning>

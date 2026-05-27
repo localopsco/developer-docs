@@ -28,6 +28,13 @@ And add RDS instances as a dependency, like below.
           "storage_gb": 10,
           "instance_type": "db.t4g.small",
           "publicly_accessible": false,
+          "parameters": [
+            {
+              "name": "shared_preload_libraries",
+              "value": "pg_stat_statements,pg_cron",
+              "apply_method": "pending-reboot"
+            }
+          ],
           "exports": {
             "MY_RDS_INSTANCE_NAME": "$name",
             "MY_RDS_INSTANCE_ARN": "$arn",
@@ -35,7 +42,9 @@ And add RDS instances as a dependency, like below.
             "MY_RDS_INSTANCE_ADDRESS": "$address",
             "MY_RDS_INSTANCE_USERNAME": "$username",
             "MY_RDS_INSTANCE_PASSWORD_ARN": "$passwordArn",
-            "MY_RDS_INSTANCE_DB_NAME": "$dbName"
+            "MY_RDS_INSTANCE_PASSWORD": "$password",
+            "MY_RDS_INSTANCE_DB_NAME": "$dbName",
+            "MY_RDS_INSTANCE_DSN": "$dsn"
           }
         }
       ]
@@ -68,7 +77,21 @@ Arguments you can add in each instance object above:
    "Mon:00:00-Mon:03:00". See
    [RDS Maintenance Window docs](http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#AdjustingTheMaintenanceWindow)
    for more information.
-10. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+10. `parameters` - Optional list of DB parameter group settings to apply to the RDS instance. Each entry is an object
+    with the following keys:
+    - `name` - Name of the parameter (e.g., `shared_preload_libraries`, `max_connections`). Must be a valid parameter
+      for the chosen `engine` and `version`. Refer to the
+      [Postgres parameter docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Parameters.html)
+      or
+      [MySQL parameter docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithParamGroups.html)
+      for available names.
+    - `value` - Value to set for the parameter. Always specified as a string.
+    - `apply_method` - When the change should take effect. Required. One of `immediate` or `pending-reboot`. Use
+      `pending-reboot` for parameters that require a database restart (such as `shared_preload_libraries`).
+
+    When `parameters` is provided, LocalOps creates a dedicated DB parameter group for the instance and attaches it.
+    Adding, updating or removing entries on subsequent deployments updates the parameter group in-place.
+11. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
     the properties of the RDS instance provisioned. See below for available properties.
 
 <Warning>Changing `id` or `prefix` string will delete & replace the original RDS instance with new one.</Warning>
@@ -85,6 +108,13 @@ Available properties of the RDS instance to use in `exports`:
    string to access the database `$dbName`.
 7. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by RDS in AWS
    secret manager. Your code has to read the password from the AWS secret manager using this `$passwordArn`.
+8. `$password` - The plaintext password of the user `$username`. LocalOps resolves the password from AWS Secrets
+   Manager and injects it directly as an environment variable, so your code can use it without calling the Secrets
+   Manager API. Treat this value as a secret.
+9. `$dsn` - Ready-to-use database connection string for the instance, in the standard URL form for the chosen engine
+   (e.g., `postgres://$username:$password@$address:5432/$dbName` for Postgres or
+   `mysql://$username:$password@$address:3306/$dbName` for MySQL). Convenient for libraries/ORMs that accept a single
+   connection URL. Treat this value as a secret since it embeds the password.
 
 ### Lifecycle:
 

@@ -1,0 +1,224 @@
+---
+title: OpenSearch
+description: Provision Amazon OpenSearch domains for search and analytics
+---
+
+Your service(s) may want to index, search and analyze data using OpenSearch. This guide will show you steps to create
+and access Amazon OpenSearch domains that offer fully managed OpenSearch clusters.
+
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more OpenSearch domains, you can add `ops.json` in the root directory of Github
+repo you've connected for the service.
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add OpenSearch domains as a dependency, like below.
+
+```json
+{
+  "dependencies": {
+    "opensearch": {
+      "domains": [
+        {
+          "id": "testopensearch",
+          "prefix": "testopensearch",
+          "engine_version": "OpenSearch_2.11",
+          "instance_type": "t3.small.search",
+          "node_count": 3,
+          "ebs_volume_size": 20,
+          "ebs_volume_type": "gp3",
+          "dedicated_master": false,
+          "publicly_accessible": false,
+          "advanced_options": [],
+          "exports": {
+            "MY_OPENSEARCH_NAME": "$name",
+            "MY_OPENSEARCH_ARN": "$arn",
+            "MY_OPENSEARCH_ENDPOINT": "$endpoint",
+            "MY_OPENSEARCH_ADDRESS": "$address",
+            "MY_OPENSEARCH_PORT": "$port",
+            "MY_OPENSEARCH_USERNAME": "$username",
+            "MY_OPENSEARCH_PASSWORD_ARN": "$passwordArn",
+            "MY_OPENSEARCH_PASSWORD": "$password",
+            "MY_OPENSEARCH_DSN": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+You can add as many OpenSearch domains as you want.
+
+Arguments you can add in each domain object above:
+
+1. `id` - Alphanumeric string. Must be unique amongst the domains you've declared above. Changing this string will
+   replace the original domain with new one.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your domain. Changing this string will
+   replace the original domain with new domain.
+3. `engine_version` - The OpenSearch (or legacy Elasticsearch) engine version to provision. Format is
+   `OpenSearch_X.Y` (e.g., `OpenSearch_2.11`) or `Elasticsearch_X.Y`. Refer to the
+   [supported versions](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/what-is.html#choosing-version).
+4. `instance_type` - Data node instance type. Must end with `.search` - e.g., `t3.small.search`, `m6g.large.search`.
+   Refer to
+   [AWS docs](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/supported-instance-types.html) for
+   available sizes. Default: `t3.small.search`.
+5. `node_count` - Number of data nodes in the cluster. Default: `3` in production, forced to `1` in ephemeral preview
+   environments. Valid values are `1`, or any number that divides evenly across 2 or 3 Availability Zones (`1`, `2`,
+   `3`, `4`, `6`, `8`, `9`, ...) — LocalOps picks the AZ count for you and rejects values that don't fit. `node_count=2`
+   in production is also rejected unless `dedicated_master` is `true`, because a 2-node quorum loses majority on any
+   single node failure.
+6. `ebs_volume_size` - Size of the EBS volume attached to each data node, in GB. Default: `20`.
+7. `ebs_volume_type` - Type of EBS volume to attach to each data node. One of `gp3`, `gp2`, `io1`, `standard`. Refer to
+   [AWS docs](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createdomain-configure-storage.html)
+   for guidance. Default: `gp3`.
+8. `dedicated_master` - Set to `true` to provision dedicated master nodes separate from data nodes. When enabled,
+   LocalOps provisions `3` dedicated masters (the AWS-recommended count for production). Recommended for clusters with
+   more than a few data nodes, or to safely run a 2-node data tier. Ignored in ephemeral preview environments.
+   Default: `false`.
+9. `dedicated_master_type` - Instance type for the dedicated master nodes when `dedicated_master` is `true`. Must end
+   with `.search`. Default: same as `instance_type`.
+10. `publicly_accessible` - Set it to `true` if you need this domain to be reachable publicly on the internet. You
+    would want this to be `false` most of the time. When `false`, the domain is attached to your environment's VPC and
+    private subnets; when `true`, the domain is exposed over the public internet and access is gated by HTTPS + the
+    fine-grained access control master user. Default: `false`.
+11. `advanced_options` - Optional list of advanced cluster-level options to set on the OpenSearch domain. Each entry is
+    an object with the following keys:
+    - `name` - Name of the advanced option (e.g., `rest.action.multi.allow_explicit_index`,
+      `override_main_response_version`). Refer to the
+      [AWS advanced options docs](https://docs.aws.amazon.com/opensearch-service/latest/developerguide/createupdatedomains.html#createdomain-configure-advanced-options)
+      for available names.
+    - `value` - Value to set for the option. Always specified as a string.
+
+    Pass an empty list `[]` if you don't need to set any advanced options.
+12. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+    the properties of the OpenSearch domain provisioned. See below for available properties.
+
+<Warning>Changing `id` or `prefix` string will delete & replace the original OpenSearch domain with new one.</Warning>
+
+Available properties of the OpenSearch domain to use in `exports`:
+
+1. `$name` - Name of the OpenSearch domain.
+2. `$arn` - Amazon resource name of the OpenSearch domain. Eg., `arn:aws:es:...`
+3. `$endpoint` - The connection endpoint in `address:port` format.
+4. `$address` - DNS address of the OpenSearch domain (e.g., `search-mydomain-xxxxx.us-east-1.es.amazonaws.com`).
+5. `$port` - The port your code will use to access the domain. OpenSearch is reached over HTTPS, so this is `443`.
+6. `$username` - Username of the master user for fine-grained access control.
+7. `$passwordArn` - Password of the master user `$username` is automatically generated, encrypted and maintained in AWS
+   Secrets Manager. Your code can read the password from Secrets Manager using this `$passwordArn`.
+8. `$password` - The plaintext password of the master user `$username`. LocalOps resolves the password from AWS Secrets
+   Manager and injects it directly as an environment variable, so your code can use it without calling the Secrets
+   Manager API. Treat this value as a secret.
+9. `$dsn` - Ready-to-use connection string for the domain, in the form
+   `https://$username:$password@$address:443`. Convenient for OpenSearch clients/libraries that accept a single
+   connection URL. Treat this value as a secret since it embeds the password.
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in
+any of your active environment points at the same repository as source and when a deployment is triggered.
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing.
+  Resources declared in the `dependencies` object will be provisioned before your code starts to run.
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in
+  one of the properties above.
+- Keys in `exports` object will be passed as enviroment variables to your service.
+- When the service is deleted, the provisioned OpenSearch domains are deleted from the cloud account immediately &
+  automatically.
+
+### Private only access:
+
+OpenSearch domains can be accessed from your code using your favorite OpenSearch client library over HTTPS.
+
+When `publicly_accessible` is `false` (the default), the domain is attached to your environment's VPC. Its network
+interfaces are placed in the private subnets and protected with a security group that allows:
+
+1. From source: `10.0.0.0/16` (Your environment's VPC CIDR IP range)
+2. At port: `443`
+3. Protocol: `TCP`
+
+So only workload/containers/servers from within your environment's VPC can reach the OpenSearch domain.
+
+When `publicly_accessible` is `true`, the domain is reachable from the public internet. The domain still enforces
+HTTPS-only access and requires the master user credentials for every request (see fine-grained access control below).
+
+### Reading Master user password:
+
+LocalOps generates a unique random password for the master user and stores it - along with the username - as a JSON
+document `{"username":"...","password":"..."}` in AWS Secrets Manager. The first deployment writes the secret; later
+deployments do not overwrite it, so the password is stable across re-deploys.
+
+You can either capture the ARN of this secret using `$passwordArn` and read the JSON from Secrets Manager using the
+AWS SDK, or use `$password` / `$dsn` to receive the resolved password directly as an environment variable.
+
+### Pre-configured for production use:
+
+All OpenSearch domains provisioned via `ops.json` are tuned for production by default. LocalOps handles the AWS
+plumbing that is easy to get wrong and applies the following on every domain:
+
+**High availability & quorum**
+
+1. Defaults to **3 data nodes** so the cluster forms a 3-way quorum and tolerates a single node failure.
+2. Spreads nodes across **multiple Availability Zones** with zone awareness. LocalOps picks 3 AZs if `node_count` is a
+   multiple of 3, else 2 AZs if it is a multiple of 2 - matching AWS's requirement that `instance_count` divide evenly
+   by `availability_zone_count`. The required number of private subnets must exist in your environment's space; the
+   deployment fails with a clear error if it doesn't.
+3. **Rejects 2-node production clusters without dedicated masters**, since such a cluster loses quorum on any single
+   node failure.
+4. When `dedicated_master` is `true`, provisions **3 dedicated master nodes** (the AWS-recommended count) so
+   master-eligible workload is isolated from data nodes.
+
+**Encryption & transport**
+
+1. **Encryption at rest** is enabled (free; applied even in preview environments).
+2. **Node-to-node encryption** is enabled so inter-node traffic is encrypted in transit.
+3. **HTTPS-only** access with a **TLS 1.2 minimum** security policy (`Policy-Min-TLS-1-2-2019-07`).
+
+**Authentication & authorization**
+
+1. **Fine-grained access control (FGAC)** is enabled with the **internal user database**, so the domain is locked
+   behind a master user from the moment it comes up.
+2. Master user credentials are auto-generated and stored in **AWS Secrets Manager**. The application service role is
+   granted `secretsmanager:GetSecretValue` and `secretsmanager:DescribeSecret` on that secret, and
+   `es:ESHttp*`, `es:DescribeDomain`, `es:DescribeDomainConfig` on the domain.
+3. The domain's resource policy allows the action surface (`es:*`) on the domain; **FGAC is the actual auth gate**.
+
+**Observability**
+
+In non-preview environments, LocalOps creates two CloudWatch log groups per domain (30-day retention) and publishes:
+
+1. `INDEX_SLOW_LOGS`, `SEARCH_SLOW_LOGS`, `ES_APPLICATION_LOGS` to the general log group.
+2. `AUDIT_LOGS` to a separate audit log group. Audit logs require FGAC (already enabled) and record every
+   authentication/authorization event - critical for compliance and forensics.
+
+A single CloudWatch resource policy grants `es.amazonaws.com` write access to both log groups, keeping you under the
+per-region 10-policy CloudWatch limit even with many domains.
+
+**Safe updates & rename protection**
+
+1. The underlying **domain name is locked** after creation. Renaming the dependency `id` in `ops.json` is a no-op on
+   the live domain - it does not force a replacement that would destroy all indexed data. To actually replace a domain,
+   delete the dependency and add a new one.
+2. The Secrets Manager **secret version is locked** after the first deployment, so re-deploys never rotate the master
+   password silently.
+3. `engine_version` changes are **not** ignored - bumping the version in `ops.json` flows through as an in-place engine
+   upgrade.
+
+**Service prerequisites**
+
+LocalOps automatically ensures the `AWSServiceRoleForAmazonOpenSearchService` service-linked role exists in your AWS
+account before provisioning the first VPC-attached domain. AWS requires this role; LocalOps creates it on your behalf.
+
+### Ephemeral preview environments:
+
+For speed and cost savings, the following are scaled down in ephemeral services created for
+[pull request previews](https://localops.co/blog/introducing-pull-request-previews):
+
+1. `node_count` is forced to `1` regardless of the `ops.json` value.
+2. Zone awareness is disabled (single AZ).
+3. `dedicated_master` is ignored.
+4. CloudWatch log publishing (slow logs, app logs, audit logs) is **not** configured.
+
+Encryption at rest, node-to-node encryption, HTTPS enforcement and fine-grained access control remain enabled in
+preview environments as well.
