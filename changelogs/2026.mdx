@@ -16,13 +16,13 @@ You can now declare Amazon OpenSearch domains under `dependencies.opensearch.dom
     "opensearch": {
       "domains": [
         {
-          "id": "testopensearch",
-          "prefix": "testopensearch",
+          "id": "productsearch",
+          "prefix": "product-search",
           "engine_version": "OpenSearch_2.11",
           "instance_type": "t3.small.search",
           "node_count": 3,
           "exports": {
-            "MY_OPENSEARCH_DSN": "$dsn"
+            "PRODUCT_SEARCH_DSN": "$dsn"
           }
         }
       ]
