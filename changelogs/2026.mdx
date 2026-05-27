@@ -4,6 +4,81 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="May 28, 2026">
+
+## OpenSearch as a dependency
+
+You can now declare Amazon OpenSearch domains under `dependencies.opensearch.domains` in `ops.json`. LocalOps provisions production-tuned domains by default — 3-node multi-AZ quorum, encryption at rest, node-to-node encryption, HTTPS-only with TLS 1.2, fine-grained access control with an auto-generated master user in AWS Secrets Manager, and audit logging to CloudWatch. Preview environments are automatically scaled down to a single node. See [OpenSearch](https://docs.localops.co/environment/services/aws/opensearch) for the full reference.
+
+```json
+{
+  "dependencies": {
+    "opensearch": {
+      "domains": [
+        {
+          "id": "testopensearch",
+          "prefix": "testopensearch",
+          "engine_version": "OpenSearch_2.11",
+          "instance_type": "t3.small.search",
+          "node_count": 3,
+          "exports": {
+            "MY_OPENSEARCH_DSN": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## `parameters` for RDS and ElastiCache
+
+Both RDS instances and ElastiCache clusters now accept a `parameters` list in `ops.json` to configure DB / cache parameter group settings inline. LocalOps creates a dedicated parameter group for the resource and keeps it in sync as you add, update or remove entries on subsequent deployments.
+
+For RDS, each entry takes a `name`, `value` and an `apply_method` of `immediate` or `pending-reboot` (use the latter for parameters like `shared_preload_libraries` that need a restart):
+
+```json
+{
+  "parameters": [
+    {
+      "name": "shared_preload_libraries",
+      "value": "pg_stat_statements,pg_cron",
+      "apply_method": "pending-reboot"
+    }
+  ]
+}
+```
+
+For ElastiCache, each entry is just a `name` and `value`:
+
+```json
+{
+  "parameters": [
+    {
+      "name": "maxmemory-policy",
+      "value": "volatile-lru"
+    }
+  ]
+}
+```
+
+See [RDS](https://docs.localops.co/environment/services/aws/rds) and [ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
+
+## Plaintext `$password` and `$dsn` exports for RDS
+
+RDS exports now include `$password` and `$dsn` alongside the existing `$passwordArn`. `$password` resolves the master user password from AWS Secrets Manager and injects it directly as an environment variable, so your code does not need to call the Secrets Manager API. `$dsn` is a ready-to-use connection string in the form `postgres://$username:$password@$address:5432/$dbName` (or the MySQL equivalent) for libraries that accept a single URL. Treat both values as secrets.
+
+```json
+{
+  "exports": {
+    "MY_RDS_INSTANCE_PASSWORD": "$password",
+    "MY_RDS_INSTANCE_DSN": "$dsn"
+  }
+}
+```
+
+</Update>
+
 <Update label="May 22, 2026">
 
 ## Deletion protection for critical services
