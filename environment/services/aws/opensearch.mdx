@@ -21,8 +21,8 @@ And add OpenSearch domains as a dependency, like below.
     "opensearch": {
       "domains": [
         {
-          "id": "testopensearch",
-          "prefix": "testopensearch",
+          "id": "productsearch",
+          "prefix": "product-search",
           "engine_version": "OpenSearch_2.11",
           "instance_type": "t3.small.search",
           "node_count": 3,
@@ -32,15 +32,15 @@ And add OpenSearch domains as a dependency, like below.
           "publicly_accessible": false,
           "advanced_options": [],
           "exports": {
-            "MY_OPENSEARCH_NAME": "$name",
-            "MY_OPENSEARCH_ARN": "$arn",
-            "MY_OPENSEARCH_ENDPOINT": "$endpoint",
-            "MY_OPENSEARCH_ADDRESS": "$address",
-            "MY_OPENSEARCH_PORT": "$port",
-            "MY_OPENSEARCH_USERNAME": "$username",
-            "MY_OPENSEARCH_PASSWORD_ARN": "$passwordArn",
-            "MY_OPENSEARCH_PASSWORD": "$password",
-            "MY_OPENSEARCH_DSN": "$dsn"
+            "PRODUCT_SEARCH_NAME": "$name",
+            "PRODUCT_SEARCH_ARN": "$arn",
+            "PRODUCT_SEARCH_ENDPOINT": "$endpoint",
+            "PRODUCT_SEARCH_ADDRESS": "$address",
+            "PRODUCT_SEARCH_PORT": "$port",
+            "PRODUCT_SEARCH_USERNAME": "$username",
+            "PRODUCT_SEARCH_PASSWORD_ARN": "$passwordArn",
+            "PRODUCT_SEARCH_PASSWORD": "$password",
+            "PRODUCT_SEARCH_DSN": "$dsn"
           }
         }
       ]
