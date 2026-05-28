@@ -77,6 +77,16 @@ RDS exports now include `$password` and `$dsn` alongside the existing `$password
 }
 ```
 
+## Import managed secrets from other services
+
+Secrets exported via `ops.json` now appear in each service's console secrets section as **managed secrets**. You can pull those exports into any other service in the same environment as a single secret — every key the source service exported is injected as environment variables in the importing service.
+
+This is useful for wiring databases, caches and other declared cloud resources into the services that consume them. For example, a boot script job can declare an RDS instance in `ops.json` and export its DSN, username and password; any other service in the same environment can then import them all in one line. See [Importing other service secrets](https://docs.localops.co/environment/services/secrets#importing-other-service-secrets) for the syntax.
+
+## Search in the service switcher
+
+The service switcher now has a search bar at the top, so you can jump to a service by typing instead of scrolling. Handy in environments with a long list of services.
+
 </Update>
 
 <Update label="May 22, 2026">
