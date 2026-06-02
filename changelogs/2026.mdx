@@ -4,6 +4,37 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="June 2, 2026">
+
+## `managed_password` toggle for RDS
+
+RDS instances in `ops.json` now accept a `managed_password` boolean. The default is `true`, where AWS RDS generates the master password, stores it in its own AWS Secrets Manager entry, and rotates it automatically. Setting it to `false` makes LocalOps generate a cryptographically unique string and use it as the RDS master password instead — the password is then not rotated, so this mode is not recommended. Regardless of which mode you pick, use `$password` and `$dsn` in `exports` to fetch the current password and connection string; LocalOps resolves them transparently in both cases.
+
+```json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "test123",
+          "prefix": "testdep123",
+          "engine": "postgres",
+          "managed_password": true,
+          "exports": {
+            "MY_RDS_INSTANCE_PASSWORD": "$password",
+            "MY_RDS_INSTANCE_DSN": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+See [RDS](https://docs.localops.co/environment/services/aws/rds) for details.
+
+</Update>
+
 <Update label="May 28, 2026">
 
 ## OpenSearch as a dependency
