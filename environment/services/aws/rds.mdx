@@ -28,6 +28,7 @@ And add RDS instances as a dependency, like below.
           "storage_gb": 10,
           "instance_type": "db.t4g.small",
           "publicly_accessible": false,
+          "managed_password": true,
           "parameters": [
             {
               "name": "shared_preload_libraries",
@@ -77,7 +78,16 @@ Arguments you can add in each instance object above:
    "Mon:00:00-Mon:03:00". See
    [RDS Maintenance Window docs](http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#AdjustingTheMaintenanceWindow)
    for more information.
-10. `parameters` - Optional list of DB parameter group settings to apply to the RDS instance. Each entry is an object
+10. `managed_password` - Controls who creates and stores the RDS master password. Default: `true`.
+    - When `true` (recommended), AWS RDS generates the master password and stores it in its own AWS Secrets Manager
+      entry, and RDS rotates it automatically over time.
+    - When `false`, LocalOps generates a cryptographically unique password string and sets it as the RDS master
+      password. The password is not rotated, so the same value keeps being used for the life of the instance.
+
+    Setting this to `false` is not recommended since keeping the same master password forever is less secure than
+    letting RDS rotate it. Regardless of which mode you pick, use `$password` and `$dsn` in `exports` to fetch the
+    current password and connection string - LocalOps resolves them transparently in both cases.
+11. `parameters` - Optional list of DB parameter group settings to apply to the RDS instance. Each entry is an object
     with the following keys:
     - `name` - Name of the parameter (e.g., `shared_preload_libraries`, `max_connections`). Must be a valid parameter
       for the chosen `engine` and `version`. Refer to the
@@ -91,7 +101,7 @@ Arguments you can add in each instance object above:
 
     When `parameters` is provided, LocalOps creates a dedicated DB parameter group for the instance and attaches it.
     Adding, updating or removing entries on subsequent deployments updates the parameter group in-place.
-11. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+12. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
     the properties of the RDS instance provisioned. See below for available properties.
 
 <Warning>Changing `id` or `prefix` string will delete & replace the original RDS instance with new one.</Warning>
@@ -146,9 +156,22 @@ So only workload/containers/servers from within your environment's VPC can acces
 
 ### Reading Database password:
 
-We have configured such that RDS will creates & encrypts a unique random password and store it in your AWS account's
-secret manager. You can capture ARN of this secret under an environment variable like shown above and fetch the password
-value using AWS SDK.
+By default (`managed_password: true`), RDS creates and encrypts a unique random password and stores it in your AWS
+account's Secrets Manager, and rotates it automatically. You can capture the ARN of this secret under an environment
+variable like shown above and fetch the password value using AWS SDK.
+
+If you set `managed_password: false`, LocalOps generates a cryptographically unique string and uses it as the RDS
+master password instead. This password is not rotated, which is why `managed_password: true` is the recommended
+setting.
+
+In both modes, you can use `$password` to receive the resolved plaintext password as an environment variable, or
+`$dsn` for a ready-to-use connection string - LocalOps handles the resolution for you regardless of which mode the
+instance was created in.
+
+When `managed_password: true`, RDS rotates the password periodically, so the `$password` and `$dsn` values injected at
+container start can go stale between rotations. Also export `$passwordArn` and have your code fall back to reading the
+current password from AWS Secrets Manager using that ARN whenever a DB connection fails with a bad-password / auth
+error, then retry the connection with the freshly fetched password.
 
 ### Pre-configured for production use:
 
