@@ -157,11 +157,6 @@
             "pages": ["troubleshoot/create-environment", "troubleshoot/custom-domain"]
           },
           {
-            "group": "Legal",
-            "icon": "scale-balanced",
-            "pages": ["terms", "privacy-policy"]
-          },
-          {
             "group": "Bring your helm charts (soon)",
             "pages": [
               {
@@ -198,6 +193,11 @@
               "bring-your-helm-charts/env-vars",
               "bring-your-helm-charts/multiple-helm-charts"
             ]
+          },
+          {
+            "group": "Legal",
+            "icon": "scale-balanced",
+            "pages": ["terms", "privacy-policy"]
           }
         ]
       },
