@@ -4,6 +4,16 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="June 12, 2026">
+
+## New warning when marking a Helm chart field as non-sensitive
+
+When editing a Helm chart's values in the console, switching a previously sensitive field to non-sensitive now prompts a confirmation dialog listing every affected key. This guards against accidentally exposing credentials or other confidential data — once a value is marked non-sensitive, it is stored and rendered in plain text.
+
+![Mark a secret as non-sensitive confirmation dialog](./images/2026/non-sensitive-secret-warning-june-12.png)
+
+</Update>
+
 <Update label="June 9, 2026">
 
 ## `DEPLOYMENT_ID` and `LOPS_INSTANCE_ID` built-in secrets
