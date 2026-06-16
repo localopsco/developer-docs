@@ -4,6 +4,22 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="June 16, 2026">
+
+## Reading the real client IP
+
+New doc explaining which header to trust for the real client IP based on how your service is fronted. The short version:
+
+| Setup                                           | Read this header                                                      |
+| ----------------------------------------------- | --------------------------------------------------------------------- |
+| No CDN, HTTP                                    | `X-Real-IP` (or `X-Forwarded-For`)                                    |
+| No CDN, HTTPS (via SSL-passthrough multiplexer) | `X-Real-IP` (or `X-Forwarded-For`)                                    |
+| Behind CDN                                      | `X-Forwarded-For[0]` — or the CDN's own header like `CF-Connecting-IP` / `True-Client-IP` |
+
+See [Client IP](https://docs.localops.co/environment/services/client-ip) for the full guidance, spoofing notes, and Node / Python / Go / Elixir examples.
+
+</Update>
+
 <Update label="June 12, 2026">
 
 ## New warning when marking a Helm chart field as non-sensitive
