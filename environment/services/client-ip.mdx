@@ -61,83 +61,141 @@ app.get('/whoami', (req, res) => {
 });
 ```
 
-### Python (FastAPI)
+<AccordionGroup>
+  <Accordion title="Python (FastAPI)">
+    ```python
+    from fastapi import FastAPI, Request
 
-```python
-from fastapi import FastAPI, Request
+    app = FastAPI()
 
-app = FastAPI()
+    @app.get('/whoami')
+    def whoami(request: Request):
+        headers = request.headers
+        xff = headers.get('x-forwarded-for')
+        client_ip = (
+            headers.get('cf-connecting-ip')
+            or headers.get('true-client-ip')
+            or (xff.split(',')[0].strip() if xff else None)
+            or headers.get('x-real-ip')
+            or request.client.host
+        )
+        return { 'clientIp': client_ip }
+    ```
+  </Accordion>
 
-@app.get('/whoami')
-def whoami(request: Request):
-    headers = request.headers
-    xff = headers.get('x-forwarded-for')
-    client_ip = (
-        headers.get('cf-connecting-ip')
-        or headers.get('true-client-ip')
-        or (xff.split(',')[0].strip() if xff else None)
-        or headers.get('x-real-ip')
-        or request.client.host
-    )
-    return { 'clientIp': client_ip }
-```
-
-### Go (net/http)
-
-```go
-func whoami(w http.ResponseWriter, r *http.Request) {
-    clientIP := r.Header.Get("CF-Connecting-IP")
-    if clientIP == "" {
-        clientIP = r.Header.Get("True-Client-IP")
+  <Accordion title="Go (net/http)">
+    ```go
+    func whoami(w http.ResponseWriter, r *http.Request) {
+        clientIP := r.Header.Get("CF-Connecting-IP")
+        if clientIP == "" {
+            clientIP = r.Header.Get("True-Client-IP")
+        }
+        if clientIP == "" {
+            if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+                clientIP = strings.TrimSpace(strings.Split(xff, ",")[0])
+            }
+        }
+        if clientIP == "" {
+            clientIP = r.Header.Get("X-Real-IP")
+        }
+        fmt.Fprintln(w, clientIP)
     }
-    if clientIP == "" {
-        if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
-            clientIP = strings.TrimSpace(strings.Split(xff, ",")[0])
+    ```
+  </Accordion>
+
+  <Accordion title="Java (Spring Boot)">
+    ```java
+    @RestController
+    public class WhoamiController {
+
+        @GetMapping("/whoami")
+        public String whoami(HttpServletRequest request) {
+            String clientIp = firstNonEmpty(
+                request.getHeader("CF-Connecting-IP"),
+                request.getHeader("True-Client-IP"),
+                firstXff(request.getHeader("X-Forwarded-For")),
+                request.getHeader("X-Real-IP"),
+                request.getRemoteAddr()
+            );
+            return clientIp;
+        }
+
+        private static String firstXff(String xff) {
+            if (xff == null || xff.isEmpty()) return null;
+            return xff.split(",")[0].trim();
+        }
+
+        private static String firstNonEmpty(String... values) {
+            for (String v : values) {
+                if (v != null && !v.isEmpty()) return v;
+            }
+            return null;
         }
     }
-    if clientIP == "" {
-        clientIP = r.Header.Get("X-Real-IP")
+    ```
+  </Accordion>
+
+  <Accordion title=".NET (ASP.NET Core)">
+    ```csharp
+    [ApiController]
+    [Route("whoami")]
+    public class WhoamiController : ControllerBase
+    {
+        [HttpGet]
+        public string Get()
+        {
+            var headers = Request.Headers;
+
+            string clientIp =
+                headers["CF-Connecting-IP"].FirstOrDefault()
+                ?? headers["True-Client-IP"].FirstOrDefault()
+                ?? headers["X-Forwarded-For"].FirstOrDefault()?.Split(',')[0].Trim()
+                ?? headers["X-Real-IP"].FirstOrDefault()
+                ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+
+            return clientIp;
+        }
     }
-    fmt.Fprintln(w, clientIP)
-}
-```
+    ```
+  </Accordion>
 
-### Erlang / Elixir (Phoenix / Plug)
+  <Accordion title="Erlang / Elixir (Phoenix / Plug)">
+    ```elixir
+    defmodule MyAppWeb.WhoamiController do
+      use MyAppWeb, :controller
+      import Plug.Conn
 
-```elixir
-defmodule MyAppWeb.WhoamiController do
-  use MyAppWeb, :controller
-  import Plug.Conn
+      def show(conn, _params) do
+        text(conn, client_ip(conn))
+      end
 
-  def show(conn, _params) do
-    text(conn, client_ip(conn))
-  end
+      defp client_ip(conn) do
+        cond do
+          ip = first_header(conn, "cf-connecting-ip") -> ip
+          ip = first_header(conn, "true-client-ip")   -> ip
+          ip = first_xff(conn)                        -> ip
+          ip = first_header(conn, "x-real-ip")        -> ip
+          true -> conn.remote_ip |> :inet.ntoa() |> to_string()
+        end
+      end
 
-  defp client_ip(conn) do
-    cond do
-      ip = first_header(conn, "cf-connecting-ip") -> ip
-      ip = first_header(conn, "true-client-ip")   -> ip
-      ip = first_xff(conn)                        -> ip
-      ip = first_header(conn, "x-real-ip")        -> ip
-      true -> conn.remote_ip |> :inet.ntoa() |> to_string()
+      defp first_header(conn, name) do
+        case get_req_header(conn, name) do
+          [value | _] -> value
+          [] -> nil
+        end
+      end
+
+      defp first_xff(conn) do
+        case get_req_header(conn, "x-forwarded-for") do
+          [value | _] -> value |> String.split(",") |> hd() |> String.trim()
+          [] -> nil
+        end
+      end
     end
-  end
-
-  defp first_header(conn, name) do
-    case get_req_header(conn, name) do
-      [value | _] -> value
-      [] -> nil
-    end
-  end
-
-  defp first_xff(conn) do
-    case get_req_header(conn, "x-forwarded-for") do
-      [value | _] -> value |> String.split(",") |> hd() |> String.trim()
-      [] -> nil
-    end
-  end
-end
-```
+    ```
+  </Accordion>
+</AccordionGroup>
 
 ## Spoofing and trust
 
