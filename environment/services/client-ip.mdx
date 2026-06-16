@@ -1,0 +1,163 @@
+---
+title: Client IP
+description: How to read the real client IP from incoming HTTP requests across direct, SSL-passthrough, and CDN setups.
+---
+
+When your service handles an incoming HTTP request, the source IP on the TCP connection is rarely the real client.
+Requests traverse load balancers, SSL terminators, and (often) a CDN before they reach your container. Your
+environment ingress populates standard headers so your code can recover the real client IP — but which header to
+trust depends on how your service is fronted.
+
+## Headers populated by your environment ingress
+
+| Header            | Set by                                   | Contains                                                                |
+| ----------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| `X-Real-IP`       | Your environment ingress                 | A single IP that the ingress believes is the closest hop to the client. |
+| `X-Forwarded-For` | Your environment ingress (appended to)   | Comma-separated list of IPs in the chain, left-most being the earliest. |
+
+## Behavior across setups
+
+Different fronting setups leave these headers populated differently:
+
+| Setup                                                | `X-Real-IP`                | `X-Forwarded-For`                                |
+| ---------------------------------------------------- | -------------------------- | ------------------------------------------------ |
+| No CDN, HTTP                                         | Real client                | Real client                                      |
+| No CDN, HTTPS (via SSL-passthrough multiplexer)      | Real client (fixed)        | Real client                                      |
+| Behind CDN (public IPs)                              | CDN edge IP                | `<real-client-from-CDN-XFF>, <CDN-IP>`           |
+
+In the first two setups, both headers resolve to the real client and either is safe to use.
+
+In the third setup — when a CDN like Cloudflare, Fastly, or CloudFront sits in front of your service — your
+environment ingress sees the CDN edge IP on the connection. `X-Real-IP` will reflect that edge IP, not the real
+client. The real client IP shows up as the left-most entry in `X-Forwarded-For`, which the CDN populates before
+forwarding the request.
+
+## Recommendation
+
+<Tip>
+  If your service sits behind a CDN, read `X-Forwarded-For[0]` (the left-most entry) to get the real client IP.
+  Alternatively, use your CDN's own header — `CF-Connecting-IP` for Cloudflare, `True-Client-IP` for Akamai
+  / Cloudflare Enterprise, or `X-Forwarded-For` set by CloudFront.
+</Tip>
+
+If you are not behind a CDN, `X-Real-IP` is the simplest and safest header to read.
+
+## Examples
+
+### Node.js (Express)
+
+```js
+app.get('/whoami', (req, res) => {
+  // Behind a CDN: prefer the CDN's own header, then fall back to X-Forwarded-For[0].
+  const xff = req.headers['x-forwarded-for'];
+  const clientIp =
+    req.headers['cf-connecting-ip'] ||
+    req.headers['true-client-ip'] ||
+    (xff && xff.split(',')[0].trim()) ||
+    req.headers['x-real-ip'] ||
+    req.socket.remoteAddress;
+
+  res.json({ clientIp });
+});
+```
+
+### Python (FastAPI)
+
+```python
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+@app.get('/whoami')
+def whoami(request: Request):
+    headers = request.headers
+    xff = headers.get('x-forwarded-for')
+    client_ip = (
+        headers.get('cf-connecting-ip')
+        or headers.get('true-client-ip')
+        or (xff.split(',')[0].strip() if xff else None)
+        or headers.get('x-real-ip')
+        or request.client.host
+    )
+    return { 'clientIp': client_ip }
+```
+
+### Go (net/http)
+
+```go
+func whoami(w http.ResponseWriter, r *http.Request) {
+    clientIP := r.Header.Get("CF-Connecting-IP")
+    if clientIP == "" {
+        clientIP = r.Header.Get("True-Client-IP")
+    }
+    if clientIP == "" {
+        if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+            clientIP = strings.TrimSpace(strings.Split(xff, ",")[0])
+        }
+    }
+    if clientIP == "" {
+        clientIP = r.Header.Get("X-Real-IP")
+    }
+    fmt.Fprintln(w, clientIP)
+}
+```
+
+### Erlang / Elixir (Phoenix / Plug)
+
+```elixir
+defmodule MyAppWeb.WhoamiController do
+  use MyAppWeb, :controller
+  import Plug.Conn
+
+  def show(conn, _params) do
+    text(conn, client_ip(conn))
+  end
+
+  defp client_ip(conn) do
+    cond do
+      ip = first_header(conn, "cf-connecting-ip") -> ip
+      ip = first_header(conn, "true-client-ip")   -> ip
+      ip = first_xff(conn)                        -> ip
+      ip = first_header(conn, "x-real-ip")        -> ip
+      true -> conn.remote_ip |> :inet.ntoa() |> to_string()
+    end
+  end
+
+  defp first_header(conn, name) do
+    case get_req_header(conn, name) do
+      [value | _] -> value
+      [] -> nil
+    end
+  end
+
+  defp first_xff(conn) do
+    case get_req_header(conn, "x-forwarded-for") do
+      [value | _] -> value |> String.split(",") |> hd() |> String.trim()
+      [] -> nil
+    end
+  end
+end
+```
+
+## Spoofing and trust
+
+`X-Forwarded-For` is a request header — any client can set it. Your environment ingress strips and rewrites it
+on the hop it controls, so for traffic arriving directly from the public internet to your service the header
+is trustworthy.
+
+When a CDN is in front, the CDN appends the original client IP to `X-Forwarded-For` before forwarding. The
+left-most entry is the real client only if every upstream hop between the client and your ingress is trusted.
+If you accept arbitrary `X-Forwarded-For` values from untrusted upstreams, attackers can spoof the client IP
+for rate-limiting, audit logs, or geo-IP checks.
+
+<Note>
+  Configuration of environment-specific trusted CDN CIDR ranges is on the roadmap. Once available, you will
+  be able to list your CDN's published IP ranges so that `X-Real-IP` also resolves to the real client when
+  traffic arrives from those ranges. Until then, CDN customers should prefer `X-Forwarded-For[0]` or the
+  CDN's own header.
+</Note>
+
+## See also
+
+- [Web service](/environment/services/web)
+- [Custom domain](/environment/services/custom-domain)
