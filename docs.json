@@ -60,7 +60,7 @@
             "pages": [
               {
                 "group": "Cloud accounts",
-                "pages": ["accounts/aws", "accounts/azure", "accounts/gcp"]
+                "pages": ["accounts/aws", "accounts/gcp", "accounts/azure"]
               },
               "accounts/connect-github"
             ]
