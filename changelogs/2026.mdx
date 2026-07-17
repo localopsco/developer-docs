@@ -4,6 +4,31 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="July 17, 2026">
+
+# Lots of little fixes (and some tighter access control)
+
+## Role-based access control across team and account management
+
+Team and account management endpoints now enforce **owner/admin roles**. Inviting or removing members, cancelling invitations, changing member roles, listing members and invitations, managing API tokens, registry and license-token access, and account domain changes are all now restricted to owners and admins. Members without the right role receive a clear permission error instead of the action going through.
+
+## Clearer error messages
+
+- Domain verification failures now return a specific `DOMAIN_VERIFICATION_FAILED` error instead of a generic 4xx, so you can tell exactly what went wrong.
+- Verbose internal authentication validation errors are no longer surfaced in API responses, keeping error output clean and actionable.
+
+## Fixes
+
+- Environment creation could sometimes fail in fresh Google Cloud projects — this has been fixed.
+- Private instance lookups and updates are more robust — consistent handling of not-found instances and a fix for an edge case when updating an instance with no changed fields.
+- Fixed the LocalOps CLI rendering CLI flags: the Geist Mono ligature no longer swallows the space before double-dash (`--`) flags.
+
+No new buttons to click this week — just a bunch of things that quietly stopped misbehaving. Your future self, running `deploy` at 2am, thanks us.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="July 3, 2026">
 
 ## Google Cloud support
