@@ -4,6 +4,20 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="July 28, 2026">
+
+# Environment cloning fixes
+
+A few fixes to make cloning an environment more reliable:
+
+- **More reliable global secrets page.** The global secrets page in a cloned environment now loads consistently on the first try instead of occasionally appearing empty, and the page stays safely locked until your secrets have fully loaded.
+- **Service references in `ops.json` are now rewritten correctly.** When you clone an environment, service alias references (e.g. `$svc-123`) in `ops.json` are updated to point at the corresponding services in the new environment — matching how secrets are already remapped.
+- **Helm charts are no longer skipped.** Helm-based services are now reliably included when cloning an environment, instead of occasionally being left out.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="July 17, 2026">
 
 # Lots of little fixes (and some tighter access control)
