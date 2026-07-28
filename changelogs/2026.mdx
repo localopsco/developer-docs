@@ -10,6 +10,7 @@ mode: center
 
 A few fixes to make cloning an environment more reliable:
 
+- **Clone environments across projects.** You can now clone an environment into a different project, not just within the same project — handy for promoting a setup from one project to another.
 - **More reliable global secrets page.** The global secrets page in a cloned environment now loads consistently on the first try instead of occasionally appearing empty, and the page stays safely locked until your secrets have fully loaded.
 - **Service references in `ops.json` are now rewritten correctly.** When you clone an environment, service alias references (e.g. `$svc-123`) in `ops.json` are updated to point at the corresponding services in the new environment — matching how secrets are already remapped.
 - **Helm charts are no longer skipped.** Helm-based services are now reliably included when cloning an environment, instead of occasionally being left out.
