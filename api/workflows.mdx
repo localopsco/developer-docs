@@ -1,0 +1,199 @@
+---
+title: Common workflows
+description: End to end recipes for the LocalOps API
+---
+
+These recipes chain the endpoints in the sidebar. All of them assume the `Authorization: Bearer <api_token>` header
+described in [Getting Started](/api/getting-started), and a base URL of `https://sdk.localops.co`.
+
+## Create a Helm service and deploy it
+
+<Steps>
+  <Step title="Create the service" icon="plus">
+    `POST /v1/environments/{envId}/services` with `source: "helm_chart"` and `deploy_now: false`.
+
+    Keep `deploy_now` off for Helm services. It deploys without a chart version, so an explicit deploy is almost always
+    what you want.
+
+    ```bash
+    curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services \
+      -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "name": "checkout api",
+        "type": "web",
+        "source": "helm_chart",
+        "port": 8080,
+        "helm_chart_repo": "https://charts.example.com",
+        "helm_chart_name": "checkout",
+        "helm_values_yml": "replicaCount: 2\n",
+        "deploy_now": false
+      }'
+    ```
+
+    Keep `data.service.id` from the response - there is no list endpoint to look it up again.
+
+  </Step>
+  <Step title="Write service secrets" icon="key">
+    `PUT /v1/environments/{envId}/services/{serviceId}/secrets`, if the service needs any.
+  </Step>
+  <Step title="Deploy a chart version" icon="rocket">
+    `POST /v1/environments/{envId}/services/{serviceId}/deploy` with `{"helm_chart_version": "1.4.0"}`.
+
+    Keep `data.deployment_id` from the response.
+
+  </Step>
+  <Step title="Poll the deployment" icon="arrows-rotate">
+    `GET /v1/deployments/{deploymentId}` until `state` is `success` or `failed`.
+  </Step>
+</Steps>
+
+<Note>
+  Service names on create accept letters and spaces only. Digits, hyphens and underscores are rejected. Updates are
+  laxer and also allow hyphens.
+</Note>
+
+## Deploy a git service from CI
+
+For a GitHub or GitLab service, deploy the head of the configured branch by sending an empty object:
+
+```bash
+curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/deploy \
+  -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+Or pin an exact commit, with an optional note of up to 300 characters:
+
+```json
+{ "commit_id": "9f2c1ab", "note": "release 1.4.0" }
+```
+
+Then poll `GET /v1/deployments/{deploymentId}`. The deployment row is created synchronously, so you always get an id
+back immediately even though the rollout itself runs in the background - a rollout failure shows up as
+`state: "failed"`, not as an error on the deploy call.
+
+For a `docker_image` service, send `docker_image_tag` instead. For `helm_chart`, send `helm_chart_version`.
+
+## Deploy a pull request preview
+
+<Steps>
+  <Step title="Check the parent service" icon="circle-check">
+    The parent service must use the `github` source, be of type `web`, and have `enable_previews` turned on. Your plan
+    must include preview environments, otherwise the call returns `403`.
+
+    Turn previews on with `PATCH /v1/environments/{envId}/services/{serviceId}` and `{"enable_previews": true}`.
+
+  </Step>
+  <Step title="Trigger the preview deploy" icon="code-pull-request">
+    ```bash
+    curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/deploy \
+      -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{ "preview": true, "commit_id": "9f2c1ab", "branch": "feat/checkout-v2", "pr_number": 42 }'
+    ```
+
+    `commit_id`, `branch` and `pr_number` are all required in preview mode, and `docker_image_tag` and
+    `helm_chart_version` must be absent.
+
+  </Step>
+  <Step title="Use the returned preview service" icon="link">
+    The response carries `service_id`, `service_name`, `origin`, `pr_number` and `is_new` - not a deployment id.
+
+    A preview service is created for the pull request the first time (`is_new: true`) and reused on later calls
+    (`is_new: false`). It inherits the parent's type, resources, port and node group, and has `auto_deploy` turned on.
+
+  </Step>
+  <Step title="Poll the preview service" icon="arrows-rotate">
+    `GET /v1/environments/{envId}/services/{serviceId}` with the returned `service_id`, until `state` is `running`.
+  </Step>
+</Steps>
+
+## Attach a custom domain
+
+<Steps>
+  <Step title="Register the domain" icon="globe">
+    `POST /v1/environments/{envId}/services/{serviceId}/custom-domains` with `{"domain": "app.example.com"}`.
+
+    The response contains `dns_records`, each with `record_name`, `record_type` and `record_value`.
+
+  </Step>
+  <Step title="Create the DNS records" icon="server">
+    Add every returned record in your DNS provider - both the certificate validation record and the traffic routing
+    record.
+  </Step>
+  <Step title="Verify" icon="shield-check">
+    `POST /v1/environments/{envId}/services/{serviceId}/custom-domains/{customDomainId}/verify`.
+
+    <Warning>
+      While DNS is still propagating, verification fails with `500` and `error_code: unknown` rather than a 4xx. Retry
+      once the records have propagated.
+    </Warning>
+
+  </Step>
+  <Step title="Confirm" icon="circle-check">
+    `GET /v1/environments/{envId}/services/{serviceId}/custom-domains` until `active_domain.state` is `deployed`.
+
+    Verifying a new domain retires the service's previously active domain.
+
+  </Step>
+</Steps>
+
+## Wire one service to another
+
+Services inside the same environment reach each other over an in cluster DNS alias.
+
+<Steps>
+  <Step title="Read the alias" icon="magnifying-glass">
+    `GET /v1/environments/{envId}/services/{serviceId}` returns `svc_alias`. It is empty until the service is
+    provisioned, so poll until it is set.
+  </Step>
+  <Step title="Publish it as a secret" icon="key">
+    `PUT /v1/environments/{envId}/services/{serviceId}/secrets` on the consuming service, with the alias as the host -
+    for example `DB_HOST`.
+  </Step>
+  <Step title="Redeploy the consumer" icon="rocket">
+    Secret writes do not roll themselves out. Trigger a deployment for the consuming service.
+  </Step>
+</Steps>
+
+## Update secrets safely
+
+Both secret endpoints are a **full replacement**, not a merge. Any key you leave out of the array is removed.
+
+<Steps>
+  <Step title="Read" icon="download">
+    `GET /v1/environments/{envId}/secrets`, or the service level equivalent.
+  </Step>
+  <Step title="Modify" icon="pen">
+    Change or add entries in the array you just read. Keys must be non empty and unique - a duplicate is rejected with
+    `422` and `Duplicate secret key: <key>`.
+  </Step>
+  <Step title="Write the whole set back" icon="upload">
+    `PUT` the complete array. Validation runs before anything is written, so a rejected request changes nothing.
+  </Step>
+</Steps>
+
+## Delete a service
+
+<Steps>
+  <Step title="Remove protection" icon="unlock">
+    A protected service returns `409` on delete. Clear it first with
+    `PATCH /v1/environments/{envId}/services/{serviceId}` and `{"is_protected": false}`.
+
+    <Warning>
+      When patching a service whose `type` is `job`, always include `"auto_deploy": false` in the body. Omitting it on
+      a job typed service surfaces as a `500`.
+    </Warning>
+
+  </Step>
+  <Step title="Delete" icon="trash">
+    `DELETE /v1/environments/{envId}/services/{serviceId}` returns `202 {"message": "accepted"}`, meaning the teardown
+    was accepted and started. A non 2xx means nothing was torn down.
+  </Step>
+  <Step title="Poll to completion" icon="arrows-rotate">
+    `GET /v1/environments/{envId}/services/{serviceId}` through `delete_queued`, `deleting` and `deleted`, or
+    `delete_failed` on failure.
+  </Step>
+</Steps>

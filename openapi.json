@@ -3,11 +3,33 @@
   "info": {
     "title": "LocalOps API",
     "version": "1.0.0",
-    "description": "API for programmatically managing LocalOps environments and services."
+    "description": "API for programmatically managing LocalOps environments and services.\n\nEvery successful response (except `GET /health` and `DELETE /v1/environments/{envId}/services/{serviceId}`) is wrapped in an envelope: `{ \"message\": \"success\", \"data\": { ... } }`. Errors are returned unwrapped as `{ \"error_code\": \"...\", \"message\": \"...\", \"errors\": [...] }`.\n\nDeploys, deletes, secret writes and custom domain deploys are asynchronous. A 2xx confirms that the request was accepted and passed synchronous validation - observe the outcome by polling deployment state, service state or custom domain state."
   },
   "servers": [
     {
       "url": "https://sdk.localops.co"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Liveness probe."
+    },
+    {
+      "name": "Services",
+      "description": "Create, read, update and delete services inside an environment."
+    },
+    {
+      "name": "Deployments",
+      "description": "Trigger deployments and poll their state."
+    },
+    {
+      "name": "Custom Domains",
+      "description": "Attach and verify custom domains for a service."
+    },
+    {
+      "name": "Secrets",
+      "description": "Read and replace environment level and service level secrets."
     }
   ],
   "components": {
@@ -15,7 +37,607 @@
       "bearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "bearerFormat": "JWT"
+        "bearerFormat": "UUID",
+        "description": "Your account API token, sent as `Authorization: Bearer <api_token>`. Owners and admins can read the token from the LocalOps console."
+      }
+    },
+    "schemas": {
+      "FieldError": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Name of the request field that failed validation"
+          },
+          "error": {
+            "type": "string",
+            "description": "Reason the field was rejected"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error_code": {
+            "type": "string",
+            "enum": ["unauthorized", "forbidden", "notfound", "conflict", "validation", "unknown"],
+            "description": "Machine readable error code. Treat this, and not the HTTP status, as the signal for whether the request was at fault - some business rule violations are returned as `500` with `error_code: validation`."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable error message"
+          },
+          "errors": {
+            "type": "array",
+            "nullable": true,
+            "description": "Per field details. Present only on validation errors, and can be null when the failure has no field level detail.",
+            "items": {
+              "$ref": "#/components/schemas/FieldError"
+            }
+          }
+        }
+      },
+      "Service": {
+        "type": "object",
+        "description": "A service inside an environment. Fields that are unset are omitted from the response.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["web", "internal", "worker", "cron", "job"]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "deploy_pending",
+              "deploy_queued",
+              "deploying",
+              "deploy_failed",
+              "running",
+              "delete_pending",
+              "delete_queued",
+              "deleting",
+              "deleted",
+              "delete_failed"
+            ],
+            "description": "Lifecycle state, mirrored from the provisioner"
+          },
+          "run_status": {
+            "type": "string",
+            "description": "Runtime status reported by the provisioner. Empty unless the response hydrates live state."
+          },
+          "ready_count": {
+            "type": "integer",
+            "description": "Number of ready replicas. Empty unless the response hydrates live state."
+          },
+          "replica_count": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cpu_count_min": {
+            "type": "number"
+          },
+          "cpu_count_max": {
+            "type": "number"
+          },
+          "memory_mb_min": {
+            "type": "integer"
+          },
+          "memory_mb_max": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["github", "gitlab", "docker_image", "helm_chart"]
+          },
+          "port": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cron_schedule": {
+            "type": "string",
+            "nullable": true
+          },
+          "auto_deploy": {
+            "type": "boolean",
+            "description": "Deploy on push. Git sources only."
+          },
+          "gitlab_connection_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "git_repo_full_name": {
+            "type": "string"
+          },
+          "git_repo_branch": {
+            "type": "string"
+          },
+          "dockerfile_path": {
+            "type": "string"
+          },
+          "run_command": {
+            "type": "string"
+          },
+          "ops_json_path": {
+            "type": "string"
+          },
+          "ops_json": {
+            "type": "string",
+            "description": "Inline ops JSON. Docker image source only."
+          },
+          "docker_registry": {
+            "type": "string"
+          },
+          "docker_image": {
+            "type": "string"
+          },
+          "helm_chart_repo": {
+            "type": "string"
+          },
+          "helm_chart_name": {
+            "type": "string"
+          },
+          "helm_values_yml": {
+            "type": "string"
+          },
+          "prov_node_group_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "private_instance_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Id of the environment this service belongs to"
+          },
+          "subdomain": {
+            "type": "string",
+            "description": "Generated by LocalOps as `<first 4 chars of name>-<8 char id>`. Not accepted on create."
+          },
+          "is_protected": {
+            "type": "boolean",
+            "description": "When true, the service cannot be deleted until protection is removed"
+          },
+          "is_deleted": {
+            "type": "boolean"
+          },
+          "latest_deployment": {
+            "type": "object",
+            "nullable": true,
+            "description": "Metadata of the most recent deployment, when the edge is loaded"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kube_svc_alias": {
+            "type": "string",
+            "description": "In cluster DNS alias. Only hydrated by `GET /v1/environments/{envId}/services/{serviceId}`."
+          },
+          "kube_secret": {
+            "type": "string"
+          },
+          "kube_dep_secret": {
+            "type": "string"
+          },
+          "kube_preview_dep_secret": {
+            "type": "string"
+          },
+          "custom_domain_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Zero UUID when no custom domain is attached"
+          },
+          "custom_domain": {
+            "type": "object",
+            "nullable": true
+          },
+          "origin": {
+            "type": "string",
+            "description": "Public URL of the service, or the custom domain when one is attached"
+          },
+          "parent_service_id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Set on preview services"
+          },
+          "enable_previews": {
+            "type": "boolean"
+          },
+          "enable_code_review": {
+            "type": "boolean"
+          },
+          "is_preview": {
+            "type": "boolean"
+          },
+          "pr_number": {
+            "type": "integer",
+            "nullable": true
+          },
+          "pr_comment_id": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "Deployment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["update", "restore", "service_update"]
+          },
+          "state": {
+            "type": "string",
+            "enum": ["queued", "in_progress", "success", "failed"],
+            "description": "`success` and `failed` are terminal. Keep polling on `queued` and `in_progress`."
+          },
+          "service_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "private_instance_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cloud_connection_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prev_deployment_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prov_deployment_id": {
+            "type": "string"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "op_ids": {
+            "type": "array",
+            "description": "Always empty on this endpoint - operations are not fetched here",
+            "items": {
+              "type": "string"
+            }
+          },
+          "ops": {
+            "type": "object",
+            "description": "Always empty on this endpoint"
+          },
+          "git_commit_ref": {
+            "type": "string"
+          },
+          "git_commit_author": {
+            "type": "string"
+          },
+          "git_commit_message": {
+            "type": "string"
+          },
+          "docker_image_tag": {
+            "type": "string"
+          },
+          "helm_chart_version": {
+            "type": "string"
+          },
+          "helm_values_yml": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "created_by_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Zero UUID for API triggered deployments"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "DnsRecord": {
+        "type": "object",
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "enum": ["route_app_traffic", "route_monit_traffic", "verify_acm"]
+          },
+          "record_name": {
+            "type": "string",
+            "description": "DNS name to create"
+          },
+          "record_type": {
+            "type": "string",
+            "description": "DNS record type, for example `CNAME`"
+          },
+          "record_value": {
+            "type": "string",
+            "description": "DNS record value"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "CustomDomain": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "account_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "private_instance_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "service_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "prov_custom_domain_id": {
+            "type": "string"
+          },
+          "domain": {
+            "type": "string"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "unverified",
+              "verified",
+              "deploy_queued",
+              "deploying",
+              "deployed",
+              "deploy_failed",
+              "delete_queued",
+              "deleting",
+              "deleted",
+              "delete_failed"
+            ]
+          },
+          "dns_records": {
+            "type": "array",
+            "description": "Hydrated live from the provisioner. Present on add, verify and list responses.",
+            "items": {
+              "$ref": "#/components/schemas/DnsRecord"
+            }
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EnvSecret": {
+        "type": "object",
+        "required": ["key"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Required, non empty after trimming, and unique within the array"
+          },
+          "value": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "is_sensitive": {
+            "type": "boolean",
+            "description": "Marks the value as sensitive"
+          },
+          "expose_to_chart": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Expose this secret to Helm chart values"
+          },
+          "chart_default_val": {
+            "type": "string",
+            "nullable": true,
+            "description": "Default value used in chart values"
+          },
+          "dep_export": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Export this secret to dependent services"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      },
+      "ServiceSecret": {
+        "type": "object",
+        "required": ["key"],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Required, non empty after trimming, and unique within the array"
+          },
+          "value": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "use_preview": {
+            "type": "boolean",
+            "description": "Also inject this secret into PR preview services of this service"
+          },
+          "is_sensitive": {
+            "type": "boolean"
+          },
+          "expose_to_chart": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "chart_default_val": {
+            "type": "string",
+            "nullable": true
+          },
+          "dep_export": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true
+          }
+        }
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing, malformed or unknown API token",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error_code": "unauthorized",
+              "message": "You are not authorized to do this action"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "The account has no active plan, the plan does not include the requested feature, or the service is being deleted",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error_code": "forbidden",
+              "message": "You don't have an active plan"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "The environment, service, deployment, custom domain or connection does not exist, or belongs to another account",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error_code": "notfound",
+              "message": "Service not found"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "The service is protected against deletion",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error_code": "conflict",
+              "message": "Cannot delete a protected service. Remove protection first."
+            }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Field validation failed, or the request body was missing or malformed. Endpoints that take a body always need at least `{}` - a zero byte body fails to bind.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "field": {
+                "summary": "Field validation",
+                "value": {
+                  "error_code": "validation",
+                  "message": "Invalid data",
+                  "errors": [
+                    {
+                      "field": "replica_count",
+                      "error": "replica_count is a required field"
+                    }
+                  ]
+                }
+              },
+              "body": {
+                "summary": "Missing or malformed body",
+                "value": {
+                  "error_code": "validation",
+                  "message": "Please check your request body"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ServerError": {
+        "description": "Unexpected failure. Some business rule violations are also returned here with `error_code: validation` - check `error_code` rather than the status to decide whether the request was at fault.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "examples": {
+              "unknown": {
+                "summary": "Unexpected failure",
+                "value": {
+                  "error_code": "unknown",
+                  "message": "Something went wrong. Please try again later"
+                }
+              },
+              "rule": {
+                "summary": "Business rule violation",
+                "value": {
+                  "error_code": "validation",
+                  "message": "Ops Json is only supported for docker image source"
+                }
+              }
+            }
+          }
+        }
       }
     }
   },
@@ -25,10 +647,665 @@
     }
   ],
   "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health Check",
+        "operationId": "healthCheck",
+        "description": "Unauthenticated liveness check. No `Authorization` header is required.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "ok"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/services": {
+      "post": {
+        "tags": ["Services"],
+        "summary": "Create Service",
+        "operationId": "createService",
+        "description": "Create a service inside an environment. The service is registered with the provisioner and persisted, service level secrets are optionally seeded, and an immediate first deployment is optionally triggered.\n\nThe service `subdomain` is generated by LocalOps and cannot be supplied.\n\n**`deploy_now`** triggers a deployment right after creation with an empty target - the latest commit on the configured branch for git sources, and the `latest` tag for `docker_image`. No chart version is passed for `helm_chart`, so prefer `deploy_now: false` plus an explicit deploy call with `helm_chart_version`. `deploy_now` does not return a deployment id. If creation succeeds but the deployment fails, the service still exists and the call returns `500` with `Service created successfully, but failed to deploy the service`.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "source"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "description": "Letters and spaces only. Digits, hyphens and underscores are rejected on create."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["web", "internal", "worker", "cron", "job"],
+                    "description": "Optional, but drives other requirements"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": ["github", "gitlab", "docker_image", "helm_chart"]
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535,
+                    "description": "Required when `type` is `web` or `internal`"
+                  },
+                  "cron_schedule": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required when `type` is `cron`"
+                  },
+                  "replica_count": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Required unless `source` is `helm_chart`"
+                  },
+                  "cpu_count_min": {
+                    "type": "number",
+                    "description": "Required unless `source` is `helm_chart`"
+                  },
+                  "cpu_count_max": {
+                    "type": "number"
+                  },
+                  "memory_mb_min": {
+                    "type": "integer",
+                    "description": "Required unless `source` is `helm_chart`"
+                  },
+                  "memory_mb_max": {
+                    "type": "integer"
+                  },
+                  "prov_node_group_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Pins the service to a node group"
+                  },
+                  "is_protected": {
+                    "type": "boolean",
+                    "description": "When true, the service cannot be deleted until protection is removed"
+                  },
+                  "deploy_now": {
+                    "type": "boolean",
+                    "description": "Trigger a first deployment immediately after creation"
+                  },
+                  "secrets": {
+                    "type": "array",
+                    "description": "Service level secrets, written to the provisioner after creation",
+                    "items": {
+                      "$ref": "#/components/schemas/ServiceSecret"
+                    }
+                  },
+                  "installation_id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "GitHub App installation record id for `github`. For `gitlab` this field carries the GitLab connection id."
+                  },
+                  "git_repo_full_name": {
+                    "type": "string",
+                    "description": "Required for `github` and `gitlab`, in `org/repo` form"
+                  },
+                  "git_repo_branch": {
+                    "type": "string",
+                    "description": "Required for `github` and `gitlab`"
+                  },
+                  "auto_deploy": {
+                    "type": "boolean",
+                    "description": "Deploy on push. Git sources only, and rejected when `type` is `job`."
+                  },
+                  "dockerfile_path": {
+                    "type": "string",
+                    "description": "Git sources only. Trimmed server side."
+                  },
+                  "run_command": {
+                    "type": "string",
+                    "description": "Git and `docker_image` sources"
+                  },
+                  "ops_json_path": {
+                    "type": "string",
+                    "description": "Git sources only. Trimmed server side."
+                  },
+                  "ops_json": {
+                    "type": "string",
+                    "description": "Inline ops JSON. Supported only when `source` is `docker_image`."
+                  },
+                  "enable_previews": {
+                    "type": "boolean",
+                    "description": "GitHub only, and allowed only when `type` is `web`. Required before PR preview deployments can be triggered."
+                  },
+                  "enable_code_review": {
+                    "type": "boolean",
+                    "description": "GitHub only"
+                  },
+                  "docker_registry": {
+                    "type": "string",
+                    "description": "Registry to pull the image from. `docker_image` source."
+                  },
+                  "docker_image": {
+                    "type": "string",
+                    "description": "Required when `source` is `docker_image`"
+                  },
+                  "helm_chart_repo": {
+                    "type": "string",
+                    "description": "Required when `source` is `helm_chart`"
+                  },
+                  "helm_chart_name": {
+                    "type": "string",
+                    "description": "Required when `source` is `helm_chart`"
+                  },
+                  "helm_values_yml": {
+                    "type": "string",
+                    "description": "Contents of `values.yaml` as a single string"
+                  }
+                }
+              },
+              "examples": {
+                "helm": {
+                  "summary": "Helm chart service with secrets",
+                  "value": {
+                    "name": "checkout api",
+                    "type": "web",
+                    "source": "helm_chart",
+                    "port": 8080,
+                    "helm_chart_repo": "https://charts.example.com",
+                    "helm_chart_name": "checkout",
+                    "helm_values_yml": "replicaCount: 2\nimage:\n  tag: 1.4.0\n",
+                    "secrets": [
+                      {
+                        "key": "API_KEY",
+                        "value": "s3cr3t",
+                        "is_sensitive": true
+                      }
+                    ]
+                  }
+                },
+                "docker": {
+                  "summary": "Docker image worker, deployed immediately",
+                  "value": {
+                    "name": "worker",
+                    "type": "worker",
+                    "source": "docker_image",
+                    "replica_count": 1,
+                    "cpu_count_min": 0.25,
+                    "cpu_count_max": 0.5,
+                    "memory_mb_min": 256,
+                    "memory_mb_max": 512,
+                    "docker_registry": "123456789012.dkr.ecr.us-east-1.amazonaws.com",
+                    "docker_image": "acme/worker",
+                    "deploy_now": true
+                  }
+                },
+                "github": {
+                  "summary": "GitHub service with PR previews",
+                  "value": {
+                    "name": "storefront",
+                    "type": "web",
+                    "source": "github",
+                    "port": 3000,
+                    "replica_count": 2,
+                    "cpu_count_min": 0.5,
+                    "memory_mb_min": 512,
+                    "installation_id": "1e2c8f30-0000-0000-0000-000000000000",
+                    "git_repo_full_name": "acme/storefront",
+                    "git_repo_branch": "main",
+                    "auto_deploy": true,
+                    "enable_previews": true
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "$ref": "#/components/schemas/Service"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "service": {
+                      "id": "b1f0a9c2-0000-0000-0000-000000000000",
+                      "name": "checkout api",
+                      "type": "web",
+                      "state": "deploy_pending",
+                      "run_status": "",
+                      "ready_count": 0,
+                      "source": "helm_chart",
+                      "subdomain": "chec-a1b2c3d4",
+                      "account_id": "6c1d0f7a-0000-0000-0000-000000000000",
+                      "private_instance_id": "9a3b2c10-0000-0000-0000-000000000000",
+                      "helm_chart_repo": "https://charts.example.com",
+                      "helm_chart_name": "checkout",
+                      "helm_values_yml": "replicaCount: 2\n",
+                      "created_at": "2026-08-10T09:12:33Z",
+                      "updated_at": "2026-08-10T09:12:33Z",
+                      "kube_svc_alias": "",
+                      "kube_secret": "",
+                      "origin": "https://chec-a1b2c3d4.space.example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/services/{serviceId}": {
+      "get": {
+        "tags": ["Services"],
+        "summary": "Get Service Status",
+        "operationId": "getServiceStatus",
+        "description": "Poll a service's runtime status. Live state is fetched from the provisioner on every call and returned as a narrow projection.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current service status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "state": {
+                          "type": "string",
+                          "description": "Lifecycle state of the service"
+                        },
+                        "run_status": {
+                          "type": "string",
+                          "description": "Runtime status reported by the provisioner"
+                        },
+                        "ready_count": {
+                          "type": "integer",
+                          "description": "Number of ready replicas"
+                        },
+                        "svc_alias": {
+                          "type": "string",
+                          "description": "In cluster DNS alias. Use it for service to service addressing inside the same environment. Empty until the service is provisioned."
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "state": "running",
+                    "run_status": "Running",
+                    "ready_count": 2,
+                    "svc_alias": "checkout-a1b2c3d4"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Services"],
+        "summary": "Update Service",
+        "operationId": "updateService",
+        "description": "Update a service's configuration. Send only the fields you want to change. The database update and the provisioner update run in one transaction.\n\nThis does not roll the change out - trigger a deployment afterwards.\n\nWhen patching a service whose `type` is `job`, always include `\"auto_deploy\": false`. Omitting it on a job typed service surfaces as a `500`.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 3,
+                    "maxLength": 50,
+                    "description": "Letters, spaces and hyphens"
+                  },
+                  "replica_count": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "cpu_count_min": {
+                    "type": "number"
+                  },
+                  "cpu_count_max": {
+                    "type": "number"
+                  },
+                  "memory_mb_min": {
+                    "type": "integer"
+                  },
+                  "memory_mb_max": {
+                    "type": "integer"
+                  },
+                  "port": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 65535
+                  },
+                  "cron_schedule": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 100
+                  },
+                  "auto_deploy": {
+                    "type": "boolean",
+                    "description": "Rejected for services whose `type` is `job`"
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": ["github", "gitlab", "docker_image", "helm_chart"],
+                    "description": "Changing the source makes the matching source fields required in the same request"
+                  },
+                  "git_repo_branch": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required if `source: github` is sent"
+                  },
+                  "run_command": {
+                    "type": "string",
+                    "maxLength": 100
+                  },
+                  "dockerfile_path": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Trimmed server side"
+                  },
+                  "ops_json_path": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Trimmed server side"
+                  },
+                  "ops_json": {
+                    "type": "string",
+                    "description": "Docker image source only"
+                  },
+                  "enable_previews": {
+                    "type": "boolean"
+                  },
+                  "enable_code_review": {
+                    "type": "boolean"
+                  },
+                  "docker_registry": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required if `source: docker_image` is sent"
+                  },
+                  "docker_image": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required if `source: docker_image` is sent"
+                  },
+                  "helm_chart_repo": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required if `source: helm_chart` is sent"
+                  },
+                  "helm_chart_name": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "description": "Required if `source: helm_chart` is sent"
+                  },
+                  "helm_values_yml": {
+                    "type": "string",
+                    "description": "Full replacement of `values.yaml`"
+                  },
+                  "prov_node_group_id": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "is_protected": {
+                    "type": "boolean",
+                    "description": "Set to false before deleting a protected service"
+                  }
+                }
+              },
+              "examples": {
+                "helm": {
+                  "summary": "Bump Helm values and move node group",
+                  "value": {
+                    "helm_values_yml": "replicaCount: 3\nimage:\n  tag: 1.5.0\n",
+                    "prov_node_group_id": "8e77b210-0000-0000-0000-000000000000"
+                  }
+                },
+                "unprotect": {
+                  "summary": "Remove delete protection",
+                  "value": {
+                    "is_protected": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Service updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "service": {
+                          "$ref": "#/components/schemas/Service"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Services"],
+        "summary": "Delete Service",
+        "operationId": "deleteService",
+        "description": "Delete a service. The request creates a delete operation, asks the provisioner to tear the service down and moves the service to `delete_pending`. The teardown itself continues asynchronously.\n\nA `202` means the delete was accepted and started. A non 2xx means nothing was torn down.\n\nPoll the service status to follow `delete_queued`, `deleting` and `deleted`, or `delete_failed` on failure.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Delete accepted and started. This response is not wrapped in the data envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "accepted"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
     "/v1/environments/{envId}/services/{serviceId}/deploy": {
       "post": {
+        "tags": ["Deployments"],
         "summary": "Deploy Service",
-        "description": "Trigger a deployment for a specific service within an environment.",
+        "operationId": "deployService",
+        "description": "Trigger a deployment for a specific service within an environment.\n\nThere are two modes. A **standard deploy** rolls out the service itself and returns a `deployment_id` you can poll. A **preview deploy** (`preview: true`) fans out to a per PR preview service and returns that service instead - preview mode does not return a deployment id.\n\nA request body is always required. To deploy the latest commit on a git service's configured branch, send `{}`.\n\nThe deployment row is created synchronously so the id comes back immediately. The rollout runs in the background and any failure there marks the deployment `failed` rather than failing this request.\n\nPreview mode requires the parent service to use the `github` source, be of type `web`, have `enable_previews` turned on, and not itself be a preview service. The account plan must include preview environments.\n\nIf both `docker_image_tag` and `helm_chart_version` are supplied, `helm_chart_version` wins.",
         "parameters": [
           {
             "name": "envId",
@@ -62,7 +1339,12 @@
                     "properties": {
                       "commit_id": {
                         "type": "string",
-                        "description": "The Git commit ID to deploy"
+                        "description": "The Git commit ID to deploy. Omit it, and send `{}`, to deploy the latest commit on the service's configured branch."
+                      },
+                      "note": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Optional note stored on the deployment"
                       }
                     }
                   },
@@ -73,7 +1355,12 @@
                     "properties": {
                       "docker_image_tag": {
                         "type": "string",
-                        "description": "The Docker image tag to deploy"
+                        "description": "The Docker image tag to deploy. Required for `docker_image` services."
+                      },
+                      "note": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Optional note stored on the deployment"
                       }
                     }
                   },
@@ -84,14 +1371,19 @@
                     "properties": {
                       "helm_chart_version": {
                         "type": "string",
-                        "description": "The Helm chart version to deploy"
+                        "description": "The Helm chart version to deploy. Required for `helm_chart` services."
+                      },
+                      "note": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Optional note stored on the deployment"
                       }
                     }
                   },
                   {
                     "title": "Preview Deployment",
                     "type": "object",
-                    "required": ["preview", "commit_id"],
+                    "required": ["preview", "commit_id", "branch", "pr_number"],
                     "properties": {
                       "preview": {
                         "type": "boolean",
@@ -101,6 +1393,20 @@
                       "commit_id": {
                         "type": "string",
                         "description": "The Git commit ID to deploy for preview"
+                      },
+                      "branch": {
+                        "type": "string",
+                        "description": "The branch of the pull request"
+                      },
+                      "pr_number": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "description": "The pull request number. Must be greater than 0."
+                      },
+                      "note": {
+                        "type": "string",
+                        "maxLength": 300,
+                        "description": "Optional note stored on the deployment"
                       }
                     }
                   }
@@ -114,7 +1420,846 @@
         },
         "responses": {
           "200": {
-            "description": "Deployment triggered successfully"
+            "description": "Deployment triggered successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "oneOf": [
+                        {
+                          "title": "Standard deployment",
+                          "type": "object",
+                          "properties": {
+                            "deployment_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "Poll this id on the deployment endpoint"
+                            }
+                          },
+                          "required": ["deployment_id"]
+                        },
+                        {
+                          "title": "Preview deployment",
+                          "type": "object",
+                          "properties": {
+                            "service_id": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "The preview service for this pull request"
+                            },
+                            "service_name": {
+                              "type": "string"
+                            },
+                            "origin": {
+                              "type": "string",
+                              "description": "Public URL of the preview service"
+                            },
+                            "pr_number": {
+                              "type": "integer"
+                            },
+                            "is_new": {
+                              "type": "boolean",
+                              "description": "False when an existing preview service for this pull request was reused"
+                            }
+                          },
+                          "required": ["service_id", "pr_number"]
+                        }
+                      ]
+                    }
+                  }
+                },
+                "examples": {
+                  "standard": {
+                    "summary": "Standard deployment",
+                    "value": {
+                      "message": "success",
+                      "data": {
+                        "deployment_id": "3c7a4d81-0000-0000-0000-000000000000"
+                      }
+                    }
+                  },
+                  "preview": {
+                    "summary": "Preview deployment",
+                    "value": {
+                      "message": "success",
+                      "data": {
+                        "service_id": "7ab3c920-0000-0000-0000-000000000000",
+                        "service_name": "checkout api (PR#42)",
+                        "origin": "https://pr-42-chec-a1b2c3d4.space.example.com",
+                        "pr_number": 42,
+                        "is_new": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/deployments/{deploymentId}": {
+      "get": {
+        "tags": ["Deployments"],
+        "summary": "Get Deployment",
+        "operationId": "getDeployment",
+        "description": "Poll a deployment. Scoped to your account, so no environment is needed in the path.\n\n`success` and `failed` are terminal states. `created_by_id` is the zero UUID for API triggered deployments, and `op_ids` and `ops` are always empty on this endpoint.",
+        "parameters": [
+          {
+            "name": "deploymentId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the deployment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Deployment state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "deployment": {
+                          "$ref": "#/components/schemas/Deployment"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "deployment": {
+                      "id": "3c7a4d81-0000-0000-0000-000000000000",
+                      "type": "service_update",
+                      "state": "in_progress",
+                      "service_id": "b1f0a9c2-0000-0000-0000-000000000000",
+                      "private_instance_id": "9a3b2c10-0000-0000-0000-000000000000",
+                      "cloud_connection_id": "4d5e6f70-0000-0000-0000-000000000000",
+                      "prev_deployment_id": "00000000-0000-0000-0000-000000000000",
+                      "prov_deployment_id": "dep-91ac",
+                      "account_id": "6c1d0f7a-0000-0000-0000-000000000000",
+                      "op_ids": [],
+                      "ops": {},
+                      "git_commit_ref": "9f2c1ab",
+                      "git_commit_author": "octocat",
+                      "git_commit_message": "fix checkout total",
+                      "docker_image_tag": "",
+                      "helm_chart_version": "",
+                      "helm_values_yml": "",
+                      "note": "release 1.4.0",
+                      "created_by_id": "00000000-0000-0000-0000-000000000000",
+                      "created_at": "2026-08-10T09:20:11Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/services/{serviceId}/custom-domains": {
+      "post": {
+        "tags": ["Custom Domains"],
+        "summary": "Add Custom Domain",
+        "operationId": "addCustomDomain",
+        "description": "Register a custom domain for a service and get back the DNS records to create. Create the returned records in your DNS provider, then verify the domain.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["domain"],
+                "properties": {
+                  "domain": {
+                    "type": "string",
+                    "description": "The fully qualified domain name to attach to this service"
+                  }
+                }
+              },
+              "example": {
+                "domain": "app.example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Custom domain registered, with the DNS records to create",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "custom_domain": {
+                          "$ref": "#/components/schemas/CustomDomain"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "custom_domain": {
+                      "id": "d41f5b60-0000-0000-0000-000000000000",
+                      "account_id": "6c1d0f7a-0000-0000-0000-000000000000",
+                      "private_instance_id": "9a3b2c10-0000-0000-0000-000000000000",
+                      "service_id": "b1f0a9c2-0000-0000-0000-000000000000",
+                      "prov_custom_domain_id": "cd-77aa",
+                      "domain": "app.example.com",
+                      "origin": "https://app.example.com",
+                      "state": "unverified",
+                      "dns_records": [
+                        {
+                          "purpose": "verify_acm",
+                          "record_name": "_x1.app.example.com",
+                          "record_type": "CNAME",
+                          "record_value": "_y2.acm-validations.aws",
+                          "created_at": "2026-08-10T09:31:00Z"
+                        },
+                        {
+                          "purpose": "route_app_traffic",
+                          "record_name": "app.example.com",
+                          "record_type": "CNAME",
+                          "record_value": "k8s-ingress.elb.amazonaws.com",
+                          "created_at": "2026-08-10T09:31:00Z"
+                        }
+                      ],
+                      "created_at": "2026-08-10T09:31:00Z",
+                      "updated_at": "2026-08-10T09:31:00Z"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "get": {
+        "tags": ["Custom Domains"],
+        "summary": "Get Custom Domains",
+        "operationId": "getCustomDomains",
+        "description": "Read the service's active and pending custom domain, each hydrated with live DNS records.\n\nNote that `data.custom_domain` holds a pair object, not a single domain and not an array.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Active and pending custom domains",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "custom_domain": {
+                          "type": "object",
+                          "properties": {
+                            "is_active": {
+                              "type": "boolean",
+                              "description": "The service has a custom domain attached"
+                            },
+                            "is_pending": {
+                              "type": "boolean",
+                              "description": "A newer domain exists that is not yet the active one"
+                            },
+                            "active_domain": {
+                              "type": "object",
+                              "nullable": true,
+                              "allOf": [
+                                {
+                                  "$ref": "#/components/schemas/CustomDomain"
+                                }
+                              ],
+                              "description": "Currently serving domain"
+                            },
+                            "pending_domain": {
+                              "type": "object",
+                              "nullable": true,
+                              "allOf": [
+                                {
+                                  "$ref": "#/components/schemas/CustomDomain"
+                                }
+                              ],
+                              "description": "Domain awaiting verification or deployment"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "custom_domain": {
+                      "is_active": true,
+                      "is_pending": false,
+                      "active_domain": {
+                        "id": "d41f5b60-0000-0000-0000-000000000000",
+                        "domain": "app.example.com",
+                        "state": "deployed",
+                        "dns_records": []
+                      },
+                      "pending_domain": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/services/{serviceId}/custom-domains/{customDomainId}/verify": {
+      "post": {
+        "tags": ["Custom Domains"],
+        "summary": "Verify Custom Domain",
+        "operationId": "verifyCustomDomain",
+        "description": "Check DNS and certificate validation for the domain and, once verified, deploy its ingress and retire the previously active domain for the service.\n\nIf DNS has not propagated yet the call returns `500` with `error_code: unknown` rather than a 4xx. Retry verification once the records have propagated.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "customDomainId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the custom domain",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Domain verified, with its state advanced towards `deployed`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "custom_domain": {
+                          "$ref": "#/components/schemas/CustomDomain"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/secrets": {
+      "get": {
+        "tags": ["Secrets"],
+        "summary": "Get Environment Secrets",
+        "operationId": "getEnvironmentSecrets",
+        "description": "Read the environment's secret set. Environment level secrets are shared by all services in the environment.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The environment's secrets. `secrets` can be null when there are none.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "secrets": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "$ref": "#/components/schemas/EnvSecret"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "secrets": [
+                      {
+                        "key": "DB_URL",
+                        "value": "postgres://user:pass@host:5432/db",
+                        "description": "primary db",
+                        "is_sensitive": true,
+                        "expose_to_chart": false,
+                        "dep_export": false,
+                        "updated_at": "2026-08-09T18:04:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Secrets"],
+        "summary": "Replace Environment Secrets",
+        "operationId": "replaceEnvironmentSecrets",
+        "description": "Replace the environment's entire secret set. This is a full write and not a merge - any key you omit is removed. Read the current set, modify it, then write the whole set back.\n\nKeys must be non empty after trimming and unique within the array. Validation runs before anything is written.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["secrets"],
+                "properties": {
+                  "secrets": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/EnvSecret"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "secrets": [
+                  {
+                    "key": "DB_URL",
+                    "value": "postgres://user:pass@host:5432/db",
+                    "description": "primary db",
+                    "is_sensitive": true,
+                    "expose_to_chart": false,
+                    "chart_default_val": null,
+                    "dep_export": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Secrets replaced, returned as stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "secrets": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/EnvSecret"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      }
+    },
+    "/v1/environments/{envId}/services/{serviceId}/secrets": {
+      "get": {
+        "tags": ["Secrets"],
+        "summary": "Get Service Secrets",
+        "operationId": "getServiceSecrets",
+        "description": "Read a service's secret set. Service level secrets are scoped to a single service and are separate from the environment level set.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The service's secrets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "secrets": {
+                          "type": "array",
+                          "nullable": true,
+                          "items": {
+                            "$ref": "#/components/schemas/ServiceSecret"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "message": "success",
+                  "data": {
+                    "secrets": [
+                      {
+                        "key": "API_KEY",
+                        "value": "s3cr3t",
+                        "description": "",
+                        "use_preview": false,
+                        "is_sensitive": true,
+                        "updated_at": "2026-08-09T18:04:00Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
+          }
+        }
+      },
+      "put": {
+        "tags": ["Secrets"],
+        "summary": "Replace Service Secrets",
+        "operationId": "replaceServiceSecrets",
+        "description": "Replace the service's entire secret set. This is a full write and not a merge - any key you omit is removed.\n\nKeys must be non empty after trimming and unique within the array.",
+        "parameters": [
+          {
+            "name": "envId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the environment",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "serviceId",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the service",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["secrets"],
+                "properties": {
+                  "secrets": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ServiceSecret"
+                    }
+                  }
+                }
+              },
+              "example": {
+                "secrets": [
+                  {
+                    "key": "API_KEY",
+                    "value": "s3cr3t",
+                    "description": "payment gateway key",
+                    "use_preview": false,
+                    "is_sensitive": true,
+                    "expose_to_chart": false,
+                    "chart_default_val": null,
+                    "dep_export": false
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Secrets replaced, returned as stored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "secrets": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ServiceSecret"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "500": {
+            "$ref": "#/components/responses/ServerError"
           }
         }
       }

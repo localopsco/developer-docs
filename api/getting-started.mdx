@@ -1,39 +1,153 @@
 ---
 title: Getting Started
-description: Introduction to the LocalOps API
+description: Authentication, response format and error handling for the LocalOps API
 ---
 
 ## Overview
 
-Welcome to the LocalOps API documentation. This API allows you to programmatically manage your environments, services,
-and resources.
+The LocalOps API lets you manage environments, services, deployments, custom domains and secrets programmatically - from
+the LocalOps SDK, a CLI wrapper or your CI pipeline.
 
-## Authentication
+It is a small, deliberately separate surface from the LocalOps console. Every operation the API supports is listed under
+**Endpoints** in the sidebar.
 
-All API requests require authentication using an API key. Include your API key in the request headers:
-
-```bash
-curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://sdk.localops.co/v1/environments
-```
+<Note>
+  An **environment** is also referred to as a *Space* in the console. The `envId` path parameter is the environment's
+  unique identifier.
+</Note>
 
 ## Base URL
 
-The base URL for all API requests is:
-
 ```
-https://sdk.localops.co/v1
+https://sdk.localops.co
 ```
 
-## Response Format
+## Authentication
 
-All API responses are returned in JSON format. Successful responses have a `200` status code, while errors return
-appropriate HTTP status codes with error details in the response body.
+Every endpoint except `GET /health` requires your account API token, sent as a bearer token:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_TOKEN" \
+     https://sdk.localops.co/v1/deployments/3c7a4d81-0000-0000-0000-000000000000
+```
+
+The token is issued per account. Owners and admins can read it from the LocalOps console.
+
+A missing header, a non-`Bearer` header, a malformed token, or a token that matches no account are all rejected the same
+way:
+
+```json
+{
+  "error_code": "unauthorized",
+  "message": "You are not authorized to do this action"
+}
+```
+
+Your account also needs an active plan. If your subscription is not `active` or `past_due`, requests are rejected with
+`403` and `You don't have an active plan`. Accounts without a subscription, such as BYOC accounts, pass this check.
+
+<Warning>
+  The API token is the tenancy boundary for every request. Environment, service, deployment and custom domain
+  identifiers are always looked up within your account, so an identifier belonging to another account behaves exactly
+  like one that does not exist.
+</Warning>
+
+### Attribution in audit logs
+
+API requests are not tied to a user. [Audit log](/team/audit-logs) entries for actions taken through the API show
+**`API Token`** as the actor, and deployments created this way have a zero UUID in `created_by_id`.
+
+Service creates, updates and deletes, secret updates, and custom domain creates and verifications are all written to the
+audit log.
+
+## Response format
+
+Successful responses are wrapped in an envelope:
+
+```json
+{
+  "message": "success",
+  "data": {
+    "...": "endpoint specific payload"
+  }
+}
+```
+
+There are two exceptions:
+
+- `GET /health` returns `{ "message": "ok" }`
+- `DELETE /v1/environments/{envId}/services/{serviceId}` returns `202 { "message": "accepted" }`
 
 ## Errors
 
-- `401 Unauthorized`: The API key is invalid or missing.
-- `403 Forbidden`: The API key is not authorized to access the requested resource.
-- `404 Not Found`: The requested resource does not exist.
-- `429 Too Many Requests`: The API key has exceeded the rate limit.
-- `500 Internal Server Error`: An unexpected error occurred on our servers.
+Errors are **not** wrapped in the `data` envelope:
+
+```json
+{
+  "error_code": "validation",
+  "message": "Invalid data",
+  "errors": [{ "field": "replica_count", "error": "replica_count is a required field" }]
+}
+```
+
+The `errors` array is present only on validation failures, and can be `null` when the failure has no field level detail.
+
+| Status | `error_code`   | When                                                                                                                |
+| ------ | -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `401`  | `unauthorized` | Missing, malformed or unknown API token                                                                             |
+| `403`  | `forbidden`    | Inactive plan, a deploy on a service being deleted, or a plan without preview environments                          |
+| `404`  | `notfound`     | Unknown environment, service, deployment, custom domain, connection or commit                                       |
+| `409`  | `conflict`     | Deleting a protected service                                                                                        |
+| `422`  | `validation`   | Field validation failures, a missing or malformed body, duplicate secret keys, a missing image tag or chart version |
+| `500`  | `unknown`      | Unexpected failure. Message: `Something went wrong. Please try again later`                                         |
+| `500`  | `validation`   | A business rule violation - see below                                                                               |
+
+<Warning>
+  Check `error_code` rather than the HTTP status to decide whether a request was at fault. Some business rule
+  violations, such as `Ops Json is only supported for docker image source` or `Enable Preview is allowed only for
+  service type web`, are returned as `500` with `error_code: validation`.
+</Warning>
+
+### Always send a body
+
+Endpoints that accept a request body reject a zero byte body with `422`:
+
+```json
+{ "error_code": "validation", "message": "Please check your request body" }
+```
+
+Send at least `{}`. This matters most when deploying the latest commit on a git service's configured branch, where there
+is nothing else to send.
+
+### Rate limits
+
+There are no rate limits on the API today.
+
+## Asynchronous work
+
+Deployments, service deletes, secret writes and custom domain deploys all hand off to the provisioner. The HTTP response
+confirms only that the request was accepted and passed synchronous validation.
+
+Observe the real outcome by polling:
+
+- deployment state, with `GET /v1/deployments/{deploymentId}`
+- service state, with `GET /v1/environments/{envId}/services/{serviceId}`
+- custom domain state, with `GET /v1/environments/{envId}/services/{serviceId}/custom-domains`
+
+There are no idempotency keys. Retrying a deploy creates another deployment. Retrying a preview deploy for the same pull
+request reuses the existing preview service, indicated by `is_new: false`, but starts another rollout.
+
+## No list endpoints
+
+The API has no "list services" or "list deployments" endpoint. Keep the identifiers returned when you create a service
+or trigger a deployment, or read them from the console.
+
+## Next steps
+
+<Card title="Common workflows" icon="route" href="/api/workflows">
+  End to end recipes for creating and deploying a service, previewing pull requests, wiring services together and
+  attaching custom domains.
+</Card>
+
+The full endpoint reference, with request and response schemas and a live playground, is under **Endpoints** in the
+sidebar.
