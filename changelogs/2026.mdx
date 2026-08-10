@@ -4,9 +4,47 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="August 7, 2026">
+
+## New search bar
+
+Managing more than a handful of services in your environment?
+
+Checkout the new search bar in services section that lets you search for services by their name or branch name or anything you remember about them.
+
+![Search services](./images/2026/services-search.png)
+
+### New demo section 
+
+When users sign up for first time, they are greeted a new brand new demo section that takes them live through the core product UX in just 2 mins.
+
+- create environment 
+- deploy services 
+- repeat! 
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="July 29, 2026">
+
+## Bug fixes
+
+We sent a bunch of fixes this time, as reported by our users:
+
+- Fixed an issue where console refreshes adhoc when picking a repo in service form 
+- Hide the replica count when service is stopped and avoid showing "0/0" as count
+- Post service creation, showed an appropriate message to ask user to deploy with correct branch name
+- Allowed user to picker large cpu and memory rquirements for their service(s) under Scaling tab
+- Several other minor bug fixes and UI refinements throughout the console
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="July 28, 2026">
 
-# Environment cloning fixes
+## Environment cloning fixes
 
 A few fixes to make cloning an environment more reliable:
 
@@ -21,9 +59,7 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 <Update label="July 17, 2026">
 
-# Lots of little fixes (and some tighter access control)
-
-## Role-based access control across team and account management
+## Lots of little fixes (and some tighter access control)
 
 Team and account management endpoints now enforce **owner/admin roles**. Inviting or removing members, cancelling invitations, changing member roles, listing members and invitations, managing API tokens, registry and license-token access, and account domain changes are all now restricted to owners and admins. Members without the right role receive a clear permission error instead of the action going through.
 
