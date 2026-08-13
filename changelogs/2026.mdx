@@ -4,6 +4,51 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="August 12, 2026">
+
+## Passing secrets securely for Helm Charts
+
+Secrets section is now available for Helm Chart services too! 
+
+![Chart secrets](./images/2026/helm-secrets.png)
+
+So teams can now create secrets for Helm charts in the secrets editor. This will encrypt and save secrets in AWS parameter store (in the case of AWS) and save them as secret in Kubernetes cluster.
+
+And in values.yaml passed as setting in Helm chart service, the k8s secret can be referenced. Like this, for example with postgers chart: 
+
+  ```yaml
+  auth:
+    existingSecret: "db-adm69f6-secrets"
+    secretKeys:
+      adminPasswordKey: "postgrespassword"
+      userPasswordKey: "password"
+````
+
+  You can find the `existingSecret` name in secrets section.
+
+
+...instead of passing them in plaintext like this: 
+
+  ```yaml
+  auth:
+    postgresPassword: "mysecretpass"
+    username: "myuser"
+    password: "myuserpass"
+    database: "mydb"
+  ````
+
+
+
+### Custom domain for chart services 
+
+Say your helm chart exposes services to the public world. For eg - you're self-hosting Supabase which has a dashboard that must be exposed to the world. 
+
+New "Custom domain" section in the service dashboad will now provide instructions on how to expose this service.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="August 7, 2026">
 
 ## New search bar
