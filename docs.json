@@ -120,6 +120,7 @@
               "environment/services/workers",
               "environment/services/job",
               "environment/services/cronjob",
+              "environment/services/db-migrations",
               {
                 "group": "AWS services",
                 "pages": [

@@ -1,0 +1,554 @@
+---
+title: Running DB migrations
+description: Package your database migrations as a separate image and run them as an init job or a manual job service
+---
+
+Most applications need to apply database schema changes before the new version of the code starts serving traffic. In
+LocalOps, you do this in two steps:
+
+1. Package your migration command into a **separate Dockerfile** whose `CMD` runs the migration.
+2. Run that image either as an **init job** in [`ops.json`](/environment/services/ops-json#init-jobs) (automatic, on
+   every deployment) or as a **[job service](/environment/services/job)** you trigger manually.
+
+<Note>
+  Use a migration framework with versioned, linear migration files (Rails `ActiveRecord::Migration`, Django migrations,
+  Flyway, EF Core migrations, etc.,). To undo a change, add a new migration instead of editing an old one. This keeps
+  migrations replayable across all your environments - production, dedicated, self-hosted and PR previews.
+</Note>
+
+## Step 1: Create a Dockerfile for migrations
+
+Keep the migration image in its own directory in your repo, so you can point a job at it independently of your web
+service. For example `migrate/Dockerfile`.
+
+The only thing that makes it a "migration image" is its `CMD` - it runs migrations and exits, instead of starting a
+server.
+
+<Tabs>
+  <Tab title="Ruby on Rails">
+    ```docker migrate/Dockerfile
+    FROM ruby:3.3-slim
+
+    # Postgres client libs + build tools needed by the pg gem
+    RUN apt-get update -qq && apt-get install -y --no-install-recommends \
+      build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
+
+    WORKDIR /app
+
+    # Install gems first so this layer is cached across commits
+    COPY Gemfile Gemfile.lock ./
+    RUN bundle config set --local without 'development test' && bundle install
+
+    COPY . .
+
+    ENV RAILS_ENV=production
+
+    # Run migrations and exit
+    CMD ["bundle", "exec", "rails", "db:migrate"]
+    ```
+
+    Rails builds `DATABASE_URL` from the environment, or you can read the individual variables in
+    `config/database.yml`:
+
+    ```yaml config/database.yml
+    production:
+      adapter: postgresql
+      encoding: unicode
+      host: <%= ENV['DB_HOST'] %>
+      port: <%= ENV['DB_PORT'] %>
+      database: <%= ENV['DB_NAME'] %>
+      username: <%= ENV['DB_USER'] %>
+      password: <%= ENV['DB_PASS'] %>
+    ```
+
+    <Tip>
+      If you also seed data, use a wrapper command like `bundle exec rails db:migrate db:seed` - or keep seeding as a
+      second init job so you can control the order and see separate logs.
+    </Tip>
+
+  </Tab>
+  <Tab title="Python (Django)">
+    ```docker migrate/Dockerfile
+    FROM python:3.12-slim
+
+    ENV PYTHONDONTWRITEBYTECODE=1
+    ENV PYTHONUNBUFFERED=1
+
+    WORKDIR /app
+
+    COPY requirements.txt ./
+    RUN pip install --no-cache-dir -r requirements.txt
+
+    COPY . .
+
+    # Run migrations and exit
+    CMD ["python", "manage.py", "migrate", "--noinput"]
+    ```
+
+    Your `settings.py` should read database credentials from environment variables, so the same image works in every
+    environment:
+
+    ```python django_app/settings.py
+    DATABASES = {
+      'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ.get('DB_NAME'),
+        'USER': os.environ.get('DB_USER'),
+        'PASSWORD': os.environ.get('DB_PASS'),
+        'HOST': os.environ.get('DB_HOST'),
+        'PORT': os.environ.get('DB_PORT'),
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab title="Java (Flyway)">
+    Flyway needs only your versioned SQL files, so the migration image can be small - no application jar required.
+
+    ```docker migrate/Dockerfile
+    FROM flyway/flyway:11-alpine
+
+    # Versioned migrations, eg. V1__create_tasks.sql, V2__add_index.sql
+    COPY src/main/resources/db/migration /flyway/sql
+
+    # Run migrations and exit
+    CMD ["migrate"]
+    ```
+
+    Flyway reads `FLYWAY_URL`, `FLYWAY_USER` and `FLYWAY_PASSWORD` from the environment. The simplest option is to add
+    those three keys as [secrets](/environment/services/secrets) for the service - then `CMD ["migrate"]` needs no
+    override.
+
+    When the credentials come from `exports` as separate `DB_*` variables (as they do in
+    [PR previews](/use-cases/ephemeral)), compose the JDBC URL at run time by wrapping the command in a shell:
+
+    ```json ops.json
+    {
+      "init": [
+        {
+          "id": "migrate",
+          "prefix": "migrate",
+          "cmd": "sh -c 'flyway -url=jdbc:postgresql://$DB_HOST:$DB_PORT/$DB_NAME -user=$DB_USER -password=$DB_PASS migrate'",
+          "once": true
+        }
+      ]
+    }
+    ```
+
+    <Tip>
+      Using Spring Boot? Keep `spring.flyway.enabled=false` in your app config and let this job own migrations, so your
+      web containers don't each try to migrate on boot.
+    </Tip>
+
+    If you prefer running Flyway through Maven or the Spring Boot jar instead of the Flyway CLI image, use a JDK base
+    image and set `CMD ["mvn", "flyway:migrate"]` or `CMD ["java", "-jar", "app.jar", "--migrate-only"]`.
+
+  </Tab>
+  <Tab title=".NET (EF Core)">
+    EF Core migrations are bundled into a self-contained executable at build time, so the runtime image needs neither
+    the SDK nor the `dotnet-ef` tool.
+
+    ```docker migrate/Dockerfile
+    FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+
+    WORKDIR /src
+
+    RUN dotnet tool install --global dotnet-ef
+    ENV PATH="$PATH:/root/.dotnet/tools"
+
+    COPY . .
+    RUN dotnet restore
+
+    # Produce a standalone migrations bundle
+    RUN dotnet ef migrations bundle \
+      --project MyApp/MyApp.csproj \
+      --self-contained -r linux-x64 \
+      -o /src/efbundle
+
+    FROM mcr.microsoft.com/dotnet/runtime:8.0
+
+    WORKDIR /app
+    COPY --from=build /src/efbundle ./efbundle
+
+    # Run migrations and exit
+    CMD ["./efbundle"]
+    ```
+
+    The bundle picks up the connection string the same way your app does - from
+    `ConnectionStrings__DefaultConnection`. Add that key as a [secret](/environment/services/secrets) for the service and
+    `CMD ["./efbundle"]` needs no override.
+
+    When the credentials arrive as separate `DB_*` variables from `exports` (as they do in
+    [PR previews](/use-cases/ephemeral)), compose the connection string at run time by wrapping the command in a shell:
+
+    ```json ops.json
+    {
+      "init": [
+        {
+          "id": "migrate",
+          "prefix": "migrate",
+          "cmd": "sh -c './efbundle --connection \"Host=$DB_HOST;Port=$DB_PORT;Database=$DB_NAME;Username=$DB_USER;Password=$DB_PASS\"'",
+          "once": true
+        }
+      ]
+    }
+    ```
+
+    <Warning>
+      Don't call `Database.Migrate()` on application startup. Every container would run it, they race with each other,
+      and a failed migration crashes your web service instead of failing the deployment cleanly.
+    </Warning>
+
+  </Tab>
+</Tabs>
+
+<Note>
+  Commit the migration Dockerfile to the same repo as your service. Paths inside the Dockerfile (`COPY ...`) must
+  resolve against the build context used for your service. Check the build logs of your first deployment if a `COPY`
+  fails.
+</Note>
+
+## Step 2A: Run migrations automatically as an init job
+
+This is the recommended option for most services. Declare the migration as an
+[init job](/environment/services/ops-json#init-jobs) in `ops.json`. LocalOps runs init jobs **before** your main service
+starts, and fails the deployment if a job fails - so a broken migration never leaves you with new code running against
+an old schema. See [Zero downtime deployments](#zero-downtime-deployments) below for exactly where this lands in a
+rollout.
+
+```json ops.json
+{
+  "init": [
+    {
+      "type": "job",
+      "id": "migrate",
+      "prefix": "migrate",
+      "cmd": "bundle exec rails db:migrate",
+      "once": true
+    }
+  ]
+}
+```
+
+### Always set `once: true` for migrations
+
+By default, an init job runs once per copy/pod of your service. If your service runs 3 containers, your migration would
+run 3 times in parallel. Setting `once: true` makes the job run **exactly once across all pods** for that deployment.
+
+<Warning>
+  When `once` is set, `cmd` must be a fully qualified command (eg., `bundle exec rails db:migrate`), not just arguments.
+  LocalOps overrides the `ENTRYPOINT` in your Dockerfile with a custom entrypoint script to get this behaviour.
+</Warning>
+
+### Using the dedicated migration image
+
+If you built a separate migration image and pushed it to a registry, point the init job at it with `image`:
+
+```json ops.json
+{
+  "init": [
+    {
+      "id": "migrate",
+      "prefix": "migrate",
+      "image": "<your-registry>/myapp-migrate:1.4.0",
+      "cmd": "flyway migrate",
+      "once": true
+    }
+  ]
+}
+```
+
+When you omit `image`, LocalOps uses the same image it just built from the latest commit in your branch/PR. That is
+usually what you want - the migrations are then always in lockstep with the code being deployed.
+
+### Environment variables
+
+You don't need to repeat your database credentials in `ops.json`. Init jobs automatically receive, in this order:
+
+1. Secrets and variables you added for the service in the LocalOps console UI
+2. `exports` from cloud `dependencies` (eg., an [RDS instance](/environment/services/aws/rds))
+3. `exports` from `previews.dependencies` when running as part of a PR preview
+4. Anything in the init job's own `env` block
+
+So if your [RDS dependency](/environment/services/aws/rds) exports `DB_HOST`, `DB_NAME` and friends, the migration job
+can read them directly.
+
+### Migrations in PR preview environments
+
+For [ephemeral PR previews](/use-cases/ephemeral), declare an ephemeral database under `previews.dependencies` and the
+migration as an init job. LocalOps provisions the database first, then runs the init job - so every PR preview comes up
+with a freshly migrated schema.
+
+```json ops.json
+{
+  "previews": {
+    "dependencies": {
+      "db": [
+        {
+          "id": "db",
+          "prefix": "db",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DB_HOST": "$host",
+            "DB_PORT": "$port",
+            "DB_USER": "$user",
+            "DB_NAME": "$db",
+            "DB_PASS": "$pass"
+          }
+        }
+      ]
+    }
+  },
+  "init": [
+    {
+      "id": "migrate",
+      "prefix": "migrate",
+      "cmd": "python manage.py migrate --noinput",
+      "once": true
+    }
+  ]
+}
+```
+
+## Step 2B: Run migrations manually as a job service
+
+Sometimes you don't want migrations tied to a deployment - for example a long-running backfill, a one-off data
+migration, or a production change that needs a maintenance window and an explicit human "go".
+
+In that case, create a [job service](/environment/services/job):
+
+<Steps>
+  <Step title="Add a new service" icon="plus">
+    In your environment, go to the **Services** tab and click **+ Add new service**. Pick **Job** as the kind.
+  </Step>
+  <Step title="Point at the migration Dockerfile" icon="docker">
+    Set **Dockerfile location** to the directory holding your migration Dockerfile (eg., `migrate`). See [Dockerfile
+    location](/environment/services/create#dockerfile-location).
+  </Step>
+  <Step title="Leave the run command empty" icon="terminal">
+    The `CMD` in your migration Dockerfile is already the migration command, so nothing to override. If you reuse your
+    main app's Dockerfile instead, set **Run command** to eg., `bundle exec rails db:migrate`.
+  </Step>
+  <Step title="Add secrets" icon="key">
+    Add the database [secrets](/environment/services/secrets) the migration needs. If the database is provisioned via
+    `ops.json` dependencies, its `exports` are injected automatically.
+  </Step>
+  <Step title="Deploy to run" icon="play">
+    Click **Deploy** to run the job. The container comes up, runs migrations and shuts down. Deploy again whenever you
+    want to re-run it.
+  </Step>
+</Steps>
+
+<Tip>
+  Turn **off** automatic deployments for this service so a push to your branch doesn't silently run a migration. Then
+  each run is an explicit, audited action from the LocalOps console.
+</Tip>
+
+You can create any number of job services - eg., one for schema migrations and another for a heavy data backfill.
+
+## Zero downtime deployments
+
+Deployments in LocalOps use Kubernetes' default rolling update strategy. When you deploy a new version, LocalOps does
+**not** stop your current containers first. Instead, it brings up new pods alongside the ones already serving traffic.
+Each new pod only starts receiving requests once it passes its
+[health checks](/environment/services/ops-json#health-checks), and only after the new pods are healthy and serving does
+Kubernetes terminate the old ones. If the new pods never become healthy, the old ones keep serving and nothing is taken
+away from your users.
+
+Migrations declared as init jobs run inside this rollout, in the **new** pods, before any new application container
+starts. The sequence for a single deployment is:
+
+1. You push a commit (or click Deploy). LocalOps builds the new image.
+2. New pods are scheduled. In each new pod, the init containers run first - this is where your migration `cmd` runs.
+   With `once: true`, exactly one of those new pods actually performs the migration; the others wait for it to finish.
+3. Once the migration exits successfully, the new pods start your application container.
+4. Health checks run against the new pods. As each becomes healthy, it starts taking traffic.
+5. Only then does Kubernetes terminate the old pods, which were serving the previous version the whole time.
+
+The consequence worth internalising is in steps 3 and 4: **your old containers are still serving traffic against the
+already-migrated schema.** There is a window - from the moment the migration commits until the last old pod is
+terminated - where the previous version of your code is talking to the new database schema. This is exactly why
+migrations need to be backward compatible with the version being replaced.
+
+<Warning>
+  A migration that renames or drops a column, or adds a `NOT NULL` column without a default, will break the old pods
+  during this window - even though the deployment itself "succeeded". Split such changes across two deployments: first
+  deploy an additive, backward compatible migration (add the new column, write to both), then in a later deployment
+  remove what is no longer read.
+</Warning>
+
+If a migration fails, the init container fails, the new pods never become ready, and the deployment is marked failed.
+Your old pods keep serving the previous version - so a bad migration costs you a failed deployment, not an outage. Do
+note that whatever the failed migration already committed to the database stays committed, so keep migrations small and
+let your framework's transaction handling do its job.
+
+## Backfilling data
+
+A schema migration changes the shape of a table and finishes in seconds. A backfill rewrites existing rows - possibly
+millions of them - and can run for minutes or hours. They deserve different treatment.
+
+**Run backfills as a [job service](#step-2b-run-migrations-manually-as-a-job-service) you trigger manually, not as an
+init job.** An init job is the wrong home for a backfill because:
+
+- It blocks the rollout. Your deployment - and everything your team queues behind it - waits for every row to be
+  rewritten.
+- It runs on every deployment. A one-time backfill would re-run on each deploy forever, until someone remembers to
+  delete it from `ops.json`.
+- It couples two unrelated failures. A backfill that dies halfway fails the deployment, even though the schema change
+  itself was fine.
+- You can't pace it. As a job service you decide when it runs, watch it, stop it, and run it again.
+
+### The expand, backfill, contract sequence
+
+Keep the schema change and the data change in separate deployments, with the backfill run in between. For adding a
+`region` column derived from an existing `country_code`:
+
+<Steps>
+  <Step title="Deploy 1 - expand" icon="arrows-left-right">
+    An init job migration adds `region` as a **nullable** column. Your new code writes `region` on every insert and
+    update, but still reads `country_code`. Old pods, which know nothing about `region`, keep working - the column is
+    nullable, so their inserts are still valid.
+  </Step>
+  <Step title="Run the backfill job" icon="play">
+    Trigger the backfill job service to fill `region` for pre-existing rows. Nothing is waiting on it, so it can take as
+    long as it needs. Re-run it until it reports zero rows remaining.
+  </Step>
+  <Step title="Deploy 2 - contract" icon="check">
+    Now that every row has a value, deploy code that reads `region`, and an init job migration that adds the `NOT NULL`
+    constraint and drops `country_code`.
+  </Step>
+</Steps>
+
+Each deployment stays backward compatible with the version it replaces, which is what makes the whole sequence safe
+during a rolling update. See [Zero downtime deployments](#zero-downtime-deployments).
+
+### Write backfills in batches
+
+Never rewrite a whole table in one statement - it holds locks, bloats your write-ahead log and cannot be resumed if the
+container is restarted. Loop over small batches instead:
+
+<Tabs>
+  <Tab title="Ruby on Rails">
+    ```ruby lib/tasks/backfill.rake
+    namespace :backfill do
+      task region: :environment do
+        batch_size = Integer(ENV.fetch('BATCH_SIZE', '1000'))
+        pause = Float(ENV.fetch('BATCH_SLEEP', '0.1'))
+        total = 0
+
+        User.where(region: nil).in_batches(of: batch_size) do |batch|
+          total += batch.update_all('region = country_code')
+          Rails.logger.info("backfill:region - #{total} rows done")
+          sleep pause
+        end
+
+        Rails.logger.info("backfill:region - complete, #{total} rows")
+      end
+    end
+    ```
+
+    ```docker backfill/Dockerfile
+    # ... same base and dependency install as your migration image ...
+    CMD ["bundle", "exec", "rake", "backfill:region"]
+    ```
+
+  </Tab>
+  <Tab title="Python (Django)">
+    ```python users/management/commands/backfill_region.py
+    import time
+
+    from django.core.management.base import BaseCommand
+    from django.db.models import F
+
+    from users.models import User
+
+
+    class Command(BaseCommand):
+        help = 'Backfill User.region from country_code'
+
+        def add_arguments(self, parser):
+            parser.add_argument('--batch-size', type=int, default=1000)
+            parser.add_argument('--sleep', type=float, default=0.1)
+
+        def handle(self, *args, **options):
+            total = 0
+
+            while True:
+                ids = list(
+                    User.objects.filter(region__isnull=True).values_list('pk', flat=True)[: options['batch_size']]
+                )
+                if not ids:
+                    break
+
+                total += User.objects.filter(pk__in=ids).update(region=F('country_code'))
+                self.stdout.write(f'backfill_region: {total} rows done')
+                time.sleep(options['sleep'])
+
+            self.stdout.write(f'backfill_region: complete, {total} rows')
+    ```
+
+    ```docker backfill/Dockerfile
+    # ... same base and dependency install as your migration image ...
+    CMD ["python", "manage.py", "backfill_region", "--batch-size", "1000"]
+    ```
+
+  </Tab>
+</Tabs>
+
+Both examples share the four properties a good backfill needs:
+
+- **Idempotent** - the query selects only rows that still need work (`region IS NULL`), so a second run is cheap and a
+  partial run is not a problem.
+- **Resumable** - each batch commits on its own. If the container is restarted, the next run picks up exactly where it
+  stopped. No bookkeeping table needed.
+- **Throttled** - the pause between batches keeps database CPU and replication lag under control while your web service
+  is still serving live traffic against the same database.
+- **Observable** - it logs progress as it goes, so you can watch it in Grafana instead of wondering whether it hung.
+
+### Running it
+
+Create the backfill as its own [job service](#step-2b-run-migrations-manually-as-a-job-service) - separate from your
+schema migration job - so the two have independent logs and independent run history. Point **Dockerfile location** at
+`backfill`, turn **off** automatic deployments, and click **Deploy** each time you want a run. Because the job is
+idempotent, "resume" and "run again" are the same action.
+
+<Tip>
+  Keep the backfill job service around after the backfill finishes. A subsequent run is a no-op that costs one query,
+  and it's a cheap way to confirm nothing new slipped through while the expand deployment was live.
+</Tip>
+
+<Warning>
+  A backfill runs against the same database your live service is using. Start with a small `BATCH_SIZE` and a longer
+  pause, watch database CPU and replication lag on the [metrics dashboard](/environment/monitoring/metrics), then raise
+  the batch size if there is headroom.
+</Warning>
+
+## Which option should I use?
+
+|                    | Init job (`once: true`)                             | Job service                                    |
+| ------------------ | --------------------------------------------------- | ---------------------------------------------- |
+| When it runs       | Automatically, before every deployment              | Only when you trigger a deployment for the job |
+| Blocks the rollout | Yes - deployment fails if the migration fails       | No - independent of your web service           |
+| Good for           | Routine, fast schema migrations                     | Backfills, risky changes, maintenance windows  |
+| Ordering           | Guaranteed to finish before the main service starts | You control it                                 |
+
+A common setup is both: routine migrations as an init job, plus a separate job service for occasional backfills.
+
+## Viewing logs
+
+Migration output shows up in the built-in Grafana dashboard. Go to the **Monitor** tab of your environment to sign in to
+Grafana, and filter logs for the `app-services` namespace. See [Logs](/environment/monitoring/logs) for more.
+
+## Good practices
+
+- **Make migrations backward compatible.** During a rollout, old and new containers run side by side for a short while.
+  Add columns as nullable, backfill separately, and only drop columns in a later deployment. See
+  [Zero downtime deployments](#zero-downtime-deployments).
+- **Keep migrations fast.** Init jobs block the deployment. Move long backfills to a separate job service - see
+  [Backfilling data](#backfilling-data).
+- **Make them idempotent and re-runnable.** Init jobs run on every deployment, so a no-op second run must be safe. Most
+  migration frameworks handle this with a schema-version table.
+- **Avoid running migrations from your app's entrypoint.** Doing so runs them once per container, races between copies,
+  and slows down every restart. Use `once: true` init jobs instead.
+- **Don't mix DDL and long transactions.** Some databases take heavy locks; prefer separate, small migrations.
