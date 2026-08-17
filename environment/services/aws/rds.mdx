@@ -87,13 +87,13 @@ Arguments you can add in each instance object above:
     Setting this to `false` is not recommended since keeping the same master password forever is less secure than
     letting RDS rotate it. Regardless of which mode you pick, use `$password` and `$dsn` in `exports` to fetch the
     current password and connection string - LocalOps resolves them transparently in both cases.
+
 11. `parameters` - Optional list of DB parameter group settings to apply to the RDS instance. Each entry is an object
     with the following keys:
     - `name` - Name of the parameter (e.g., `shared_preload_libraries`, `max_connections`). Must be a valid parameter
       for the chosen `engine` and `version`. Refer to the
       [Postgres parameter docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Appendix.PostgreSQL.CommonDBATasks.Parameters.html)
-      or
-      [MySQL parameter docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithParamGroups.html)
+      or [MySQL parameter docs](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_WorkingWithParamGroups.html)
       for available names.
     - `value` - Value to set for the parameter. Always specified as a string.
     - `apply_method` - When the change should take effect. Required. One of `immediate` or `pending-reboot`. Use
@@ -101,6 +101,7 @@ Arguments you can add in each instance object above:
 
     When `parameters` is provided, LocalOps creates a dedicated DB parameter group for the instance and attaches it.
     Adding, updating or removing entries on subsequent deployments updates the parameter group in-place.
+
 12. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
     the properties of the RDS instance provisioned. See below for available properties.
 
@@ -118,9 +119,9 @@ Available properties of the RDS instance to use in `exports`:
    string to access the database `$dbName`.
 7. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by RDS in AWS
    secret manager. Your code has to read the password from the AWS secret manager using this `$passwordArn`.
-8. `$password` - The plaintext password of the user `$username`. LocalOps resolves the password from AWS Secrets
-   Manager and injects it directly as an environment variable, so your code can use it without calling the Secrets
-   Manager API. Treat this value as a secret.
+8. `$password` - The plaintext password of the user `$username`. LocalOps resolves the password from AWS Secrets Manager
+   and injects it directly as an environment variable, so your code can use it without calling the Secrets Manager API.
+   Treat this value as a secret.
 9. `$dsn` - Ready-to-use database connection string for the instance, in the standard URL form for the chosen engine
    (e.g., `postgres://$username:$password@$address:5432/$dbName` for Postgres or
    `mysql://$username:$password@$address:3306/$dbName` for MySQL). Convenient for libraries/ORMs that accept a single
@@ -154,19 +155,22 @@ Ingress:
 
 So only workload/containers/servers from within your environment's VPC can access the RDS instance.
 
+This means you cannot point `psql` or a desktop SQL client at the database directly from your laptop. To get an
+interactive SQL shell, or to reach the database from a GUI client, connect from inside the cluster using the LocalOps
+CLI - see [Connect to your database](/cli/usage#connect-to-your-database).
+
 ### Reading Database password:
 
 By default (`managed_password: true`), RDS creates and encrypts a unique random password and stores it in your AWS
 account's Secrets Manager, and rotates it automatically. You can capture the ARN of this secret under an environment
 variable like shown above and fetch the password value using AWS SDK.
 
-If you set `managed_password: false`, LocalOps generates a cryptographically unique string and uses it as the RDS
-master password instead. This password is not rotated, which is why `managed_password: true` is the recommended
-setting.
+If you set `managed_password: false`, LocalOps generates a cryptographically unique string and uses it as the RDS master
+password instead. This password is not rotated, which is why `managed_password: true` is the recommended setting.
 
-In both modes, you can use `$password` to receive the resolved plaintext password as an environment variable, or
-`$dsn` for a ready-to-use connection string - LocalOps handles the resolution for you regardless of which mode the
-instance was created in.
+In both modes, you can use `$password` to receive the resolved plaintext password as an environment variable, or `$dsn`
+for a ready-to-use connection string - LocalOps handles the resolution for you regardless of which mode the instance was
+created in.
 
 When `managed_password: true`, RDS rotates the password periodically, so the `$password` and `$dsn` values injected at
 container start can go stale between rotations. Also export `$passwordArn` and have your code fall back to reading the
@@ -263,8 +267,8 @@ corresponding LocalOps environment using Amazon VPC peering.
 VPC peering lets you connect two VPCs from same or different AWS account/region so that resources in one VPC can access
 the resources in another VPC like they belong to the same network.
 
-Ping us on slack / write to us at support@localops.co / [book a call](https://go.localops.co/meet-engineer) with our team
-to guide you on this.
+Ping us on slack / write to us at support@localops.co / [book a call](https://go.localops.co/meet-engineer) with our
+team to guide you on this.
 
 ### 2. Add DB endpoint and credentials as secrets
 

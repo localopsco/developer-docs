@@ -107,8 +107,145 @@ Then exec into the pod:
 kubectl exec -it <pod-name> -n app-services -- /bin/sh
 ```
 
+<Note>Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails, try `/bin/bash`.</Note>
+
+#### Shell into a pod using k9s
+
+[k9s](#monitor-pods-with-k9s) gets you the same shell in fewer keystrokes, and it saves you from having to know the pod
+name up front. Launch it against your services with `k9s -n app-services`, press `/` and type part of your service name
+to filter the list, move to the pod you want with the arrow keys, and press `s`. k9s opens an interactive shell inside
+that pod - the equivalent of the `kubectl exec` command above. If the pod runs more than one container (say your service
+plus a sidecar), press `Enter` on the pod first to list its containers, highlight the one you want, and press `s` there
+instead.
+
+When you are done, type `exit` or press `Ctrl-d` to close the shell and drop back into the k9s pod list, and `Esc` to
+back out of any k9s view. Unlike a hand-written `kubectl exec`, k9s tries a few common shells rather than a single
+hard-coded path, so the `/bin/sh` versus `/bin/bash` guesswork above usually doesn't come up.
+
+<Warning>
+  A shell opened this way is a shell on a live container serving traffic. Anything you change inside it is lost the next
+  time the pod restarts or is replaced by a [deployment](/environment/services/deploy) - use it to inspect and debug,
+  and make lasting changes through your repo instead.
+</Warning>
+
+### Connect to your database
+
+Databases provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
+[ephemeral preview databases](/environment/services/ops-json#isolated-databases) - live in the private subnets of your
+environment's VPC and only accept connections from inside it. There is no public endpoint to point `psql` at from your
+laptop, by design. So you connect from a throwaway pod inside the cluster instead.
+
 <Note>
-  Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails, try `/bin/bash`.
+  We are working on shortcut commands in the `ops` CLI to do all of this in a single step - one command to open a SQL
+  shell on your environment's database, and one to proxy it to `localhost` for your favourite GUI client. Until those
+  ship, use the `kubectl` recipes below.
 </Note>
 
-You can also use k9s to get a shell — select a pod and press `s` to open a shell session directly.
+#### First, export `$dsn`
+
+Before you connect to anything, export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that
+LocalOps assembles for you - host, port, username, password and database name already filled in and correctly escaped:
+
+```json ops.json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "app-db",
+          "prefix": "appdb",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DATABASE_URL": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy once, and every container of that service has `DATABASE_URL` in its environment. **Use this variable in the
+commands below instead of typing out `<USERNAME>`, `<PASSWORD>` and `<HOST>` yourself.** Hand-assembling the URL means
+looking up four separate values, escaping any special characters in the password correctly, and leaving credentials in
+your shell history - and it breaks silently the moment RDS rotates the password. Reading `$dsn` off a pod avoids all of
+that.
+
+List your pods, then read the variable off any pod belonging to that service:
+
+```sh
+kubectl get pods -n app-services
+```
+
+```sh
+kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL
+```
+
+<Warning>
+  `$dsn` embeds the database password, so handle the value exactly as you would a password. Don't paste it into tickets,
+  Slack messages or shared docs, don't commit it, and don't save it into a GUI client's connection profile - read it
+  from a pod each time you need it. When `managed_password` is `true`, RDS rotates the password on its own schedule, so
+  a copied URL is both a leaked secret and a value with an expiry date.
+</Warning>
+
+#### Open a psql / mysql shell
+
+Start a one-shot client pod in the same namespace, passing the DSN straight from the running pod into the new one. The
+URL never lands in your shell history, and the client pod is deleted the moment you exit:
+
+```sh
+kubectl run db-client -n app-services -it --rm --restart=Never --image=postgres:17-alpine \
+  --env="PGURL=$(kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL)" \
+  -- sh -c 'psql "$PGURL"'
+```
+
+MySQL is the same command with a different image and client. Use `mysqlsh`, which ships in the official `mysql:8` image
+and accepts the connection URL as-is - `--sql` starts it in SQL mode so it behaves like the classic `mysql` prompt:
+
+```sh
+kubectl run db-client -n app-services -it --rm --restart=Never --image=mysql:8 \
+  --env="DBURL=$(kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL)" \
+  -- sh -c 'mysqlsh --sql "$DBURL"'
+```
+
+Reach for `mysqlsh` rather than the classic `mysql` client here, which takes discrete `-h` / `-u` / `-p` flags and no
+URL. Pick a client image whose major version matches your server too - an older client against a newer server can fail
+on newer authentication methods.
+
+If you haven't exported `$dsn` yet, you can still connect by spelling the credentials out and reading each value from
+`kubectl exec -n app-services <pod-name> -- printenv | grep -i db`, but adding `$dsn` to `exports` is a one-line change
+that makes every command above shorter and safer.
+
+#### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
+
+If you would rather use a desktop SQL client, relay the private database endpoint to your laptop. Start a small TCP
+forwarder pod inside the cluster, then port-forward to it:
+
+```sh
+kubectl run rds-proxy -n app-services --image=alpine/socat --port=5432 -- \
+  tcp-listen:5432,fork,reuseaddr tcp-connect:<HOST>:5432
+```
+
+```sh
+kubectl port-forward -n app-services pod/rds-proxy 5432:5432
+```
+
+Leave that running and point your GUI client at `localhost:5432`. Take the username, password and database name from the
+`DATABASE_URL` you read above rather than looking them up separately - most clients let you paste the whole URL and fill
+the fields in for you. Use SSL mode `require` rather than `verify-full`, since the certificate is issued for the
+database's real hostname, not `localhost`. Delete the forwarder when you're done:
+
+```sh
+kubectl delete pod rds-proxy -n app-services
+```
+
+Ephemeral [preview databases](/environment/services/ops-json#isolated-databases) run as pods in the cluster rather than
+as RDS instances, so they need no forwarder at all - `kubectl port-forward -n app-services pod/<db-pod> 5432:5432`
+reaches them directly.
+
+<Warning>
+  Every recipe on this page connects you to a real database. On production environments, prefer read-only queries and
+  keep in mind that anything you run has immediate effect - there is no staging step between your prompt and your
+  customers' data.
+</Warning>
