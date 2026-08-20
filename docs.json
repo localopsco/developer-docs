@@ -127,6 +127,7 @@
                 "pages": [
                   "environment/services/aws/s3",
                   "environment/services/aws/rds",
+                  "environment/services/aws/aurora",
                   "environment/services/aws/elasti-cache",
                   "environment/services/aws/opensearch",
                   "environment/services/aws/sqs",
