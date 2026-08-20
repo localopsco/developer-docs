@@ -465,16 +465,18 @@ AWS. Please get in touch with us at help\@localops.co if you need anything speci
 1. **Amazon S3 buckets** - for static object storage (files, pictures, etc.,).
    [Learn more](/environment/services/aws/s3)
 2. **Amazon RDS Instances** - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
-3. **Amazon Elastic cache clusters** - for caching, queues, pub/sub.
+3. **Amazon Aurora clusters** - for Postgres/MySQL compatible databases with auto-scaling capacity and a separate read
+   endpoint. [Learn more](/environment/services/aws/aurora)
+4. **Amazon Elastic cache clusters** - for caching, queues, pub/sub.
    [Learn more](/environment/services/aws/elasti-cache)
-4. **Amazon SNS topics** - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
-5. **Amazon SQS queues** - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)
+5. **Amazon SNS topics** - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
+6. **Amazon SQS queues** - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)
 
 ### Configured for production use, by default
 
 All cloud resources are configured with production-grade security:
 
-- **Encryption at rest**: Enabled by default, for all data storage services (S3, RDS, Elastic Cache)
+- **Encryption at rest**: Enabled by default, for all data storage services (S3, RDS, Aurora, Elastic Cache)
 - **Network isolation**: Resources are deployed within your environment's VPC wherever applicable.
 - **Private only**: Resources are deployed for private access only, from within your environment's VPC wherever
   applicable.
@@ -973,6 +975,28 @@ Here's a comprehensive `ops.json` example:
             "MY_RDS_INSTANCE_USERNAME": "$username",
             "MY_RDS_INSTANCE_PASSWORD_ARN": "$passwordArn",
             "MY_RDS_INSTANCE_DB_NAME": "$dbName"
+          }
+        }
+      ]
+    },
+    "aurora": {
+      "clusters": [
+        {
+          "id": "orders",
+          "prefix": "orders",
+          "engine": "aurora-postgres",
+          "version": "16.4",
+          "serverless": {
+            "min_acu": 0.5,
+            "max_acu": 16
+          },
+          "replicas": 1,
+          "exports": {
+            "MY_AURORA_CLUSTER_DSN": "$dsn",
+            "MY_AURORA_CLUSTER_READER_DSN": "$readerDsn",
+            "MY_AURORA_CLUSTER_ADDRESS": "$address",
+            "MY_AURORA_CLUSTER_PORT": "$port",
+            "MY_AURORA_CLUSTER_DB_NAME": "$dbName"
           }
         }
       ]
