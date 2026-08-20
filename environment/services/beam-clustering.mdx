@@ -1,0 +1,117 @@
+---
+title: BEAM clustering
+description:
+  Cluster your Elixir/Erlang services with a single ops.json key so nodes discover each other over distributed
+  Erlang.
+---
+
+Elixir and Erlang applications often need their nodes to find each other — to hand work to a peer, to run a distributed
+registry, or to broadcast over Phoenix PubSub. On LocalOps, you get there by adding one key to `ops.json` in each
+service that should be part of the cluster.
+
+<Note>
+  This page assumes your service is already deploying on LocalOps. If you're still packaging your app, start with the
+  [Elixir/Phoenix guide](/guides/languages/elixir).
+</Note>
+
+## Enable it
+
+```json ops.json
+{
+  "beam_cluster_id": "myapp"
+}
+```
+
+Use the same value in every service you want clustered together — your web service, your worker, your internal RPC
+service. LocalOps then labels all their pods alike and creates a shared headless service whose DNS returns every member
+pod's IP.
+
+## What LocalOps injects
+
+Two environment variables are injected into your pods:
+
+| Variable                 | Value                                          |
+| ------------------------ | ---------------------------------------------- |
+| `LOPS_BEAM_CLUSTER_NAME` | `myapp`                                        |
+| `LOPS_BEAM_CLUSTER_DNS`  | `myapp-cluster.app-services.svc.cluster.local` |
+
+`app-services` is the Kubernetes namespace all your services run in within the environment.
+
+## Wire up libcluster
+
+Read the DNS name from the environment — don't hardcode it.
+
+```elixir config/runtime.exs
+config :libcluster,
+  topologies: [
+    k8s: [
+      strategy: Cluster.Strategy.Kubernetes.DNS,
+      config: [
+        service: System.get_env("LOPS_BEAM_CLUSTER_DNS"),
+        application_name: "myapp",
+        polling_interval: 5_000
+      ]
+    ]
+  ]
+```
+
+<Warning>
+  Always read `LOPS_BEAM_CLUSTER_DNS` at run time. The DNS name is derived from your `beam_cluster_id` and differs
+  between your production environment and each preview environment, so a hardcoded value will silently fail to find
+  peers somewhere.
+</Warning>
+
+## Your release config stays yours
+
+LocalOps does not set `RELEASE_DISTRIBUTION`, `RELEASE_NODE`, or `RELEASE_COOKIE`. Set these yourself — typically
+`RELEASE_DISTRIBUTION=name` with `RELEASE_NODE=myapp@${POD_IP}`. `POD_IP` is already injected into every service, so you
+can reference it directly.
+
+<Warning>
+  Use the same `RELEASE_COOKIE` across every service in the cluster, or nodes will refuse each other. Add it as a
+  [secret](/environment/services/secrets) with the same value in each service.
+</Warning>
+
+## Things to know
+
+### It takes effect on your next build
+
+LocalOps snapshots `ops.json` when it builds your service, so redeploying your current image won't pick up a newly added
+`beam_cluster_id`. Push the change and let it build.
+
+### Preview environments get their own cluster
+
+A preview environment forms its own separate cluster and never joins your production cluster. This is deliberate —
+otherwise a preview would share your cookie and be able to call into live nodes. See
+[ephemeral databases and services for pull request previews](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews).
+
+### Job and cron services join too
+
+[Job](/environment/services/job) and [cron](/environment/services/cronjob) services join the cluster as well, so
+scheduled and one-off tasks can call into the running cluster. If you'd rather they stayed out, just leave
+`beam_cluster_id` out of those services' `ops.json`.
+
+<Warning>
+  Two caveats when they are in. Each run is a join-then-leave, which is a cluster-wide event — `:global` locks the
+  cluster on every `nodeup`, and Horde/Swarm rebalance their registries — so a frequent schedule means constant churn.
+  And those pods join as full peers, able to run code on any other node.
+</Warning>
+
+### Processes with their own image stay out
+
+A [`processes`](/environment/services/ops-json#configuring-processes) entry that specifies its own `image` stays out of
+the cluster, since it isn't running your app.
+
+## Verify it worked
+
+Get a shell on a running pod (see [Shell into a pod](/cli/usage#shell-into-a-pod)), open a remote console, and run:
+
+```elixir
+Node.list()
+```
+
+It should return your peers. The cluster's name is in `LOPS_BEAM_CLUSTER_NAME`.
+
+To watch inter-node distribution traffic over time, see the
+[Erlang & Elixir instrumentation guide](/environment/services/instrument/erlang) — the Erlang-Distribution Grafana
+dashboard it links is built for exactly this.

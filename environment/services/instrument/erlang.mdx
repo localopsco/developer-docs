@@ -75,3 +75,9 @@ dashboards covering memory, schedulers, processes, ETS, and more, that you can i
 To import: in Grafana, go to **Dashboards → New → Import**, enter the dashboard ID (or upload the JSON), and select
 your LocalOps Prometheus data source. You'll see scheduler utilization, run queues, memory by allocator type, process
 counts, and ETS table stats. Your custom application metrics (`emails_sent_total`, etc.) can be charted alongside.
+
+<Tip>
+  The Erlang-Distribution dashboard is most useful when your nodes are actually clustered. See
+  [BEAM clustering](/environment/services/beam-clustering) for how to cluster your Elixir/Erlang services with a single
+  `ops.json` key.
+</Tip>
