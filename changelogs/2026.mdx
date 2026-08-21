@@ -4,6 +4,40 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="August 20, 2026">
+
+## Restrict who can reach your services with IP allowlists
+
+![Service IP whitelist](./images/2026/service-ip-whitelist.png)
+
+Some of your services shouldn't be open to the whole internet. An internal admin panel, a partner-facing API, a
+staging web app — you want these reachable only from your office network, your VPN, or a specific customer's egress
+IPs.
+
+There's now a **Security** tab in the service dashboard where you can do exactly that.
+
+Add the IP addresses and CIDR ranges that should be allowed to reach the service, and everything else gets turned away
+at the ingress:
+
+```
+203.0.113.0/24
+198.51.100.7
+10.20.0.0/16
+```
+
+Leave the list empty and the service stays open to all IPs — which is how every service behaves today, so nothing
+changes until you explicitly add entries.
+
+### Preview services and cloned environments
+
+Preview services inherit the allowlist from their parent service automatically, so a locked-down service stays locked
+down across its previews. Cloning an environment also copies each service's allowlist to the clone. Neither needs
+anything from you.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="August 12, 2026">
 
 ## Passing secrets securely for Helm Charts
