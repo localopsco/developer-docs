@@ -13,6 +13,7 @@ Using service configuration `ops.json`, you can spin up
 - Crons
 - Health checks
 - Cloud dependencies like S3, RDS, SQS queue, etc
+- Volumes - scratch space, durable disks and secret files
 - Sidecar containers
 - and more..
 
@@ -297,6 +298,191 @@ pod's IP, then injects `LOPS_BEAM_CLUSTER_NAME` and `LOPS_BEAM_CLUSTER_DNS` so `
 
 See [BEAM clustering](/environment/services/beam-clustering) for the full guidance — wiring up `libcluster`, the release
 config you still own, and how previews, jobs and crons behave.
+
+## Volumes
+
+Your service may need scratch space to write temporary files, a durable disk that survives restarts, or a set of
+certificate files mounted into a well known path.
+
+Declare them once under the top-level `volumes` key and LocalOps provisions them for you. There are no Kubernetes
+manifests to write and no storage class to pick. The same declaration works identically on AWS and GCP, and it drives
+both the service running in your environment and the [Helm chart you generate](/use-cases/self-hosted) for customers.
+
+```json
+{
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    { "name": "run", "mount_path": "/var/run", "kind": "mem" },
+    {
+      "name": "tmpfiles",
+      "mount_path": "/app/src/tmpfiles",
+      "kind": "disk",
+      "size": "10Gi",
+      "expose": true
+    },
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls",
+      "expose": true
+    }
+  ]
+}
+```
+
+Volumes apply to the service itself. Every container that runs for the service gets the mounts, including the
+[init jobs](/environment/services/ops-json#init-jobs) that run before it starts.
+
+### Volume arguments
+
+| Key           | Required      | Description                                                                                                                                                                    |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | Yes           | Your identifier for the volume. Lowercase letters, numbers and `-`, starting and ending with a letter or number, at most 59 characters, unique within the service. This is also the key you will see in the generated Helm chart, so pick something you are happy reading later. |
+| `mount_path`  | Yes           | Absolute path inside the container. Must be unique within the service.                                                                                                          |
+| `kind`        | Yes           | One of `mem`, `disk` or `secret`. See [Kinds of volumes](/environment/services/ops-json#kinds-of-volumes) below.                                                                 |
+| `size`        | `disk` only   | A quantity like `10Gi` or `512Mi`. Required for `disk`. Optional on `mem`, where it changes the behaviour. Not accepted on `secret`.                                             |
+| `secret_name` | `secret` only | Name of the Kubernetes secret to mount. Not accepted on other kinds.                                                                                                            |
+| `expose`      | No            | Publishes one setting for this volume into the generated chart's `values.yaml`. Valid on `disk` and `secret` only.                                                              |
+
+### Kinds of volumes
+
+#### `mem` - scratch space
+
+Scratch space that is discarded when the container goes away. This is what you want for paths like `/tmp` and
+`/var/run` when your image runs with a read-only root filesystem.
+
+By default it is backed by the disk of the machine your service runs on. Add a `size` and you get a RAM disk instead.
+
+```json
+{
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    { "name": "cache", "mount_path": "/cache", "kind": "mem", "size": "256Mi" }
+  ]
+}
+```
+
+The first one is backed by the machine's disk. The second is a 256Mi RAM disk.
+
+<Warning>
+  A RAM disk counts against the memory limit of your service. Size it deliberately - files written there consume the
+  same memory your application code needs.
+</Warning>
+
+#### `disk` - durable storage
+
+Storage that survives restarts and rescheduling. `size` is required.
+
+Disks are encrypted, are created in the same zone as the service that uses them, and can be grown later by raising
+`size` and deploying again.
+
+Each replica of your service gets its own disk and keeps it across restarts, rather than all replicas sharing one.
+
+```json
+{
+  "volumes": [
+    { "name": "tmpfiles", "mount_path": "/app/src/tmpfiles", "kind": "disk", "size": "10Gi" }
+  ]
+}
+```
+
+Disks are available on [web](/environment/services/web), [internal](/environment/services/internal) and
+[worker](/environment/services/workers) services.
+
+<Note>
+  Disks are not available on [cron](/environment/services/cronjob) or [job](/environment/services/job) services, where
+  each run gets a fresh short-lived container and durable storage does not mean much. Declaring one there fails the
+  deployment.
+</Note>
+
+#### `secret` - mount a secret as files
+
+Mounts an existing Kubernetes secret into the container as read-only files. Each key in the secret becomes a file
+inside `mount_path`.
+
+```json
+{
+  "volumes": [
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls"
+    }
+  ]
+}
+```
+
+A secret with a key called `cert` shows up at `/etc/temporal/tls/cert`.
+
+This works on every service type. The secret must already exist in the same environment - LocalOps mounts it, it does
+not create it for you. To pass values as environment variables instead, use
+[secrets](/environment/services/secrets).
+
+### Volumes in the generated Helm chart
+
+The same `ops.json` drives the [Helm chart you generate](/use-cases/self-hosted) from your environment, so your service
+behaves the same when a customer installs it in their own EKS or GKE cluster.
+
+Volumes marked `expose: true` show up in the chart's `values.yaml` under `persistence`, keyed by the `name` you chose.
+Volumes you don't mark do not appear there at all - they are still mounted, they are just not something the person
+installing the chart can change.
+
+```yaml
+pronto:
+  replicaCount: 3
+  persistence:
+    # /app/src/tmpfiles
+    'tmpfiles':
+      size: 10Gi
+    # /etc/temporal/tls
+    'temporal-tls':
+      secretName: ''
+```
+
+A `disk` exposes its `size`:
+
+```bash
+helm install suprsend ./chart --set pronto.persistence.tmpfiles.size=50Gi
+```
+
+A `secret` exposes its `secretName` and defaults to blank. The mount is only created when a name is supplied, so a
+stock install neither mounts it nor requires the secret to exist. That matters when the feature backed by that secret
+is turned off for a given customer. To enable it:
+
+```bash
+helm install suprsend ./chart --set pronto.persistence.temporal-tls.secretName=my-tls
+```
+
+Mount paths and kinds stay fixed. They are part of how your app works, rather than something whoever installs the chart
+should be changing - `size` and `secretName` are the only settings exposed.
+
+<Note>
+  `expose` only affects the generated chart. In a LocalOps environment, a declared `secret` volume is always mounted,
+  because you control both the `ops.json` and the secret.
+</Note>
+
+### Validation
+
+The `volumes` block is checked before anything is deployed. A problem fails the deployment with a message naming the
+entry, instead of leaving you with a container that won't start. These are rejected:
+
+- A missing or malformed `name`, a duplicate `name`, or a duplicate `mount_path`
+- A `mount_path` that is not an absolute path
+- A missing or unknown `kind`
+- A `disk` without a `size`, or a `size` that is not a valid quantity like `10Gi`
+- A `disk` on a `cron` or `job` service
+- A `secret` without a `secret_name`, or a `secret` with a `size`
+- `secret_name` on a `mem` or `disk` volume
+- `expose` on a `mem` volume
+
+<Note>
+  Volumes apply to the service's own containers. They are not added to additional processes declared under
+  [`processes`](/environment/services/ops-json#configuring-processes).
+</Note>
+
+<Note>Volumes are supported on AWS and GCP today. Azure support is coming soon.</Note>
 
 ## Automatic provisioning of cloud resources
 
@@ -881,6 +1067,23 @@ Here's a comprehensive `ops.json` example:
 ```json
 {
   "beam_cluster_id": "myapp",
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    {
+      "name": "tmpfiles",
+      "mount_path": "/app/src/tmpfiles",
+      "kind": "disk",
+      "size": "10Gi",
+      "expose": true
+    },
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls",
+      "expose": true
+    }
+  ],
   "init": [
     {
       "id": "migrate",
