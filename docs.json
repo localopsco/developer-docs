@@ -73,7 +73,8 @@
                   "accounts/azure"
                 ]
               },
-              "accounts/connect-github"
+              "accounts/connect-github",
+              "accounts/connect-gitlab"
             ]
           },
           {
