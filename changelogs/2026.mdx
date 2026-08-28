@@ -4,6 +4,70 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="August 28, 2026">
+
+## Persist data, mount certs, and grab scratch space
+
+Your service may need scratch space for temporary files, a durable disk that survives restarts, or certificate files
+mounted at a well known path. Declare all three as volumes in `ops.json` and LocalOps mounts them for you:
+
+```json
+{
+  "volumes": [
+    { "name": "scratch", "mount_path": "/tmp/scratch", "kind": "mem", "size": "512Mi" },
+    { "name": "data", "mount_path": "/var/lib/data", "kind": "disk", "size": "10Gi", "expose": true },
+    { "name": "certs", "mount_path": "/etc/certs", "kind": "secret", "secret_name": "my-tls-certs" }
+  ]
+}
+```
+
+`mem` is scratch discarded at shutdown — add a `size` to make it a RAM disk. `disk` is encrypted, persists across
+restarts and gets one disk per replica. `secret` mounts a Kubernetes secret read-only, each key becoming a file. Disk
+volumes aren't available on cron and job services, and support covers AWS and GCP.
+
+The same declaration drives the Helm chart you generate for customers. Volumes marked `expose: true` land in the
+chart's `values.yaml` under `persistence`, so whoever installs it can size the disk or point at their own secret:
+
+```yaml
+api:
+  persistence:
+    # /var/lib/data
+    'data':
+      size: 10Gi
+```
+
+Everything else stays fixed — mount paths and kinds are part of how your app works, not an install-time choice.
+[Read the docs](/environment/services/ops-json#volumes).
+
+## Let your Elixir nodes find each other
+
+Phoenix PubSub, a distributed registry, or any coordinated work across replicas needs your BEAM nodes to discover each
+other first. Add one field to `ops.json`, using the same value in every service that belongs together:
+
+```json
+{
+  "beam_cluster_id": "myapp"
+}
+```
+
+Each service gets `LOPS_BEAM_CLUSTER_NAME` and `LOPS_BEAM_CLUSTER_DNS` injected at runtime — point libcluster's
+Kubernetes DNS strategy at the latter, and set `RELEASE_DISTRIBUTION`, `RELEASE_NODE` and `RELEASE_COOKIE` yourself.
+Rebuild to apply, and note that previews cluster separately from production.
+[Read the docs](/environment/services/beam-clustering).
+
+## Run VMs inside your services on GCP
+
+Firecracker microVMs, Android emulators, CI runners that build and boot disk images — workloads that need a real VM
+couldn't run on LocalOps before, because the underlying nodes didn't permit a guest hypervisor.
+
+Now you can enable nested virtualization on a GCP node group from the Node groups section, picking an Intel-based
+machine type, then assign the services that need VMs to it. KVM is available inside the container, so anything
+shelling out to QEMU/KVM behaves as it would on a bare VM.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="August 20, 2026">
 
 ## Restrict who can reach your services with IP allowlists
