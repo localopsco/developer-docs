@@ -4,6 +4,36 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 2, 2026">
+
+## Monorepos fully supported with custom Build Context path
+
+![Build context](./images/2026/buildcontext.png)
+
+In favor of simplicity, teams host all their code within a single git repository. And organize subsystems within multiple sub-directories like client/, server/, ui/ etc., each having their own Dockerifle.
+
+So far, you can give a custom Dockerfile path while creating services - like client/Dockerfile, server/Dockerfile and so on. 
+
+From today, you can also set a custom build context path to inform our plaform where to trigger `docker build` from. Either from the root of the git repo (default option), or from any other path.
+
+```
+docker build -f <DockerfilePath> -t ImageName:ImageTag <BuildContextPath>
+```
+
+## EKS control plane logs visible within Grafana
+
+EKS clusters managed via LocalOps platform will now start to log all its control plane logs to CloudWatch which are in turn visible in the in-built grafana dashboard.
+
+So your advanced users get to understand how the underlying cluster works, whenever needed.
+
+### Other enhancements:
+1. Increased project description length to let teams describe their projects in full 
+2. Several security enhancements to zero out CVEs the 3rd party docker images
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="August 28, 2026">
 
 ## Persist data, mount certs, and grab scratch space
