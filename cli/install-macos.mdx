@@ -22,18 +22,29 @@ brew install kubectl
 
 ### Install LocalOps CLI
 
-To quickly install or update the LocalOps CLI on your macOS distribution, run the following command in your terminal:
+To quickly install or update the LocalOps CLI on your macOS distribution, run one of the following commands in your
+terminal:
 
-```bash
-bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
-```
+<Tabs>
+  <Tab title="Homebrew" default>
+    ```bash
+    brew install localopsco/tap/ops
+    ```
+  </Tab>
+  <Tab title="Install script">
+    ```bash
+    bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
+    ```
 
-This script downloads and installs the `ops` CLI to your system's PATH.
+    This script downloads and installs the `ops` CLI to your system's PATH.
 
-<Note>You may be prompted to enter your password during the installation process.</Note>
+    <Note>You may be prompted to enter your password during the installation process.</Note>
 
-You can view the source code for the installation script on
-[GitHub](https://github.com/localopsco/lops-cli/blob/main/install.sh).
+    You can view the source code for the installation script on
+    [GitHub](https://github.com/localopsco/lops-cli/blob/main/install.sh).
+
+  </Tab>
+</Tabs>
 
 ## Download Binaries
 
