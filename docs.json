@@ -243,7 +243,8 @@
             "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "api/getting-started"
+              "api/getting-started",
+              "api/workflows"
             ]
           },
           {
