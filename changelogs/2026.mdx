@@ -4,6 +4,73 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 7, 2026">
+
+## CLI v3.0.4 — Shell into a service and tail its logs with one command
+
+Getting a shell inside a running service used to mean pointing your kubeconfig at the environment, listing pods in
+`app-services` and picking the right one before `kubectl exec`. Two new CLI commands cut that down to a single line
+each.
+
+```sh
+ops connect --env "ProdUS" --svc web
+```
+
+opens a shell in your service, so you can do ad-hoc script runs or drop into your Django / Rails / other application
+shell.
+
+```sh
+ops logs --env "ProdUS" --svc web
+```
+
+tails logs in real time. You don't have to open Grafana just to watch what a service is printing.
+
+#### New shell tab
+
+![Build context](./images/2026/CLI-release-screenshot.png)
+
+You can find these commands to copy-paste, from the new "Shell" tab in Service dashboard.
+
+#### Install/upgrade to v3.0.4
+
+Both commands ship in CLI **v3.0.4**. If you're new to the CLI, install it with Homebrew and sign in:
+
+```sh
+brew install localopsco/tap/ops
+ops login
+```
+
+Already have `ops`? Upgrade in place:
+
+```sh
+brew update && brew upgrade ops
+```
+
+Both commands take more options than shown here, like `-i`. See the [CLI docs](/cli/usage) for the full list, and for
+the rest of the commands.
+
+## Cluster your BEAM nodes across regions
+
+Elixir services running in separate regional environments can now form a single cluster. Keep `beam_cluster_id`
+identical everywhere, and give each environment its own record in a private DNS zone that every regional VPC can
+resolve:
+
+```json ops.json
+{
+  "beam_cluster_id": "b2bapp",
+  "beam_dns_name": "mumbai.mesh.acmecorp.internal"
+}
+```
+
+LocalOps creates that record and keeps it pointed at the environment's pods as they scale, restart and get
+rescheduled. Add one libcluster topology per region — the local nodes via `LOPS_BEAM_CLUSTER_DNS`, each peer region by
+its `beam_dns_name` — and the mesh forms. The regional VPCs still need routable connectivity between them.
+[Read the docs](/environment/services/beam-clustering#cluster-across-regions).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="September 2, 2026">
 
 ## Monorepos fully supported with custom Build Context path
