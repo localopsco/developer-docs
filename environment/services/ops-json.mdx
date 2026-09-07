@@ -296,8 +296,18 @@ pod's IP, then injects `LOPS_BEAM_CLUSTER_NAME` and `LOPS_BEAM_CLUSTER_DNS` so `
 }
 ```
 
-See [BEAM clustering](/environment/services/beam-clustering) for the full guidance — wiring up `libcluster`, the release
-config you still own, and how previews, jobs and crons behave.
+To cluster across regions, also set `beam_dns_name` to a record in a private DNS zone shared by all your regional VPCs.
+LocalOps keeps that record pointed at the environment's pods so nodes in other regions can find them.
+
+```json
+{
+  "beam_cluster_id": "b2bapp",
+  "beam_dns_name": "mumbai.mesh.acmecorp.internal"
+}
+```
+
+See [BEAM clustering](/environment/services/beam-clustering) for the full guidance — wiring up `libcluster`, clustering
+across regions, the release config you still own, and how previews, jobs and crons behave.
 
 ## Volumes
 
