@@ -3,12 +3,18 @@ title: Migrate from Fly.io
 description: Step-by-step guide to migrate your Fly.io application and Postgres database to AWS using LocalOps
 ---
 
-<div style={{ position: 'relative', paddingBottom: '66.58%', height: 0 }}>
+<div style={{ position: "relative", paddingBottom: "66.58%", height: 0 }}>
   <iframe
     src="https://www.loom.com/embed/0bf8ad4510bf401aa429924ad2364a51"
     frameBorder="0"
     allowFullScreen
-    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+    }}
   />
 </div>
 
@@ -16,8 +22,9 @@ Migrating from Fly.io to AWS gives you access to the full AWS ecosystem, better 
 pricing. LocalOps provides a similar developer experience with git-push deployments and automatic scaling.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Fly.io app to AWS. [Schedule a migration
-  call](https://go.localops.co/fly) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Fly.io app to AWS.
+  [Schedule a migration call](https://go.localops.co/fly) and we'll handle
+  everything for you.
 </Tip>
 
 ## What you get after migration
@@ -47,8 +54,8 @@ pricing. LocalOps provides a similar developer experience with git-push deployme
 </Steps>
 
 <Info>
-  Need help? [Schedule a migration call](https://go.localops.co/fly) and our engineers will assist you through the
-  entire process.
+  Need help? [Schedule a migration call](https://go.localops.co/fly) and our
+  engineers will assist you through the entire process.
 </Info>
 
 ## Step 1: Set up LocalOps environment
@@ -57,17 +64,20 @@ Before migrating, you need a LocalOps environment running on AWS.
 
 <Steps>
   <Step title="Create LocalOps account" icon="user">
-    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't already.
+    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't
+    already.
   </Step>
   <Step title="Connect AWS account" icon="cloud">
-    Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
+    Follow the [AWS connection guide](/accounts/aws) to connect your AWS
+    account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
-    environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region.
+    See [Create new environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
-    Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
+    Create a new service and connect your GitHub repository. See [Create new
+    service](/environment/services/create).
   </Step>
 </Steps>
 
@@ -144,8 +154,8 @@ flyctl sftp get /tmp/backup.dump -a your-postgres-app-name
 ```
 
 <Warning>
-  For large databases, the backup and restore process may take significant time. Plan for a maintenance window if you
-  need zero data loss during migration.
+  For large databases, the backup and restore process may take significant time.
+  Plan for a maintenance window if you need zero data loss during migration.
 </Warning>
 
 ### 3.2 Create RDS database in your LocalOps environment VPC
@@ -232,8 +242,9 @@ DATABASE_PASSWORD=your-db-password
 ```
 
 <Tip>
-  If you used `ops.json` to create RDS, the password is stored in AWS Secrets Manager. Use the AWS SDK to retrieve it
-  using the `DATABASE_PASSWORD_ARN` environment variable.
+  If you used `ops.json` to create RDS, the password is stored in AWS Secrets
+  Manager. Use the AWS SDK to retrieve it using the `DATABASE_PASSWORD_ARN`
+  environment variable.
 </Tip>
 
 ## Step 4: Migrate Fly Redis (Upstash) to ElastiCache
@@ -265,14 +276,14 @@ Update your connection code:
 
 ```javascript
 // Before (Upstash on Fly.io)
-import { Redis } from '@upstash/redis';
+import { Redis } from "@upstash/redis";
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL,
   token: process.env.UPSTASH_REDIS_REST_TOKEN,
 });
 
 // After (ElastiCache)
-import Redis from 'ioredis';
+import Redis from "ioredis";
 const redis = new Redis({
   host: process.env.REDIS_HOST,
   port: process.env.REDIS_PORT,
@@ -351,7 +362,8 @@ Each environment gets its own Grafana instance with pre-built dashboards for inf
 custom dashboards to visualize application-specific metrics and logs.
 
 <Info>
-  Learn more about [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics), and
+  Learn more about [logs](/environment/monitoring/logs),
+  [metrics](/environment/monitoring/metrics), and
   [alerts](/environment/monitoring/alerts).
 </Info>
 
@@ -367,11 +379,29 @@ custom dashboards to visualize application-specific metrics and logs.
 | Fly Metrics           | [Built-in metrics](/environment/monitoring/metrics)          |
 | Fly Logs              | [Built-in logging](/environment/monitoring/logs)             |
 
+## Fly CLI equivalents
+
+The [LocalOps CLI](/cli/install-macos) covers the two `flyctl` commands you probably ran most often:
+
+| Fly CLI           | LocalOps CLI                                        |
+| ----------------- | --------------------------------------------------- |
+| `fly logs`        | [`ops logs`](/cli/usage#stream-logs-from-a-service) |
+| `fly ssh console` | [`ops connect`](/cli/usage#shell-into-a-service)    |
+
+```sh
+ops logs --env production --svc web
+ops connect --env production --svc web
+```
+
+Both take the environment and service names you see in your dashboard, so there is no machine id to look up first. When
+a service runs several pods, `ops logs` reads all of them and prefixes each line with the pod it came from.
+
 ## Get help with your migration
 
 <Tip>
-  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Fly.io setup to
-  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  **White-glove migration**: Don't want to do this yourself? Our engineers will
+  migrate your entire Fly.io setup to AWS—including database migration,
+  environment variables, and custom domains. [Schedule a migration call
   now](https://go.localops.co/fly).
 </Tip>
 

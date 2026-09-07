@@ -20,6 +20,17 @@ Grafana dashboard can be opened from Monitoring tab, in Environment page.
 Logs are collected and kept organised under a Kubernetes namespace. Your application is hosted in a specific Kubernetes
 namespace using which you can filter and see logs under Explore section.
 
+### Tail logs from your terminal
+
+Grafana is the place to search and correlate logs across your environment. When you just want to watch one service as it
+runs - during a deploy, or while reproducing a bug - `ops logs` streams the same output straight to your terminal:
+
+```sh
+ops logs --env staging --svc api
+```
+
+See [CLI usage](/cli/usage#stream-logs-from-a-service) for the full set of options.
+
 ### Custom dashboards
 
 Grafana installation in each environment comes with pre-built dashboards to see infrastructure/system metrics. You can

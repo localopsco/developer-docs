@@ -11,9 +11,11 @@ LocalOps, you do this in two steps:
    every deployment) or as a **[job service](/environment/services/job)** you trigger manually.
 
 <Note>
-  Use a migration framework with versioned, linear migration files (Rails `ActiveRecord::Migration`, Django migrations,
-  Flyway, EF Core migrations, etc.,). To undo a change, add a new migration instead of editing an old one. This keeps
-  migrations replayable across all your environments - production, dedicated, self-hosted and PR previews.
+  Use a migration framework with versioned, linear migration files (Rails
+  `ActiveRecord::Migration`, Django migrations, Flyway, EF Core migrations,
+  etc.,). To undo a change, add a new migration instead of editing an old one.
+  This keeps migrations replayable across all your environments - production,
+  dedicated, self-hosted and PR previews.
 </Note>
 
 ## Step 1: Create a Dockerfile for migrations
@@ -203,9 +205,9 @@ server.
 </Tabs>
 
 <Note>
-  Commit the migration Dockerfile to the same repo as your service. Paths inside the Dockerfile (`COPY ...`) must
-  resolve against the build context used for your service. Check the build logs of your first deployment if a `COPY`
-  fails.
+  Commit the migration Dockerfile to the same repo as your service. Paths inside
+  the Dockerfile (`COPY ...`) must resolve against the build context used for
+  your service. Check the build logs of your first deployment if a `COPY` fails.
 </Note>
 
 ## Step 2A: Run migrations automatically as an init job
@@ -236,8 +238,9 @@ By default, an init job runs once per copy/pod of your service. If your service 
 run 3 times in parallel. Setting `once: true` makes the job run **exactly once across all pods** for that deployment.
 
 <Warning>
-  When `once` is set, `cmd` must be a fully qualified command (eg., `bundle exec rails db:migrate`), not just arguments.
-  LocalOps overrides the `ENTRYPOINT` in your Dockerfile with a custom entrypoint script to get this behaviour.
+  When `once` is set, `cmd` must be a fully qualified command (eg., `bundle exec
+  rails db:migrate`), not just arguments. LocalOps overrides the `ENTRYPOINT` in
+  your Dockerfile with a custom entrypoint script to get this behaviour.
 </Warning>
 
 ### Using the dedicated migration image
@@ -320,29 +323,34 @@ In that case, create a [job service](/environment/services/job):
 
 <Steps>
   <Step title="Add a new service" icon="plus">
-    In your environment, go to the **Services** tab and click **+ Add new service**. Pick **Job** as the kind.
+    In your environment, go to the **Services** tab and click **+ Add new
+    service**. Pick **Job** as the kind.
   </Step>
   <Step title="Point at the migration Dockerfile" icon="docker">
-    Set **Dockerfile location** to the directory holding your migration Dockerfile (eg., `migrate`). See [Dockerfile
+    Set **Dockerfile location** to the directory holding your migration
+    Dockerfile (eg., `migrate`). See [Dockerfile
     location](/environment/services/create#dockerfile-location).
   </Step>
   <Step title="Leave the run command empty" icon="terminal">
-    The `CMD` in your migration Dockerfile is already the migration command, so nothing to override. If you reuse your
-    main app's Dockerfile instead, set **Run command** to eg., `bundle exec rails db:migrate`.
+    The `CMD` in your migration Dockerfile is already the migration command, so
+    nothing to override. If you reuse your main app's Dockerfile instead, set
+    **Run command** to eg., `bundle exec rails db:migrate`.
   </Step>
   <Step title="Add secrets" icon="key">
-    Add the database [secrets](/environment/services/secrets) the migration needs. If the database is provisioned via
-    `ops.json` dependencies, its `exports` are injected automatically.
+    Add the database [secrets](/environment/services/secrets) the migration
+    needs. If the database is provisioned via `ops.json` dependencies, its
+    `exports` are injected automatically.
   </Step>
   <Step title="Deploy to run" icon="play">
-    Click **Deploy** to run the job. The container comes up, runs migrations and shuts down. Deploy again whenever you
-    want to re-run it.
+    Click **Deploy** to run the job. The container comes up, runs migrations and
+    shuts down. Deploy again whenever you want to re-run it.
   </Step>
 </Steps>
 
 <Tip>
-  Turn **off** automatic deployments for this service so a push to your branch doesn't silently run a migration. Then
-  each run is an explicit, audited action from the LocalOps console.
+  Turn **off** automatic deployments for this service so a push to your branch
+  doesn't silently run a migration. Then each run is an explicit, audited action
+  from the LocalOps console.
 </Tip>
 
 You can create any number of job services - eg., one for schema migrations and another for a heavy data backfill.
@@ -372,10 +380,11 @@ terminated - where the previous version of your code is talking to the new datab
 migrations need to be backward compatible with the version being replaced.
 
 <Warning>
-  A migration that renames or drops a column, or adds a `NOT NULL` column without a default, will break the old pods
-  during this window - even though the deployment itself "succeeded". Split such changes across two deployments: first
-  deploy an additive, backward compatible migration (add the new column, write to both), then in a later deployment
-  remove what is no longer read.
+  A migration that renames or drops a column, or adds a `NOT NULL` column
+  without a default, will break the old pods during this window - even though
+  the deployment itself "succeeded". Split such changes across two deployments:
+  first deploy an additive, backward compatible migration (add the new column,
+  write to both), then in a later deployment remove what is no longer read.
 </Warning>
 
 If a migration fails, the init container fails, the new pods never become ready, and the deployment is marked failed.
@@ -406,17 +415,19 @@ Keep the schema change and the data change in separate deployments, with the bac
 
 <Steps>
   <Step title="Deploy 1 - expand" icon="arrows-left-right">
-    An init job migration adds `region` as a **nullable** column. Your new code writes `region` on every insert and
-    update, but still reads `country_code`. Old pods, which know nothing about `region`, keep working - the column is
+    An init job migration adds `region` as a **nullable** column. Your new code
+    writes `region` on every insert and update, but still reads `country_code`.
+    Old pods, which know nothing about `region`, keep working - the column is
     nullable, so their inserts are still valid.
   </Step>
   <Step title="Run the backfill job" icon="play">
-    Trigger the backfill job service to fill `region` for pre-existing rows. Nothing is waiting on it, so it can take as
-    long as it needs. Re-run it until it reports zero rows remaining.
+    Trigger the backfill job service to fill `region` for pre-existing rows.
+    Nothing is waiting on it, so it can take as long as it needs. Re-run it
+    until it reports zero rows remaining.
   </Step>
   <Step title="Deploy 2 - contract" icon="check">
-    Now that every row has a value, deploy code that reads `region`, and an init job migration that adds the `NOT NULL`
-    constraint and drops `country_code`.
+    Now that every row has a value, deploy code that reads `region`, and an init
+    job migration that adds the `NOT NULL` constraint and drops `country_code`.
   </Step>
 </Steps>
 
@@ -514,14 +525,16 @@ schema migration job - so the two have independent logs and independent run hist
 idempotent, "resume" and "run again" are the same action.
 
 <Tip>
-  Keep the backfill job service around after the backfill finishes. A subsequent run is a no-op that costs one query,
-  and it's a cheap way to confirm nothing new slipped through while the expand deployment was live.
+  Keep the backfill job service around after the backfill finishes. A subsequent
+  run is a no-op that costs one query, and it's a cheap way to confirm nothing
+  new slipped through while the expand deployment was live.
 </Tip>
 
 <Warning>
-  A backfill runs against the same database your live service is using. Start with a small `BATCH_SIZE` and a longer
-  pause, watch database CPU and replication lag on the [metrics dashboard](/environment/monitoring/metrics), then raise
-  the batch size if there is headroom.
+  A backfill runs against the same database your live service is using. Start
+  with a small `BATCH_SIZE` and a longer pause, watch database CPU and
+  replication lag on the [metrics dashboard](/environment/monitoring/metrics),
+  then raise the batch size if there is headroom.
 </Warning>
 
 ## Which option should I use?
@@ -539,6 +552,16 @@ A common setup is both: routine migrations as an init job, plus a separate job s
 
 Migration output shows up in the built-in Grafana dashboard. Go to the **Monitor** tab of your environment to sign in to
 Grafana, and filter logs for the `app-services` namespace. See [Logs](/environment/monitoring/logs) for more.
+
+Grafana collects output from every container, including init jobs and job services, so it is the place to read a
+migration's own output.
+
+To watch what happens next - whether your service actually starts against the new schema - the
+[LocalOps CLI](/cli/install-macos) streams the running service straight to your terminal:
+
+```sh
+ops logs --env staging --svc web
+```
 
 ## Good practices
 

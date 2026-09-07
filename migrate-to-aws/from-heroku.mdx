@@ -229,6 +229,13 @@ const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@
 3. Test your application endpoints
 4. Update your DNS to point to the new LocalOps environment
 
+If you would rather watch the rollout from your terminal, the way you did with `heroku logs --tail`, install the
+[LocalOps CLI](/cli/install-macos) and stream the service directly:
+
+```sh
+ops logs --env production --svc web
+```
+
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
 
 ## Built-in observability
@@ -278,6 +285,25 @@ custom dashboards to visualize application-specific metrics and logs.
 | Papertrail / Logentries | [Built-in logging](/environment/monitoring/logs)             |
 | New Relic / Scout       | [Built-in metrics](/environment/monitoring/metrics)          |
 | Scheduler               | [Cron jobs](/environment/services/cronjob)                   |
+
+## Heroku CLI equivalents
+
+The [LocalOps CLI](/cli/install-macos) covers the two commands you probably ran most often:
+
+| Heroku CLI           | LocalOps CLI                                        |
+| -------------------- | --------------------------------------------------- |
+| `heroku logs --tail` | [`ops logs`](/cli/usage#stream-logs-from-a-service) |
+| `heroku run bash`    | [`ops connect`](/cli/usage#shell-into-a-service)    |
+| `heroku config`      | `ops connect --env <env> --svc <svc> -- printenv`   |
+
+```sh
+ops logs --env production --svc web
+ops connect --env production --svc web
+```
+
+Unlike `heroku run`, `ops connect` opens a shell on a pod that is already serving traffic rather than starting a fresh
+one-off dyno. Anything you change there is lost when the pod is replaced, so use it to inspect and debug. Run one-off
+tasks as a [job service](/environment/services/job) instead.
 
 ## Get help with your migration
 
