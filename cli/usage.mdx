@@ -2,7 +2,8 @@
 title: Usage
 ---
 
-LocalOps CLI `ops` can be used to get shell access to the underlying Kubernetes cluster of an environment.
+LocalOps CLI `ops` can be used to read logs from your services and to get shell access to them and to the underlying
+Kubernetes cluster of an environment.
 
 ```sh
 LocalOps CLI
@@ -12,10 +13,14 @@ Usage:
 
 Available Commands:
   completion        Generate the autocompletion script for the specified shell
+  connect           Open a shell in a service's pod
+  get-token         Print a Kubernetes ExecCredential for an app environment cluster
   help              Help about any command
   login             Login to LocalOps Account
   logout            Logout of LocalOps Account
-  update-kubeconfig Update current context to environment Kubernetes cluster
+  logs              Show logs from a service running in an environment
+  project           Show and switch the active project
+  update-kubeconfig Update current context to app environment kubernetes cluster
   version           LocalOps CLI Version
 
 Flags:
@@ -24,11 +29,18 @@ Flags:
 Use "ops [command] --help" for more information about a command.
 ```
 
-To get shell access, you need to
+For the two things you reach for most often - reading logs and opening a shell - `ops logs` and `ops connect` talk to
+your environment directly. You need neither `kubectl` nor the pod and namespace names:
 
-1. Login to your LocalOps account
-2. Use `ops` CLI to set Kubernetes context of `kubectl` CLI to point at the environment's Kubernetes cluster.
-3. Then use `kubectl` to inspect the cluster.
+1. Login to your LocalOps account with `ops login`
+2. Run `ops logs` or `ops connect` against an environment and service by name
+
+To inspect anything else in the cluster - deployments, jobs, secrets, events - point `kubectl` at the environment
+instead:
+
+1. Login to your LocalOps account with `ops login`
+2. Set the Kubernetes context of `kubectl` to point at the environment's cluster with `ops update-kubeconfig`
+3. Then use `kubectl` to inspect the cluster
 
 ### Login to LocalOps
 
@@ -37,6 +49,90 @@ Login to LocalOps account using your email address.
 ```sh
 ops login
 ```
+
+### Stream logs from a service
+
+`ops logs` streams logs from a service straight to your terminal:
+
+```sh
+ops logs --env staging --svc api
+```
+
+`--env` and `--svc` take the environment and service **names** shown in your dashboard, or their ids. `--svc` is
+required; `--env` falls back to the `ENV` environment variable when you leave it out.
+
+The stream stays open and prints new lines as they arrive - press `Ctrl-C` to stop. Pass `--follow=false` for a snapshot
+that prints and exits.
+
+When a service runs more than one pod, all of them are read at once and every line is prefixed with the pod it came
+from, so you can tell replicas apart:
+
+```
+[api-7d9f8b6c4-2xk9p] GET /health 200
+[api-7d9f8b6c4-mn4vt] GET /orders 201
+```
+
+| Flag                | Default | Description                                                                  |
+| ------------------- | ------- | ---------------------------------------------------------------------------- |
+| `-e, --env`         | `$ENV`  | Environment name or id                                                       |
+| `-s, --svc`         | -       | Service name or id (required)                                                |
+| `-f, --follow`      | `true`  | Keep the stream open and print new lines as they arrive                      |
+| `-n, --tail`        | `100`   | Number of recent lines to show. `0` shows everything the cluster still holds |
+| `-S, --since`       | -       | Only show logs newer than this, e.g. `15m` or `2h`                           |
+| `-T, --timestamps`  | `false` | Prefix each line with its timestamp                                          |
+| `-i, --interactive` | `false` | Pick a single pod to read, instead of reading all of them                    |
+| `-p, --project`     | -       | Project id to use, instead of the session's active project                   |
+
+```sh
+ops logs --env staging --svc api --tail 500 --timestamps
+ops logs --env staging --svc api --since 15m
+ops logs --env staging --svc api --follow=false
+```
+
+<Note>
+  `--tail` and `--since` apply to each pod, not to the service as a whole -
+  `--tail 100` against a service with three pods can print up to 300 lines.
+  Lines are printed as they arrive rather than merged into one chronological
+  order, so add `--timestamps` when ordering across replicas matters.
+</Note>
+
+### Shell into a service
+
+`ops connect` opens a shell inside a pod of your service, without looking up pod or namespace names:
+
+```sh
+ops connect --env staging --svc api
+```
+
+That gives you `/bin/sh` on the first ready pod. To use a different shell, or to run a single command and exit, put it
+after `--`:
+
+```sh
+ops connect --env staging --svc api -- /bin/bash
+ops connect --env staging --svc api -- printenv DATABASE_URL
+```
+
+| Flag                | Default | Description                                                   |
+| ------------------- | ------- | ------------------------------------------------------------- |
+| `-e, --env`         | `$ENV`  | Environment name or id                                        |
+| `-s, --svc`         | -       | Service name or id (required)                                 |
+| `-i, --interactive` | `false` | Pick which pod to open, instead of taking the first ready one |
+| `-p, --project`     | -       | Project id to use, instead of the session's active project    |
+
+Both commands take the default pod selection silently so they stay usable in scripts. Add `-i` when you want to choose
+instead. On a service with several pods it shows a list of them, and the first entry keeps the default behaviour:
+
+```sh
+ops logs -e staging -s api -i
+ops connect -e staging -s api -i
+```
+
+<Warning>
+  `ops connect` puts you on a live container serving traffic. Anything you
+  change inside it is lost the next time the pod restarts or is replaced by a
+  [deployment](/environment/services/deploy) - use it to inspect and debug, and
+  make lasting changes through your repo instead.
+</Warning>
 
 ### Set kubernetes context
 
@@ -89,11 +185,16 @@ From the k9s interface you can:
 - Delete, describe, or edit resources interactively
 
 <Tip>
-  Install k9s via Homebrew with `brew install derailed/k9s/k9s` on macOS, or see the [k9s installation
-  guide](https://k9scli.io/topics/install/) for other platforms.
+  Install k9s via Homebrew with `brew install derailed/k9s/k9s` on macOS, or see
+  the [k9s installation guide](https://k9scli.io/topics/install/) for other
+  platforms.
 </Tip>
 
 ### Shell into a pod
+
+[`ops connect`](#shell-into-a-service) is the shortest way to get a shell of one of your own services. Reach for
+`kubectl` when you need a shell on a pod that is not a LocalOps service - a database pod, or something you installed
+into the cluster yourself.
 
 To get a shell inside a running pod, first identify the pod name in the `app-services` namespace:
 
@@ -107,7 +208,10 @@ Then exec into the pod:
 kubectl exec -it <pod-name> -n app-services -- /bin/sh
 ```
 
-<Note>Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails, try `/bin/bash`.</Note>
+<Note>
+  Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails,
+  try `/bin/bash`.
+</Note>
 
 #### Shell into a pod using k9s
 
@@ -123,9 +227,10 @@ back out of any k9s view. Unlike a hand-written `kubectl exec`, k9s tries a few 
 hard-coded path, so the `/bin/sh` versus `/bin/bash` guesswork above usually doesn't come up.
 
 <Warning>
-  A shell opened this way is a shell on a live container serving traffic. Anything you change inside it is lost the next
-  time the pod restarts or is replaced by a [deployment](/environment/services/deploy) - use it to inspect and debug,
-  and make lasting changes through your repo instead.
+  A shell opened this way is a shell on a live container serving traffic.
+  Anything you change inside it is lost the next time the pod restarts or is
+  replaced by a [deployment](/environment/services/deploy) - use it to inspect
+  and debug, and make lasting changes through your repo instead.
 </Warning>
 
 ### Connect to your database
@@ -136,8 +241,9 @@ environment's VPC and only accept connections from inside it. There is no public
 laptop, by design. So you connect from a throwaway pod inside the cluster instead.
 
 <Note>
-  We are working on shortcut commands in the `ops` CLI to do all of this in a single step - one command to open a SQL
-  shell on your environment's database, and one to proxy it to `localhost` for your favourite GUI client. Until those
+  We are working on shortcut commands in the `ops` CLI to do all of this in a
+  single step - one command to open a SQL shell on your environment's database,
+  and one to proxy it to `localhost` for your favourite GUI client. Until those
   ship, use the `kubectl` recipes below.
 </Note>
 
@@ -183,10 +289,12 @@ kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL
 ```
 
 <Warning>
-  `$dsn` embeds the database password, so handle the value exactly as you would a password. Don't paste it into tickets,
-  Slack messages or shared docs, don't commit it, and don't save it into a GUI client's connection profile - read it
-  from a pod each time you need it. When `managed_password` is `true`, RDS rotates the password on its own schedule, so
-  a copied URL is both a leaked secret and a value with an expiry date.
+  `$dsn` embeds the database password, so handle the value exactly as you would
+  a password. Don't paste it into tickets, Slack messages or shared docs, don't
+  commit it, and don't save it into a GUI client's connection profile - read it
+  from a pod each time you need it. When `managed_password` is `true`, RDS
+  rotates the password on its own schedule, so a copied URL is both a leaked
+  secret and a value with an expiry date.
 </Warning>
 
 #### Open a psql / mysql shell
@@ -245,7 +353,8 @@ as RDS instances, so they need no forwarder at all - `kubectl port-forward -n ap
 reaches them directly.
 
 <Warning>
-  Every recipe on this page connects you to a real database. On production environments, prefer read-only queries and
-  keep in mind that anything you run has immediate effect - there is no staging step between your prompt and your
+  Every recipe on this page connects you to a real database. On production
+  environments, prefer read-only queries and keep in mind that anything you run
+  has immediate effect - there is no staging step between your prompt and your
   customers' data.
 </Warning>
