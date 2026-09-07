@@ -72,6 +72,92 @@ can reference it directly.
   [secret](/environment/services/secrets) with the same value in each service.
 </Warning>
 
+## Cluster across regions
+
+The headless service above only resolves inside one environment's Kubernetes cluster, so nodes in your Mumbai
+environment can't see nodes in Ireland. To form a single mesh across regional environments, give each environment a DNS
+name in a private zone that every regional VPC can resolve, and let LocalOps keep that name pointed at the environment's
+pods.
+
+<Steps>
+  <Step title="Create one private zone shared by every regional VPC" icon="globe">
+    On AWS, create a Route 53 **private hosted zone** — say `mesh.acmecorp.internal` — and associate it with the VPC of
+    every regional environment you spin up. One zone, many VPC associations. If your environments live in different AWS
+    accounts, use cross-account zone association. On GCP, the equivalent is a Cloud DNS private zone with each regional
+    VPC added to its visibility list.
+
+    The zone has to be associated with a region's VPC *before* nodes there can resolve peers.
+  </Step>
+
+  <Step title="Give each environment a name in ops.json" icon="file-pen">
+    Alongside `beam_cluster_id`, set `beam_dns_name` to the record this environment should own inside that zone:
+
+    ```json ops.json
+    {
+      "beam_cluster_id": "b2bapp",
+      "beam_dns_name": "mumbai.mesh.acmecorp.internal"
+    }
+    ```
+
+    Keep `beam_cluster_id` identical everywhere — it's still what makes these nodes one cluster. `beam_dns_name` is
+    per environment: `mumbai.mesh.acmecorp.internal` in Mumbai, `ireland.mesh.acmecorp.internal` in Ireland, and so on.
+
+    LocalOps creates that record and keeps it in sync — it publishes the IPs of every pod in the environment carrying
+    that `beam_cluster_id`, and updates the record as pods scale, restart, or get rescheduled. You don't manage the
+    record set yourself.
+  </Step>
+
+  <Step title="List every region in your topologies" icon="network-wired">
+    Add one topology per region so libcluster polls all of them. `LOPS_BEAM_CLUSTER_DNS` still points at the local
+    headless service, so keep using it for this environment's own nodes and name the peer regions by their
+    `beam_dns_name`:
+
+    ```elixir config/runtime.exs
+    config :libcluster,
+      topologies: [
+        local: [
+          strategy: Cluster.Strategy.Kubernetes.DNS,
+          config: [
+            service: System.get_env("LOPS_BEAM_CLUSTER_DNS"),
+            application_name: "b2bapp",
+            polling_interval: 5_000
+          ]
+        ],
+        mum: [
+          strategy: Cluster.Strategy.Kubernetes.DNS,
+          config: [
+            service: "mumbai.mesh.acmecorp.internal",
+            application_name: "b2bapp",
+            polling_interval: 5_000
+          ]
+        ],
+        ire: [
+          strategy: Cluster.Strategy.Kubernetes.DNS,
+          config: [
+            service: "ireland.mesh.acmecorp.internal",
+            application_name: "b2bapp",
+            polling_interval: 5_000
+          ]
+        ]
+      ]
+    ```
+
+    The same config ships to every region — each node finds its local peers through `LOPS_BEAM_CLUSTER_DNS` and every
+    remote region through that region's record. Nodes connect from both ends, and the mesh forms.
+  </Step>
+</Steps>
+
+<Warning>
+  DNS gets nodes to each other's addresses; it doesn't get packets there. The regional VPCs still need routable
+  connectivity between them — VPC peering or a Transit Gateway — with EPMD (`4369`) and your distribution port range
+  open between them. And the `RELEASE_COOKIE` has to match across regions, not just across services in one region.
+</Warning>
+
+<Note>
+  Preview environments ignore `beam_dns_name`. They keep forming their own single-region cluster, for the same reason
+  they stay out of your production cluster.
+</Note>
+
 ## Things to know
 
 ### It takes effect on your next build
