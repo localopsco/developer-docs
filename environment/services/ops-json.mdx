@@ -309,6 +309,30 @@ LocalOps keeps that record pointed at the environment's pods so nodes in other r
 See [BEAM clustering](/environment/services/beam-clustering) for the full guidance — wiring up `libcluster`, clustering
 across regions, the release config you still own, and how previews, jobs and crons behave.
 
+## Privileged containers
+
+Some workloads need to reach the node they run on - eBPF agents, kernel module loaders, low level profilers, or code
+that talks to host devices. These need more privileges than a normal container gets. Declare `unsafe.privileged` to run
+your service's container in privileged mode:
+
+```json
+{
+  "unsafe": { "privileged": true }
+}
+```
+
+This applies only to your service's own container. [Init jobs](/environment/services/ops-json#init-jobs) and
+[processes](/environment/services/ops-json#configuring-processes) continue to run unprivileged, so the extra privilege
+stays limited to the workload that asked for it.
+
+<Warning>
+  A privileged container can access host devices and effectively bypasses container isolation on the node it runs on.
+  Only enable this when your workload genuinely requires node level access, and keep such code in a dedicated service
+  instead of your main application service.
+</Warning>
+
+Leaving `unsafe` out, or setting `"privileged": false`, keeps the default behaviour - your service runs unprivileged.
+
 ## Volumes
 
 Your service may need scratch space to write temporary files, a durable disk that survives restarts, or a set of
