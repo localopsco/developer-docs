@@ -295,6 +295,7 @@ The [LocalOps CLI](/cli/install-macos) covers the two commands you probably ran 
 | `heroku logs --tail` | [`ops logs`](/cli/usage#stream-logs-from-a-service) |
 | `heroku run bash`    | [`ops connect`](/cli/usage#shell-into-a-service)    |
 | `heroku config`      | `ops connect --env <env> --svc <svc> -- printenv`   |
+| `heroku pg:psql`     | [`ops connect --dep`](/cli/usage#open-a-psql-shell) |
 
 ```sh
 ops logs --env production --svc web
