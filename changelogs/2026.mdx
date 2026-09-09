@@ -4,6 +4,53 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 9, 2026">
+
+## CLI v3.1.0 - Connect with pg shell or set up port forwarding
+
+We added two new commands that let you connect to the RDS Postgres shell directly from your dev laptop with 1 command. Without signing into bastion servers or any other step.
+
+```sh
+ops connect --env prod --svc web --dep appdb
+```
+Above command opens a postgres shell so you can start querying the database.
+
+```sh
+ops proxy --env prod --svc web --dep appdb
+```
+This command sets up port-forwarding so you can use GUI tools to connect to the same postgres database with host set to localhost and port set to 5432.
+
+All of this will soon work for redis, mysql and sql server too! Stay tuned!
+
+#### New CLI menu
+
+![Build context](./images/2026/pgshell.png)
+
+You can find these commands to copy-paste, from the new "CLI" tab in Environment/Service dashboard.
+
+#### Install/upgrade to v3.1.0
+
+Both commands ship in CLI **v3.1.0**. If you're new to the CLI, install it with Homebrew and sign in:
+
+```sh
+brew install localopsco/tap/ops
+ops login
+```
+
+Already have `ops`? Upgrade in place:
+
+```sh
+brew update && brew upgrade ops
+```
+
+Both commands take more options than shown here, like `-i`. See the [CLI docs](/cli/usage) for the full list, and for
+the rest of the commands.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+
 <Update label="September 7, 2026">
 
 ## CLI v3.0.4 — Shell into a service and tail its logs with one command
