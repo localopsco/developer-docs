@@ -2,8 +2,8 @@
 title: Usage
 ---
 
-LocalOps CLI `ops` can be used to read logs from your services and to get shell access to them and to the underlying
-Kubernetes cluster of an environment.
+LocalOps CLI `ops` can be used to read logs from your services, get shell access to them and to their databases,
+forward their ports to your machine, and reach the underlying Kubernetes cluster of an environment.
 
 ```sh
 LocalOps CLI
@@ -20,6 +20,7 @@ Available Commands:
   logout            Logout of LocalOps Account
   logs              Show logs from a service running in an environment
   project           Show and switch the active project
+  proxy             Forward a service's port to localhost
   update-kubeconfig Update current context to app environment kubernetes cluster
   version           LocalOps CLI Version
 
@@ -29,11 +30,12 @@ Flags:
 Use "ops [command] --help" for more information about a command.
 ```
 
-For the two things you reach for most often - reading logs and opening a shell - `ops logs` and `ops connect` talk to
-your environment directly. You need neither `kubectl` nor the pod and namespace names:
+For the things you reach for most often - reading logs, opening a shell, forwarding a port, connecting to a database -
+`ops logs`, `ops connect` and `ops proxy` talk to your environment directly. You need neither `kubectl` nor the pod and
+namespace names:
 
 1. Login to your LocalOps account with `ops login`
-2. Run `ops logs` or `ops connect` against an environment and service by name
+2. Run `ops logs`, `ops connect` or `ops proxy` against an environment and service by name
 
 To inspect anything else in the cluster - deployments, jobs, secrets, events - point `kubectl` at the environment
 instead:
@@ -133,6 +135,38 @@ ops connect -e staging -s api -i
   [deployment](/environment/services/deploy) - use it to inspect and debug, and
   make lasting changes through your repo instead.
 </Warning>
+
+### Forward a service port to localhost
+
+`ops proxy` opens a tunnel from your machine to a service running in an environment, so you can reach an internal
+service as though it were running locally:
+
+```sh
+ops proxy --env staging --svc api
+```
+
+It runs in the foreground and closes the tunnel when you stop it with `Ctrl-C`. By default it binds the same port
+locally that the service listens on, taken from the service's configuration.
+
+| Flag                | Default            | Description                                                |
+| ------------------- | ------------------ | ---------------------------------------------------------- |
+| `-e, --env`         | `$ENV`             | Environment name or id                                     |
+| `-s, --svc`         | -                  | Service name or id (required)                              |
+| `-L, --local-port`  | the remote port    | Local port to bind                                         |
+| `-R, --remote-port` | the service's port | Port on the service to forward to                          |
+| `-i, --interactive` | `false`            | Pick which pod to forward from                             |
+| `-p, --project`     | -                  | Project id to use, instead of the session's active project |
+
+```sh
+ops proxy --env staging --svc api --local-port 9000
+ops proxy --env staging --svc api --remote-port 9090 --local-port 9000
+```
+
+<Note>
+  The tunnel attaches to a single pod, so it does not load balance across
+  replicas. That is usually what you want when debugging, but it means
+  restarting that pod ends the tunnel.
+</Note>
 
 ### Set kubernetes context
 
@@ -240,17 +274,14 @@ Databases provisioned through `ops.json` - [RDS instances](/environment/services
 environment's VPC and only accept connections from inside it. There is no public endpoint to point `psql` at from your
 laptop, by design. So you connect from a throwaway pod inside the cluster instead.
 
-<Note>
-  We are working on shortcut commands in the `ops` CLI to do all of this in a
-  single step - one command to open a SQL shell on your environment's database,
-  and one to proxy it to `localhost` for your favourite GUI client. Until those
-  ship, use the `kubectl` recipes below.
-</Note>
+`ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
+to the database, and clean it up when you exit.
 
 #### First, export `$dsn`
 
-Before you connect to anything, export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that
-LocalOps assembles for you - host, port, username, password and database name already filled in and correctly escaped:
+Export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
+port, username, password and database name already filled in and correctly escaped. It is also what the `--dep` commands
+below look for, so they will not find a database without it:
 
 ```json ops.json
 {
@@ -297,7 +328,66 @@ kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL
   secret and a value with an expiry date.
 </Warning>
 
-#### Open a psql / mysql shell
+#### Open a psql shell
+
+```sh
+ops connect --env staging --svc api --dep
+```
+
+That starts a `postgres:17-alpine` pod in your environment, hands it the same database credential your service uses, and
+drops you at a `psql` prompt. Exit the shell and the pod is deleted.
+
+Bare `--dep` picks the dependency for you when the service has exactly one database. Name it when there are several -
+either by its `ops.json` id or by the variable it exports:
+
+```sh
+ops connect --env staging --svc api --dep app-db
+```
+
+<Note>
+  Only Postgres is supported today. A MySQL or Redis dependency is reported
+  rather than opened. `--db-image` overrides the client image if you need a
+  specific `psql` version.
+</Note>
+
+<Tip>
+  The credential is never read by the CLI or printed to your terminal. The
+  client pod is given the same Kubernetes Secret reference your service has, so
+  the password is injected by the cluster. It stays out of your shell history
+  and out of your scrollback.
+</Tip>
+
+#### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
+
+```sh
+ops proxy --env staging --svc api --dep
+```
+
+That relays the private database endpoint to your machine and prints the connection details to use:
+
+```
+  psql -h localhost -p 5432 -U appuser -d appdb -W
+  password: <the database password>
+```
+
+Point your GUI client at `localhost` on that port with those credentials, and leave the command running while you work.
+`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if `5432` is already taken locally:
+
+```sh
+ops proxy --env staging --svc api --dep --local-port 15432
+```
+
+<Warning>
+  Use SSL mode `require` rather than `verify-full`. The database's certificate
+  is issued for its real hostname, not `localhost`, so certificate verification
+  through the tunnel will fail. For `psql` that means `PGSSLMODE=require`, since
+  `psql` has no `sslmode` flag.
+</Warning>
+
+#### Without the CLI
+
+The `kubectl` recipes below do the same work by hand. Reach for them when you need something `--dep` does not cover
+yet - a MySQL shell, or a dependency that exports discrete fields rather than `$dsn`.
 
 Start a one-shot client pod in the same namespace, passing the DSN straight from the running pod into the new one. The
 URL never lands in your shell history, and the client pod is deleted the moment you exit:
@@ -325,10 +415,7 @@ If you haven't exported `$dsn` yet, you can still connect by spelling the creden
 `kubectl exec -n app-services <pod-name> -- printenv | grep -i db`, but adding `$dsn` to `exports` is a one-line change
 that makes every command above shorter and safer.
 
-#### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
-
-If you would rather use a desktop SQL client, relay the private database endpoint to your laptop. Start a small TCP
-forwarder pod inside the cluster, then port-forward to it:
+Or relay the endpoint by hand, with a TCP forwarder pod and a port-forward to it:
 
 ```sh
 kubectl run rds-proxy -n app-services --image=alpine/socat --port=5432 -- \

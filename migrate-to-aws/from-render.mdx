@@ -3,12 +3,18 @@ title: Migrate from Render
 description: Step-by-step guide to migrate your Render application and Postgres database to AWS using LocalOps
 ---
 
-<div style={{ position: 'relative', paddingBottom: '66.58%', height: 0 }}>
+<div style={{ position: "relative", paddingBottom: "66.58%", height: 0 }}>
   <iframe
     src="https://www.loom.com/embed/0bf8ad4510bf401aa429924ad2364a51"
     frameBorder="0"
     allowFullScreen
-    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+    style={{
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+    }}
   />
 </div>
 
@@ -17,8 +23,9 @@ full AWS ecosystem. LocalOps makes this migration seamless by providing the same
 Render.
 
 <Tip>
-  **White-glove migration**: Our engineers will migrate your Render app to AWS. [Schedule a migration
-  call](https://go.localops.co/render) and we'll handle everything for you.
+  **White-glove migration**: Our engineers will migrate your Render app to AWS.
+  [Schedule a migration call](https://go.localops.co/render) and we'll handle
+  everything for you.
 </Tip>
 
 ## What you get after migration
@@ -48,8 +55,8 @@ Render.
 </Steps>
 
 <Info>
-  Need help? [Schedule a migration call](https://go.localops.co/render) and our engineers will assist you through the
-  entire process.
+  Need help? [Schedule a migration call](https://go.localops.co/render) and our
+  engineers will assist you through the entire process.
 </Info>
 
 ## Step 1: Set up LocalOps environment
@@ -58,17 +65,20 @@ Before migrating, you need a LocalOps environment running on AWS.
 
 <Steps>
   <Step title="Create LocalOps account" icon="user">
-    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't already.
+    [Sign up for LocalOps](https://console.localops.co/signup) if you haven't
+    already.
   </Step>
   <Step title="Connect AWS account" icon="cloud">
-    Follow the [AWS connection guide](/accounts/aws) to connect your AWS account.
+    Follow the [AWS connection guide](/accounts/aws) to connect your AWS
+    account.
   </Step>
   <Step title="Create environment" icon="container-storage">
-    Create a new environment (e.g., production) in your preferred AWS region. See [Create new
-    environment](/environment/create).
+    Create a new environment (e.g., production) in your preferred AWS region.
+    See [Create new environment](/environment/create).
   </Step>
   <Step title="Create service" icon="server">
-    Create a new service and connect your GitHub repository. See [Create new service](/environment/services/create).
+    Create a new service and connect your GitHub repository. See [Create new
+    service](/environment/services/create).
   </Step>
 </Steps>
 
@@ -101,8 +111,8 @@ Alternatively, you can create a backup from the Render dashboard:
 4. Download the backup file
 
 <Warning>
-  For large databases, the backup and restore process may take significant time. Plan for a maintenance window if you
-  need zero data loss during migration.
+  For large databases, the backup and restore process may take significant time.
+  Plan for a maintenance window if you need zero data loss during migration.
 </Warning>
 
 ### 2.2 Create RDS database in your LocalOps environment VPC
@@ -219,8 +229,9 @@ Export your environment variables from Render and add them to LocalOps:
 4. Add each variable as a secret
 
 <Tip>
-  For environment-specific variables, LocalOps lets you configure different values per environment (test, staging,
-  production) from a single service configuration.
+  For environment-specific variables, LocalOps lets you configure different
+  values per environment (test, staging, production) from a single service
+  configuration.
 </Tip>
 
 ## Step 4: Update your application
@@ -236,8 +247,9 @@ const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@
 ```
 
 <Tip>
-  If you used `ops.json` to create RDS, the password is stored in AWS Secrets Manager. Use the AWS SDK to retrieve it
-  using the `DATABASE_PASSWORD_ARN` environment variable.
+  If you used `ops.json` to create RDS, the password is stored in AWS Secrets
+  Manager. Use the AWS SDK to retrieve it using the `DATABASE_PASSWORD_ARN`
+  environment variable.
 </Tip>
 
 ## Step 5: Deploy and verify
@@ -246,6 +258,14 @@ const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@
 2. Check logs in the LocalOps console to verify the application starts correctly
 3. Test your application endpoints
 4. Update your DNS to point to the new LocalOps environment
+
+Once it is up, the [LocalOps CLI](/cli/install-macos) gives you two useful checks from your terminal, streaming the
+service's logs, and opening a SQL shell on the migrated database to confirm the data landed:
+
+```sh
+ops logs --env production --svc web
+ops connect --env production --svc web --dep
+```
 
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
 
@@ -281,7 +301,8 @@ Each environment gets its own Grafana instance with pre-built dashboards for inf
 custom dashboards to visualize application-specific metrics and logs.
 
 <Info>
-  Learn more about [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics), and
+  Learn more about [logs](/environment/monitoring/logs),
+  [metrics](/environment/monitoring/metrics), and
   [alerts](/environment/monitoring/alerts).
 </Info>
 
@@ -299,8 +320,9 @@ custom dashboards to visualize application-specific metrics and logs.
 ## Get help with your migration
 
 <Tip>
-  **White-glove migration**: Don't want to do this yourself? Our engineers will migrate your entire Render setup to
-  AWS—including database migration, environment variables, and custom domains. [Schedule a migration call
+  **White-glove migration**: Don't want to do this yourself? Our engineers will
+  migrate your entire Render setup to AWS—including database migration,
+  environment variables, and custom domains. [Schedule a migration call
   now](https://go.localops.co/render).
 </Tip>
 
