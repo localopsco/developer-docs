@@ -271,6 +271,42 @@ APIs).
 
 <Note>These timeouts apply only to `web` (external), as they govern incoming HTTP requests from public internet routed through platform's ingress.</Note>
 
+## Deploy timeout
+
+When you push a change, LocalOps waits for the new version of your service to roll out and become ready. By default it
+waits for 5 minutes. If the rollout hasn't become ready by then, the deployment is failed.
+
+If your service genuinely needs longer - large images, slow warm up, heavy work done at container startup - set
+`deploy_timeout` (in seconds):
+
+```json
+{
+  "deploy_timeout": 900
+}
+```
+
+| Field            | Description                                                                                          | Default |
+| ---------------- | ---------------------------------------------------------------------------------------------------- | ------- |
+| `deploy_timeout` | Time (in seconds) to wait for your service's rollout to become ready, before failing the deployment. | `300`   |
+
+Allowed range is `60` (1 minute) to `1200` (20 minutes). If you declare a value outside this range, LocalOps clamps it
+to the nearest limit and tells you so in the deployment logs. A zero or negative value is ignored and the default is
+used.
+
+<Note>
+  Services running on Windows node groups wait for `900` seconds (15 minutes) by default, as image pull and container
+  startup are slower there.
+</Note>
+
+<Note>
+  `deploy_timeout` covers only the wait for your service to become ready. Cloning your repository, building the image
+  and pushing it happen before this, and are not governed by this setting.
+</Note>
+
+Every deployment logs the wait it is going to use, like
+`Waiting up to 15m0s for this service's rollout to become ready`. Check your deployment logs to confirm that the value
+you declared was picked up.
+
 ## SSL passthrough
 
 By default, the environment's nginx ingress terminates TLS for incoming traffic and forwards plain HTTP to your service. If your service needs to handle TLS termination itself (eg., for mTLS, custom certificate handling, or protocols that require end-to-end TLS), set `ssl_passthrough` to `true`:
@@ -1100,6 +1136,7 @@ Here's a comprehensive `ops.json` example:
 ```json
 {
   "beam_cluster_id": "myapp",
+  "deploy_timeout": 900,
   "volumes": [
     { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
     {
