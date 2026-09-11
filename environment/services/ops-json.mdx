@@ -271,6 +271,79 @@ APIs).
 
 <Note>These timeouts apply only to `web` (external), as they govern incoming HTTP requests from public internet routed through platform's ingress.</Note>
 
+## Request body size
+
+Every environment's ingress accepts request bodies up to `30` MB by default. A client sending more than that gets a
+`413 Request Entity Too Large` back from the ingress, before the request reaches your container.
+
+If your service accepts larger uploads - file attachments, media, bulk imports - raise the limit with
+`request_body_size`, in whole MB:
+
+```json
+{
+  "request_body_size": 100
+}
+```
+
+| Field               | Description                                                                        | Default (MB) |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------ |
+| `request_body_size` | Maximum size (in MB) of a request body the platform accepts for this service.      | `30`         |
+
+The maximum allowed value is `1024` MB (1 GB). A larger value is clamped to it. A zero or negative value is ignored and
+the `30` MB default is used.
+
+<Note>`request_body_size` applies only to `web` (external) services, as it governs incoming HTTP requests from the
+public internet routed through the platform's ingress. It is also ignored when
+[`ssl_passthrough`](#ssl-passthrough) is enabled, because the ingress forwards those connections without inspecting
+HTTP.</Note>
+
+<Tip>
+  For very large files, prefer uploading directly to object storage with a presigned URL instead of routing the bytes
+  through your service. The ingress buffers the whole body before it forwards the request, so large uploads add latency
+  and load regardless of this setting.
+</Tip>
+
+## Response buffers
+
+The platform's ingress reads each response from your service into a set of fixed-size buffers before it forwards the
+response to the client. The first buffer has to hold the whole set of response headers. By default your service gets
+`8` buffers of `8` KB each.
+
+Services that return large headers - long `Set-Cookie` values, SSO or JWT tokens, big `Authorization` headers - can
+overflow that first buffer. When they do, the ingress fails the request with a `502 Bad Gateway`, and its logs carry
+`upstream sent too big header while reading response header from upstream`. Raise `proxy_buffer_size` (in KB) to fix
+it:
+
+```json
+{
+  "proxy_buffer_size": 32,
+  "proxy_buffers": 16
+}
+```
+
+| Field               | Description                                                                                  | Default | Allowed range |
+| ------------------- | -------------------------------------------------------------------------------------------- | ------- | ------------- |
+| `proxy_buffer_size` | Size (in KB) of each buffer. The first one must fit your service's entire response headers.  | `8`     | `4` to `64`   |
+| `proxy_buffers`     | How many of those buffers the ingress uses per in-flight response.                           | `8`     | `2` to `32`   |
+
+Both take whole integers. A value outside the allowed range is clamped to the nearest limit. A zero or negative value
+is ignored and the default is used.
+
+Fixing a `502` on response headers needs only `proxy_buffer_size`. `proxy_buffers` controls how much of the response
+body the ingress holds in memory while streaming it - raising it can help a service that returns large responses to
+slow clients, and leaving it alone is fine. Declaring either field applies the pair, so a service that sets only one
+still buffers against the default for the other.
+
+<Note>These settings apply only to `web` (external) services, and are ignored when
+[`ssl_passthrough`](#ssl-passthrough) is enabled, because the ingress forwards those connections without inspecting
+HTTP.</Note>
+
+<Note>
+  These buffers are per in-flight response, in an ingress controller shared by every service in the environment, which
+  is why the ceiling is deliberately low. A response larger than `proxy_buffer_size` x `proxy_buffers` is not failed -
+  the ingress spills the remainder to disk and keeps streaming it.
+</Note>
+
 ## Deploy timeout
 
 When you push a change, LocalOps waits for the new version of your service to roll out and become ready. By default it
@@ -499,7 +572,7 @@ Volumes you don't mark do not appear there at all - they are still mounted, they
 installing the chart can change.
 
 ```yaml
-pronto:
+webapp:
   replicaCount: 3
   persistence:
     # /app/src/tmpfiles
@@ -513,7 +586,7 @@ pronto:
 A `disk` exposes its `size`:
 
 ```bash
-helm install suprsend ./chart --set pronto.persistence.tmpfiles.size=50Gi
+helm install acme ./chart --set webapp.persistence.tmpfiles.size=50Gi
 ```
 
 A `secret` exposes its `secretName` and defaults to blank. The mount is only created when a name is supplied, so a
@@ -521,7 +594,7 @@ stock install neither mounts it nor requires the secret to exist. That matters w
 is turned off for a given customer. To enable it:
 
 ```bash
-helm install suprsend ./chart --set pronto.persistence.temporal-tls.secretName=my-tls
+helm install acme ./chart --set webapp.persistence.temporal-tls.secretName=my-tls
 ```
 
 Mount paths and kinds stay fixed. They are part of how your app works, rather than something whoever installs the chart

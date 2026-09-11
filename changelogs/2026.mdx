@@ -4,6 +4,75 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 11, 2026">
+
+## New options in ops.json: bigger uploads, fewer surprise errors
+
+We have raised the platform limits that teams most often hit when they onboard, so a normal app should now run
+without touching any of this. Four new `ops.json` options let you set your own limits when your service needs more.
+
+### `request_body_size`: bigger uploads work out of the box
+
+Every environment's ingress used to reject any request body over 1 MB, so an ordinary file upload came back as a
+`413 Request Entity Too Large` before it ever reached your container. The platform now accepts **30 MB** by default, in
+line with what other hosting platforms allow.
+
+If your service takes bigger uploads - attachments, media, bulk imports - raise the limit yourself with
+`request_body_size`, in whole MB:
+
+```json ops.json
+{
+  "request_body_size": 100
+}
+```
+
+Anything up to 1 GB is allowed. [Read the docs](/environment/services/ops-json#request-body-size).
+
+### `proxy_buffer_size` and `proxy_buffers`: fix `502`s caused by large response headers
+
+Apps that hand back long headers - SSO redirects, big session cookies, fat JWTs - could fail with a
+`502 Bad Gateway`, because the ingress reserved only a small buffer for a response's headers. That buffer is now
+bigger by default, and you can size it yourself when your app needs more:
+
+```json ops.json
+{
+  "proxy_buffer_size": 32,
+  "proxy_buffers": 16
+}
+```
+
+`proxy_buffer_size` is the size of each buffer in KB and is the one that fixes the `502`. `proxy_buffers` is how many
+of them the ingress uses while streaming a response, and is usually fine left alone.
+[Read the docs](/environment/services/ops-json#response-buffers).
+
+### `send_timeout`, `read_timeout` and `connection_timeout`: slow requests get more room
+
+The ingress waits longer before giving up on your service. Sending and reading now allow **120 seconds** each, up from
+60, and connecting to your container is capped at 10 seconds so a genuinely dead container fails fast instead of
+hanging. Slow reports, large downloads and chatty websocket handshakes stop getting cut off for no obvious reason.
+
+You can still set `send_timeout`, `read_timeout` and `connection_timeout` per service, up to an hour.
+[Read the docs](/environment/services/ops-json#request-timeouts).
+
+### `deploy_timeout`: give slow-starting services longer to deploy
+
+A deployment waits 5 minutes for your new version to become ready, then fails. That is too short for services with
+large images or heavy startup work, so you can now extend it:
+
+```json ops.json
+{
+  "deploy_timeout": 900
+}
+```
+
+Anything from 1 to 20 minutes is allowed. Every deployment logs the wait it is using, so you can confirm your value was
+picked up. Services on Windows node groups already get 15 minutes by default.
+[Read the docs](/environment/services/ops-json#deploy-timeout).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="September 9, 2026">
 
 ## CLI v3.1.0 - Connect with pg shell or set up port forwarding
