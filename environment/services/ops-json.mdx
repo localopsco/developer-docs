@@ -258,19 +258,18 @@ APIs).
 {
   "send_timeout": 600,
   "read_timeout": 600,
-  "connection_timeout": 300
 }
 ```
 
-| Field                | Description                                                                                                                                                          | Default |
+| Field                | Description                                                                                                                                                          | Default (sec) |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `send_timeout`       | Maximum time (in seconds) to wait between successive write operations when sending a response to the client. The connection is closed if the client stops reading.   | `60`    |
-| `read_timeout`       | Maximum time (in seconds) to wait between successive read operations when receiving a request from the client. The connection is closed if the client stops sending. | `60`    |
-| `connection_timeout` | Maximum time (in seconds) to wait while establishing a connection with the upstream service (your container) before giving up.                                       | `60`    |
+| `connection_timeout` | Maximum time (in seconds) platform waits to establish a succesful tcp connection with your service containers, before giving up.                                        | `10`    |
+| `send_timeout`       | Maximum time (in seconds) between two successive writes from platform to your service when processing a request from clients.                                         | `120`    |
+| `read_timeout`       | Maximum time (in seconds) between two successive read operations that platform waits to read responses from your service while sending them to client                 | `120`    |
 
 <Note>The maximum allowed value for each of these timeouts is `3600` seconds (1 hour).</Note>
 
-<Note>These timeouts apply only to `web` (external) and `internal` service types, as they govern incoming HTTP requests routed through the ingress.</Note>
+<Note>These timeouts apply only to `web` (external), as they govern incoming HTTP requests from public internet routed through platform's ingress.</Note>
 
 ## SSL passthrough
 
