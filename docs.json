@@ -83,7 +83,6 @@
             "pages": [
               "environment/inside",
               "environment/create",
-              "environment/extend-with-iac",
               {
                 "group": "Monitoring",
                 "pages": [
@@ -104,6 +103,7 @@
                   }
                 ]
               },
+              "environment/extend-with-iac",
               "environment/security",
               "environment/shared-responsibilities",
               "environment/delete",
@@ -115,8 +115,8 @@
             "icon": "server",
             "pages": [
               "environment/services/create",
-              "environment/services/ops-json",
               "environment/services/deploy",
+              "environment/services/ops-json",
               "environment/services/web",
               "environment/services/internal",
               "environment/services/workers",
