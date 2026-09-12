@@ -1,6 +1,6 @@
 ---
-title: Configure ops.json
-description: Configure services programmatically using ops.json
+title: ops.json magic
+description: Define health checks, configure ingress, cloud resources and more with a simple JSON file
 ---
 
 ## Overview
@@ -248,7 +248,12 @@ When a socket cannot be created with your container on the defined port, health 
 }
 ```
 
-## Request timeouts
+## Configure ingress
+
+Each environment runs an nginx ingress in front of your services. These settings control how it handles requests on
+their way to your containers - how long it waits, how much it will buffer, and whether it terminates TLS at all.
+
+### Request timeouts
 
 You can tune how long the platform keeps client connections to your service open. This is useful for real-time
 applications that rely on long-lived TCP connections (eg., websockets, server-sent events, long polling, streaming
@@ -271,7 +276,7 @@ APIs).
 
 <Note>These timeouts apply only to `web` (external), as they govern incoming HTTP requests from public internet routed through platform's ingress.</Note>
 
-## Request body size
+### Request body size
 
 Every environment's ingress accepts request bodies up to `30` MB by default. A client sending more than that gets a
 `413 Request Entity Too Large` back from the ingress, before the request reaches your container.
@@ -303,7 +308,7 @@ HTTP.</Note>
   and load regardless of this setting.
 </Tip>
 
-## Response buffers
+### Response buffers
 
 The platform's ingress reads each response from your service into a set of fixed-size buffers before it forwards the
 response to the client. The first buffer has to hold the whole set of response headers. By default your service gets
@@ -344,6 +349,18 @@ HTTP.</Note>
   the ingress spills the remainder to disk and keeps streaming it.
 </Note>
 
+### SSL passthrough
+
+By default, the environment's nginx ingress terminates TLS for incoming traffic and forwards plain HTTP to your service. If your service needs to handle TLS termination itself (eg., for mTLS, custom certificate handling, or protocols that require end-to-end TLS), set `ssl_passthrough` to `true`:
+
+```json
+{
+  "ssl_passthrough": true
+}
+```
+
+When `ssl_passthrough` is enabled, the ingress forwards the raw TLS connection to your container without decrypting it. For this to work, set your service's port to `443` so the ingress can route HTTPS traffic directly to it. Your container must present a valid TLS certificate on that port.
+
 ## Deploy timeout
 
 When you push a change, LocalOps waits for the new version of your service to roll out and become ready. By default it
@@ -379,18 +396,6 @@ used.
 Every deployment logs the wait it is going to use, like
 `Waiting up to 15m0s for this service's rollout to become ready`. Check your deployment logs to confirm that the value
 you declared was picked up.
-
-## SSL passthrough
-
-By default, the environment's nginx ingress terminates TLS for incoming traffic and forwards plain HTTP to your service. If your service needs to handle TLS termination itself (eg., for mTLS, custom certificate handling, or protocols that require end-to-end TLS), set `ssl_passthrough` to `true`:
-
-```json
-{
-  "ssl_passthrough": true
-}
-```
-
-When `ssl_passthrough` is enabled, the ingress forwards the raw TLS connection to your container without decrypting it. For this to work, set your service's port to `443` so the ingress can route HTTPS traffic directly to it. Your container must present a valid TLS certificate on that port.
 
 ## BEAM clustering
 
@@ -790,15 +795,14 @@ permissions in the pre-configured IAM role.
 As of now, you can define the following dependencies in `ops.json`. We plan to grow this list to cover other services in
 AWS. Please get in touch with us at help\@localops.co if you need anything specific.
 
-1. **Amazon S3 buckets** - for static object storage (files, pictures, etc.,).
-   [Learn more](/environment/services/aws/s3)
-2. **Amazon RDS Instances** - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
-3. **Amazon Aurora clusters** - for Postgres/MySQL compatible databases with auto-scaling capacity and a separate read
-   endpoint. [Learn more](/environment/services/aws/aurora)
-4. **Amazon Elastic cache clusters** - for caching, queues, pub/sub.
-   [Learn more](/environment/services/aws/elasti-cache)
-5. **Amazon SNS topics** - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
-6. **Amazon SQS queues** - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)
+| Resource | Use it for | Docs |
+| --- | --- | --- |
+| Amazon S3 buckets | Static object storage (files, pictures, etc.,) | [S3](/environment/services/aws/s3) |
+| Amazon RDS instances | Hosting Postgres, MySQL databases | [RDS](/environment/services/aws/rds) |
+| Amazon Aurora clusters | Auto-scaling Postgres/MySQL, read endpoint | [Aurora](/environment/services/aws/aurora) |
+| Amazon ElastiCache | Caching, queues, pub/sub | [ElastiCache](/environment/services/aws/elasti-cache) |
+| Amazon SNS topics | Pub/sub capabilities | [SNS](/environment/services/aws/sns) |
+| Amazon SQS queues | Queueing (standard/FIFO) capabilities | [SQS](/environment/services/aws/sqs) |
 
 ### Configured for production use, by default
 

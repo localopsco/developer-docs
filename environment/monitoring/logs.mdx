@@ -29,7 +29,36 @@ runs - during a deploy, or while reproducing a bug - `ops logs` streams the same
 ops logs --env staging --svc api
 ```
 
-See [CLI usage](/cli/usage#stream-logs-from-a-service) for the full set of options.
+`--env` and `--svc` take the environment and service **names** shown in your dashboard, or their ids. The stream stays
+open and prints new lines as they arrive - press `Ctrl-C` to stop.
+
+Every ready pod of the service is read at once, and each line is prefixed with the pod it came from so you can tell
+replicas apart:
+
+```
+[api-7d9f8b6c4-2xk9p] GET /health 200
+[api-7d9f8b6c4-mn4vt] GET /orders 201
+```
+
+The flags you will reach for most often:
+
+| Flag               | Default | Description                                                     |
+| ------------------ | ------- | --------------------------------------------------------------- |
+| `-n, --tail`       | `100`   | Number of recent lines to show. `0` shows everything Loki holds  |
+| `-S, --since`      | -       | Only show logs newer than this, e.g. `15m` or `2h`               |
+| `-T, --timestamps` | `false` | Prefix each line with its timestamp                              |
+| `-f, --follow`     | `true`  | Pass `--follow=false` for a snapshot that prints and exits       |
+
+```sh
+ops logs --env staging --svc api --tail 500 --timestamps
+ops logs --env staging --svc api --since 15m
+ops logs --env staging --svc api --follow=false
+```
+
+Don't have the CLI yet? Install it on [macOS](/cli/install-macos), [Linux](/cli/install-linux) or
+[Windows](/cli/install-windows), then run `ops login`.
+
+See [CLI usage](/cli/usage#stream-logs-from-a-service) for the full set of options, including `-i` to pick a single pod.
 
 ### Custom dashboards
 
