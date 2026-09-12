@@ -5,12 +5,12 @@ title: Deploy a service
 Deployment can be started for a service either manually from LocalOps console or by pushing new code to the configured
 service repo and branch name.
 
-### Automatic deployments
+## Automatic deployments
 
 How a deployment gets triggered depends on what the service was created from - a source repo, a Docker image, or a Helm
 chart.
 
-#### GitHub/GitLab repos
+### GitHub/GitLab repos
 
 Whenever your team pushes new code to Git repository, LocalOps can automatically pull the hcanges, build them as Docker
 images very quickly and deploy seamlessly on the corresponding environment.
@@ -40,7 +40,7 @@ service section to see the logs.
   https://console.localops.co/profile
 </Note>
 
-#### Docker images
+### Docker images
 
 A service created from a [Docker image](/environment/services/docker) has no repo to watch, so there is no push event to
 react to. Trigger the deployment from wherever you publish the image - typically the last step of the pipeline that
@@ -100,7 +100,7 @@ From CI, run that call as the step right after your image push:
   Tag images with something immutable - the commit SHA works well - so each deployment points at exactly one build.
 </Tip>
 
-#### Helm charts
+### Helm charts
 
 A service created from a [Helm chart](/environment/services/helm-charts) works the same way, with the chart version in
 place of the image tag:
@@ -149,7 +149,7 @@ console.
   request and response schema.
 </Note>
 
-### Manual deployment
+## Manual deployment
 
 1. Click on "environments" on the left
 2. Navigate into the relevant environment
