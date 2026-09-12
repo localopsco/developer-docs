@@ -5,7 +5,7 @@ title: Usage
 LocalOps CLI `ops` can be used to read logs from your services, get shell access to them and to their databases,
 forward their ports to your machine, and reach the underlying Kubernetes cluster of an environment.
 
-```sh
+```
 LocalOps CLI
 
 Usage:
@@ -30,6 +30,8 @@ Flags:
 Use "ops [command] --help" for more information about a command.
 ```
 
+### How it works
+
 For the things you reach for most often - reading logs, opening a shell, forwarding a port, connecting to a database -
 `ops logs`, `ops connect` and `ops proxy` talk to your environment directly. You need neither `kubectl` nor the pod and
 namespace names:
@@ -46,11 +48,13 @@ instead:
 
 ### Login to LocalOps
 
-Login to LocalOps account using your email address.
-
 ```sh
 ops login
 ```
+
+## Basic usage
+
+Reading logs, opening a shell and forwarding a port - each of these takes an environment and a service by name.
 
 ### Stream logs from a service
 
@@ -168,6 +172,131 @@ ops proxy --env staging --svc api --remote-port 9090 --local-port 9000
   restarting that pod ends the tunnel.
 </Note>
 
+## Connect to your databases or cache
+
+Resources provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
+[ElastiCache clusters](/environment/services/aws/elasti-cache) - live in the private subnets of your environment's VPC
+and only accept connections from inside it. There is no public endpoint to point `psql` at from your laptop, by design.
+So you connect from a throwaway pod inside the cluster instead.
+
+`ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
+to the database, and clean it up when you exit.
+
+<Note>
+  These commands only reach resources you provisioned through `ops.json` - for
+  example an [RDS instance](/environment/services/aws/rds) or an [ElastiCache
+  cluster](/environment/services/aws/elasti-cache). LocalOps creates those
+  inside your environment's VPC and injects their credentials into your
+  service, which is what `--dep` reads. A database you host or manage yourself
+  is not reachable this way.
+</Note>
+
+### First, export `$dsn`
+
+Export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
+port, username, password and database name already filled in and correctly escaped. It is also what the `--dep` commands
+below look for, so they will not find a database without it:
+
+```json ops.json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "app-db",
+          "prefix": "appdb",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DATABASE_URL": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy once, and every container of that service has `DATABASE_URL` in its environment.
+
+<Warning>
+  `$dsn` embeds the database password, so handle the value exactly as you would
+  a password. Don't paste it into tickets, Slack messages or shared docs, don't
+  commit it, and don't save it into a GUI client's connection profile - read it
+  from a pod each time you need it. When `managed_password` is `true`, RDS
+  rotates the password on its own schedule, so a copied URL is both a leaked
+  secret and a value with an expiry date.
+</Warning>
+
+### Open a psql shell
+
+```sh
+ops connect --env staging --svc api --dep
+```
+
+That starts a `postgres:17-alpine` pod in your environment, hands it the same database credential your service uses, and
+drops you at a `psql` prompt. Exit the shell and the pod is deleted.
+
+Bare `--dep` picks the dependency for you when the service has exactly one database. Name it when there are several -
+either by its `ops.json` id or by the variable it exports:
+
+```sh
+ops connect --env staging --svc api --dep app-db
+```
+
+<Note>
+  Only Postgres is supported today. MySQL and Redis are coming soon.
+  `--db-image` overrides the client image if you need a specific `psql`
+  version.
+</Note>
+
+<Tip>
+  The credential is never read by the CLI or printed to your terminal. The
+  client pod is given the same Kubernetes Secret reference your service has, so
+  the password is injected by the cluster. It stays out of your shell history
+  and out of your scrollback.
+</Tip>
+
+### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
+
+```sh
+ops proxy --env staging --svc api --dep app-db
+```
+
+That relays the private database endpoint to your machine and prints the connection details to use:
+
+```
+  psql -h localhost -p 5432 -U appuser -d appdb -W
+  password: <the database password>
+```
+
+Point your GUI client at `localhost` on that port with those credentials, and leave the command running while you work.
+`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if `5432` is already taken locally:
+
+```sh
+ops proxy --env staging --svc api --dep app-db --local-port 15432
+```
+
+<Warning>
+  Use SSL mode `require` rather than `verify-full`. The database's certificate
+  is issued for its real hostname, not `localhost`, so certificate verification
+  through the tunnel will fail. For `psql` that means `PGSSLMODE=require`, since
+  `psql` has no `sslmode` flag.
+</Warning>
+
+<Warning>
+  Every recipe on this page connects you to a real database. On production
+  environments, prefer read-only queries and keep in mind that anything you run
+  has immediate effect - there is no staging step between your prompt and your
+  customers' data.
+</Warning>
+
+## Advanced workflows
+
+The commands above cover the day-to-day work without leaving the CLI. Reach for `kubectl` and [k9s](https://k9scli.io/)
+when you need to inspect anything else in the cluster - deployments, jobs, secrets, events - or to reach a pod that is
+not one of your own services.
+
 ### Set kubernetes context
 
 Use this commnd updates your local current context to point at the environment's kubernetes cluster.
@@ -195,7 +324,7 @@ To see all cluster resources across all namespaces:
 kubectl get all --all-namespaces
 ```
 
-### Monitor pods with k9s
+### Monitor pods faster than kubectl with k9s
 
 [k9s](https://k9scli.io/) is a terminal-based UI that makes it easy to monitor and manage Kubernetes resources. After
 setting up your kubeconfig with `ops update-kubeconfig`, simply launch k9s:
@@ -249,12 +378,12 @@ kubectl exec -it <pod-name> -n app-services -- /bin/sh
 
 #### Shell into a pod using k9s
 
-[k9s](#monitor-pods-with-k9s) gets you the same shell in fewer keystrokes, and it saves you from having to know the pod
-name up front. Launch it against your services with `k9s -n app-services`, press `/` and type part of your service name
-to filter the list, move to the pod you want with the arrow keys, and press `s`. k9s opens an interactive shell inside
-that pod - the equivalent of the `kubectl exec` command above. If the pod runs more than one container (say your service
-plus a sidecar), press `Enter` on the pod first to list its containers, highlight the one you want, and press `s` there
-instead.
+[k9s](#monitor-pods-faster-than-kubectl-with-k9s) gets you the same shell in fewer keystrokes, and it saves you from
+having to know the pod name up front. Launch it against your services with `k9s -n app-services`, press `/` and type
+part of your service name to filter the list, move to the pod you want with the arrow keys, and press `s`. k9s opens an
+interactive shell inside that pod - the equivalent of the `kubectl exec` command above. If the pod runs more than one
+container (say your service plus a sidecar), press `Enter` on the pod first to list its containers, highlight the one
+you want, and press `s` there instead.
 
 When you are done, type `exit` or press `Ctrl-d` to close the shell and drop back into the k9s pod list, and `Esc` to
 back out of any k9s view. Unlike a hand-written `kubectl exec`, k9s tries a few common shells rather than a single
@@ -267,47 +396,16 @@ hard-coded path, so the `/bin/sh` versus `/bin/bash` guesswork above usually doe
   and debug, and make lasting changes through your repo instead.
 </Warning>
 
-### Connect to your database
+### Connect to a database with kubectl
 
-Databases provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
-[ephemeral preview databases](/environment/services/ops-json#isolated-databases) - live in the private subnets of your
-environment's VPC and only accept connections from inside it. There is no public endpoint to point `psql` at from your
-laptop, by design. So you connect from a throwaway pod inside the cluster instead.
+These recipes do the same work as [`ops connect --dep` and `ops proxy --dep`](#connect-to-your-databases-or-cache) by
+hand. Reach for them when you need something `--dep` does not cover yet - a MySQL shell, or a dependency that exports
+discrete fields rather than `$dsn`.
 
-`ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
-to the database, and clean it up when you exit.
-
-#### First, export `$dsn`
-
-Export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
-port, username, password and database name already filled in and correctly escaped. It is also what the `--dep` commands
-below look for, so they will not find a database without it:
-
-```json ops.json
-{
-  "dependencies": {
-    "rds": {
-      "instances": [
-        {
-          "id": "app-db",
-          "prefix": "appdb",
-          "engine": "postgres",
-          "version": "17.5",
-          "exports": {
-            "DATABASE_URL": "$dsn"
-          }
-        }
-      ]
-    }
-  }
-}
-```
-
-Deploy once, and every container of that service has `DATABASE_URL` in its environment. **Use this variable in the
-commands below instead of typing out `<USERNAME>`, `<PASSWORD>` and `<HOST>` yourself.** Hand-assembling the URL means
-looking up four separate values, escaping any special characters in the password correctly, and leaving credentials in
-your shell history - and it breaks silently the moment RDS rotates the password. Reading `$dsn` off a pod avoids all of
-that.
+**Use `DATABASE_URL` instead of typing out `<USERNAME>`, `<PASSWORD>` and `<HOST>` yourself.** Hand-assembling the
+URL means looking up four separate values, escaping any special characters in the password correctly, and leaving
+credentials in your shell history - and it breaks silently the moment RDS rotates the password. Reading `$dsn` off a
+pod avoids all of that.
 
 List your pods, then read the variable off any pod belonging to that service:
 
@@ -318,76 +416,6 @@ kubectl get pods -n app-services
 ```sh
 kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL
 ```
-
-<Warning>
-  `$dsn` embeds the database password, so handle the value exactly as you would
-  a password. Don't paste it into tickets, Slack messages or shared docs, don't
-  commit it, and don't save it into a GUI client's connection profile - read it
-  from a pod each time you need it. When `managed_password` is `true`, RDS
-  rotates the password on its own schedule, so a copied URL is both a leaked
-  secret and a value with an expiry date.
-</Warning>
-
-#### Open a psql shell
-
-```sh
-ops connect --env staging --svc api --dep
-```
-
-That starts a `postgres:17-alpine` pod in your environment, hands it the same database credential your service uses, and
-drops you at a `psql` prompt. Exit the shell and the pod is deleted.
-
-Bare `--dep` picks the dependency for you when the service has exactly one database. Name it when there are several -
-either by its `ops.json` id or by the variable it exports:
-
-```sh
-ops connect --env staging --svc api --dep app-db
-```
-
-<Note>
-  Only Postgres is supported today. A MySQL or Redis dependency is reported
-  rather than opened. `--db-image` overrides the client image if you need a
-  specific `psql` version.
-</Note>
-
-<Tip>
-  The credential is never read by the CLI or printed to your terminal. The
-  client pod is given the same Kubernetes Secret reference your service has, so
-  the password is injected by the cluster. It stays out of your shell history
-  and out of your scrollback.
-</Tip>
-
-#### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
-
-```sh
-ops proxy --env staging --svc api --dep
-```
-
-That relays the private database endpoint to your machine and prints the connection details to use:
-
-```
-  psql -h localhost -p 5432 -U appuser -d appdb -W
-  password: <the database password>
-```
-
-Point your GUI client at `localhost` on that port with those credentials, and leave the command running while you work.
-`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if `5432` is already taken locally:
-
-```sh
-ops proxy --env staging --svc api --dep --local-port 15432
-```
-
-<Warning>
-  Use SSL mode `require` rather than `verify-full`. The database's certificate
-  is issued for its real hostname, not `localhost`, so certificate verification
-  through the tunnel will fail. For `psql` that means `PGSSLMODE=require`, since
-  `psql` has no `sslmode` flag.
-</Warning>
-
-#### Without the CLI
-
-The `kubectl` recipes below do the same work by hand. Reach for them when you need something `--dep` does not cover
-yet - a MySQL shell, or a dependency that exports discrete fields rather than `$dsn`.
 
 Start a one-shot client pod in the same namespace, passing the DSN straight from the running pod into the new one. The
 URL never lands in your shell history, and the client pod is deleted the moment you exit:
@@ -438,10 +466,3 @@ kubectl delete pod rds-proxy -n app-services
 Ephemeral [preview databases](/environment/services/ops-json#isolated-databases) run as pods in the cluster rather than
 as RDS instances, so they need no forwarder at all - `kubectl port-forward -n app-services pod/<db-pod> 5432:5432`
 reaches them directly.
-
-<Warning>
-  Every recipe on this page connects you to a real database. On production
-  environments, prefer read-only queries and keep in mind that anything you run
-  has immediate effect - there is no staging step between your prompt and your
-  customers' data.
-</Warning>

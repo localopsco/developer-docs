@@ -4,12 +4,92 @@ title: Install on Windows
 
 ## Install LocalOps CLI
 
-There are two ways to install LocalOps CLI in a Windows machine
+There are two ways to install LocalOps CLI on a Windows machine
 
-- [Using WSL](#using-wsl)
-- [Downloading Binaries](#downloading-binaries)
+- [Downloading Binaries](#downloading-binaries) — recommended, runs natively on Windows
+- [Using WSL](#using-wsl) — fallback, if you would rather work inside a Linux environment
+
+## Downloading Binaries
+
+Download the Windows binary and run it directly. Pick the build that matches your processor architecture:
+
+- [Windows arm64](https://github.com/localopsco/lops-cli/releases/latest/download/ops-windows-arm64.zip) — for ARM
+  devices such as Surface Pro X or Copilot+ PCs
+- [Windows x86_64 / amd64](https://github.com/localopsco/lops-cli/releases/latest/download/ops-windows-amd64.zip) — for
+  most Intel and AMD machines
+
+Both links always point to the latest release. You can also browse all versions and download an older build from the
+[releases page](https://github.com/localopsco/lops-cli/releases).
+
+<Note>
+  Not sure which one you need? Run `echo $env:PROCESSOR_ARCHITECTURE` in PowerShell. `AMD64` means you need the amd64
+  build, `ARM64` means you need the arm64 build.
+</Note>
+
+### Extract the binary
+
+Open PowerShell in the folder where the file was downloaded (usually `Downloads`) and extract the archive. Replace
+`amd64` with `arm64` in the commands below if you downloaded the ARM build.
+
+```powershell
+cd $HOME\Downloads
+Expand-Archive -Path .\ops-windows-amd64.zip -DestinationPath $HOME\localops -Force
+```
+
+This extracts `ops.exe` into `C:\Users\<you>\localops`.
+
+<Tip>
+  If you prefer a GUI, right-click the downloaded `.zip` file in File Explorer, choose **Extract All...**, and pick a
+  folder you can find easily.
+</Tip>
+
+### Run the binary
+
+You can now run the CLI using its full path:
+
+```powershell
+& $HOME\localops\ops.exe version
+```
+
+### Add to PATH (recommended)
+
+To run `ops` from any directory without typing the full path, add the folder to your user `PATH`:
+
+```powershell
+[Environment]::SetEnvironmentVariable(
+  'Path',
+  [Environment]::GetEnvironmentVariable('Path', 'User') + ';' + "$HOME\localops",
+  'User'
+)
+```
+
+<Note>Close and reopen your terminal for the `PATH` change to take effect.</Note>
+
+### Verify installation
+
+Verify that the CLI is installed correctly by running:
+
+```powershell
+ops version
+```
+
+This command should display the CLI version, confirming that the installation was successful 🚀
+
+### Update the CLI
+
+To update, download the latest zip and extract it over the same folder:
+
+```powershell
+cd $HOME\Downloads
+Expand-Archive -Path .\ops-windows-amd64.zip -DestinationPath $HOME\localops -Force
+```
+
+The `-Force` flag overwrites the existing `ops.exe`.
 
 ## Using WSL
+
+If you would rather work inside a Linux environment, or the native binary does not suit your setup, you can install the
+CLI through WSL instead.
 
 WSL is a feature developed by Microsoft that allows you to run a Linux distribution on your Windows machine. This
 feature is supported on Windows 10 and above. For older versions of Windows, you may have to
@@ -45,24 +125,7 @@ Once you have everything up and running, you can install LocalOps CLI by followi
 [Install Linux](/cli/install-linux) page. Since we are running a linux distribution on a windows machine, steps are the
 same.
 
-## Downloading Binaries
+## Source Code
 
-You can download the binaries and execute them. Downlod links for
-
-- [Windows arm64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-windows-arm64.zip)
-- [Windows x86_64 / amd64](https://github.com/localopsco/lops-cli/releases/latest/download/lops-windows-amd64.zip)
-
-### Verify installation
-
-You can verify the isntallation by running the ops executable
-
-```bash
-ops.exe version
-```
-
-This should print the cli version which confirms that LocalOps CLI is sucessfully installed 🚀
-
-## Source
-
-Our binaries and install scripts are hosted in our public github repo, checkout the soruce code at
-https://github.com/localopsco/lops-cli
+Our binaries and installation scripts are hosted in our public GitHub repository:
+[LocalOps CLI GitHub Repo](https://github.com/localopsco/lops-cli).
