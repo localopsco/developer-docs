@@ -1,0 +1,5 @@
+/* Mintlify defaults the navbar logo to h-6 (24px). Size the lockup to sit in the header. */
+img.nav-logo {
+  height: 1.8rem !important;
+  width: auto !important;
+}
