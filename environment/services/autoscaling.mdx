@@ -164,7 +164,7 @@ each node group has a minimum and maximum number of nodes. When your new replica
 running, the node group expands to make room, up to the maximum you set:
 
 - **On AWS**, the EKS managed node group backing your service adds EC2 instances of its configured instance type and
-  capacity type (on-demand or spot), within its min and max size.
+  capacity type (on-demand or spot), within its min and max size. An AWS node group holds between 2 and 20 nodes.
 - **On GCP**, the GKE node pool backing your service adds nodes of its configured machine type, within its minimum and
   maximum node count.
 
@@ -172,11 +172,15 @@ When load falls and replicas are removed, nodes that are no longer needed are re
 minimum.
 
 <Warning>
-  Set the maximum node count before you rely on autoscaling. Visit the **Node groups** section in your environment and
+  Set the maximum node count before you rely on autoscaling. Visit the **Node Groups** section in your environment and
   set minimum and maximum values on the node group your service is assigned to. If the maximum is too low to fit the
   replicas `max_replicas` allows, the extra pods have nowhere to be scheduled and stay pending - your service stops
   scaling at whatever the nodes can hold, not at the ceiling you declared in `ops.json`.
 </Warning>
+
+A service runs only on the node group it is assigned to. It can't spill over onto another node group's spare capacity,
+so it is the max of *that* node group that bounds how far your service can scale. If you run several autoscaling
+services on one node group, size it for all of them peaking together.
 
 <Note>
   New nodes take roughly 2 to 3 minutes to be provisioned, join the cluster and start running pods. This applies only
