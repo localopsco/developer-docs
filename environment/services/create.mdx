@@ -120,12 +120,19 @@ python server.
 Specify the number of copies of your codebase / containers to run. You can define any number from 1 to 99 to support
 your traffic.
 
+This count is fixed. To have LocalOps vary it with load instead, see
+[Autoscaling](/environment/services/autoscaling).
+
 ### CPU and memory requirements for each container
 
 Define the minimum CPU and memory requirements to run each container. Service containers will be scheduled to run on the
 underlying compute servers as appropriate.
 
 You can also define the max CPU and max memory here. When any container crosses this limit, it will be re-booted.
+
+The minimum CPU and memory you set here are also what [autoscaling](/environment/services/autoscaling) measures against
+- `target_cpu` and `target_memory` are percentages of each container's minimum, so a service with no minimum set can't
+scale on utilization.
 
 <Tip>Specifying max CPU and max Memory is a neat trick to catch memory leaks and restart containers</Tip>
 

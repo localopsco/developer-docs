@@ -133,6 +133,7 @@
               "environment/services/job",
               "environment/services/cronjob",
               "environment/services/db-migrations",
+              "environment/services/autoscaling",
               {
                 "group": "AWS services",
                 "pages": [
