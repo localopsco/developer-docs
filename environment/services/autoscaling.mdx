@@ -8,6 +8,10 @@ Most services don't need the same number of containers all day. Traffic peaks in
 overnight, a batch job floods a worker every Monday morning. Declare an `autoscaling` block in `ops.json` and LocalOps
 adds and removes replicas for you, between a floor and a ceiling you set.
 
+This is **horizontal** autoscaling - LocalOps runs more copies of your container, it does not give any single container
+more CPU or memory. The CPU and memory each container gets stay exactly as you set them for the service, and are what
+the utilization targets below are measured against.
+
 <Note>
   This page assumes your service already deploys on LocalOps and you have set its CPU and memory requirements. If you
   haven't, start with [creating a service](/environment/services/create).
@@ -139,6 +143,47 @@ service above the scheduled number, up to `max_replicas`.
 You can declare up to 12 windows per service. Beyond that, only the first 12 are kept. A window asking for more
 replicas than `max_replicas` is capped at the ceiling, and one asking for fewer than `min_replicas` is raised to the
 floor.
+
+## Proactive and reactive scaling
+
+The two kinds of trigger behave differently, and most services want both.
+
+`schedules` are **proactive**. The window opens on a clock, so capacity is in place before the traffic it was meant for
+arrives. Use them for load you can predict - business hours, a nightly batch, a weekly report run.
+
+`target_cpu` and `target_memory` are **reactive**. Nothing moves until utilization has already risen, so there is
+always a short lag between load arriving and replicas appearing. Use them for load you can't predict, and as the safety
+net above whatever your schedules reserved.
+
+A common shape is a schedule that covers the working day and a CPU target that handles the spikes within it.
+
+## Where the new pods run
+
+Adding replicas only helps if there is somewhere to put them. Every service runs on a node group you assign it to, and
+each node group has a minimum and maximum number of nodes. When your new replicas don't fit on the nodes already
+running, the node group expands to make room, up to the maximum you set:
+
+- **On AWS**, the EKS managed node group backing your service adds EC2 instances of its configured instance type and
+  capacity type (on-demand or spot), within its min and max size.
+- **On GCP**, the GKE node pool backing your service adds nodes of its configured machine type, within its minimum and
+  maximum node count.
+
+When load falls and replicas are removed, nodes that are no longer needed are released the same way, back down to the
+minimum.
+
+<Warning>
+  Set the maximum node count before you rely on autoscaling. Visit the **Node groups** section in your environment and
+  set minimum and maximum values on the node group your service is assigned to. If the maximum is too low to fit the
+  replicas `max_replicas` allows, the extra pods have nowhere to be scheduled and stay pending - your service stops
+  scaling at whatever the nodes can hold, not at the ceiling you declared in `ops.json`.
+</Warning>
+
+<Note>
+  New nodes take roughly 2 to 3 minutes to be provisioned, join the cluster and start running pods. This applies only
+  when new nodes are actually required. If the nodes already running have room to spare, your new replicas start
+  immediately and there is no wait at all - which is another reason to give schedules a little lead time on the traffic
+  you expect.
+</Note>
 
 ## Setting it from the console instead
 
