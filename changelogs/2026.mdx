@@ -4,6 +4,126 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 28, 2026">
+
+## Public API - run environments on any cloud, headless
+
+The LocalOps API is public. Everything you have been doing by clicking through the console - creating services,
+shipping them, rotating secrets, attaching domains - you can now do from code, with an account API token and nothing
+else.
+
+It is a small, deliberately separate surface from the console - every endpoint is listed in the
+[API reference](/api-reference). Owners and admins can read the token from the LocalOps console, and every request
+carries it:
+
+```bash
+curl -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+  https://sdk.localops.co/v1/environments/$ENV_ID
+```
+
+Actions taken this way show up in your [audit log](/team/audit-logs) with the actor `API Token`.
+
+### Ship from your own CI
+
+Create a service, then deploy a git SHA, a Docker image tag or a Helm chart version - and poll the deployment until it
+lands:
+
+```bash
+curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/deploy \
+  -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"commit_id": "9f2c1ab", "note": "release 1.4.0"}'
+```
+
+Send `{}` to deploy the head of the service's configured branch. The deployment id comes back immediately, and
+`GET /v1/deployments/{deploymentId}` runs to `success` or `failed`.
+
+### Manage secrets and custom domains
+
+Read and replace secrets at the environment level or per service. Register a custom domain and the API hands back the
+exact DNS records to create, then verifies them and cuts traffic over.
+
+<Warning>
+  Writing secrets is a full replace, not a merge. Read the whole set, change what you need and write the whole set
+  back - anything you leave out is deleted.
+</Warning>
+
+### Wire your own infrastructure to an environment
+
+`GET /v1/environments/{envId}` reads three things live from your cloud, so your DNS, firewalls and IAM policies can
+point at a LocalOps environment without anyone copying values out of a console:
+
+- `ingress_host` - what to point a `CNAME` (AWS) or `A` record (GCP) at
+- `public_nat_ips` - the egress addresses to allowlist in your firewalls and database security groups
+- `svc_role_arn` - the IAM role your pods assume, to name as a principal in your own bucket, queue and KMS key policies
+
+### Offer bring-your-own-cloud without a console step per customer
+
+If you sell a [BYOC edition](/use-cases/byoc) - your product running inside each customer's own AWS, GCP or Azure
+account - onboarding has meant repeating the same console steps for every customer: provision the environment, create
+each service, wire the secrets, attach the domain, deploy. For a dev tool company signing enterprise customers, that
+loop grows linearly with the customer list, and it is the part that does not scale.
+
+Here is the whole thing, end to end, as API calls. Once the customer has connected their cloud account, this is a
+script you run once per customer:
+
+1. **Provision an environment in their cloud.** `POST /v1/environments` with the customer's cloud connection and the
+   region they want - `aws-us-east-1`, `gcp-us-central1`, and so on. Poll `GET /v1/environments/{envId}` until `state`
+   is `available`. *(This one endpoint is still coming soon - see below. Everything after it is live today.)*
+2. **Add your services.** `POST /v1/environments/{envId}/services` once per service - API, workers, cron jobs,
+   frontend. Each one can come from a GitHub or GitLab repo, a Docker image or a Helm chart, with its own CPU, memory
+   and replica counts. Adding a new service to a customer later is the same call.
+3. **Set their secrets.** `PUT /v1/environments/{envId}/secrets` for values every service shares, and
+   `PUT /v1/environments/{envId}/services/{serviceId}/secrets` for the ones scoped to a single service. This is where
+   per-customer configuration lives - their database URLs, their API keys, their license terms.
+4. **Deploy.** `POST /v1/environments/{envId}/services/{serviceId}/deploy` with a commit SHA, a Docker image tag or a
+   Helm chart version. Poll `GET /v1/deployments/{deploymentId}` until `success` or `failed`.
+5. **Attach their domain.** `POST …/custom-domains` returns the exact DNS records for the customer to create, and
+   `POST …/custom-domains/{customDomainId}/verify` checks them and cuts traffic over once they resolve.
+6. **Hand over the network details.** `GET /v1/environments/{envId}` gives you the `ingress_host` to point DNS at, the
+   egress IP addresses to allowlist and the IAM role to name in their resource policies - the three things their
+   network and security teams ask for during review.
+
+From then on, shipping a release to every customer you have is the same program with a different environment id:
+
+```bash
+while read -r ENV_ID SERVICE_ID; do
+  curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/deploy \
+    -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"docker_image_tag": "1.4.0", "note": "rollout 1.4.0"}'
+done < customer-envs.txt
+```
+
+Each call hands back a deployment id, so you can gate the next customer on the previous one reaching `success` - a
+staged rollout across your install base, written in whatever your team already uses.
+
+### What is next
+
+Per-operation status and logs, so a failure tells you why. Creating and deleting environments. Deleting a custom
+domain. Cancelling an in-flight deployment. All of them are already published in the
+[API reference](/api-reference) with a **`COMING SOON`** badge, so you can design against them today - they return
+`404` until they ship.
+
+### Next up: MCPs
+
+This API is the foundation for what we are building next - a LocalOps MCP server, so your agents can deploy on your
+behalf.
+
+The same operations you have just read about, exposed as tools an agent can call: create a service, set its secrets,
+ship a release, check what state an environment is in. Ask your agent to stand up a service for a branch, roll a new
+image tag out to a customer, or tell you why last night's deployment failed, and it talks to LocalOps directly instead
+of you translating the request into `curl`.
+
+This and everything else we are working on is tracked on our
+[public roadmap](https://github.com/orgs/localopsco/projects/9).
+
+[Get started](/api/getting-started) · [Common workflows](/api/workflows) · [API reference](/api-reference)
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="September 11, 2026">
 
 ## New options in ops.json: bigger uploads, fewer surprise errors

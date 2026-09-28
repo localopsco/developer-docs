@@ -44,8 +44,8 @@ service section to see the logs.
 
 A service created from a [Docker image](/environment/services/docker) has no repo to watch, so there is no push event to
 react to. Trigger the deployment from wherever you publish the image - typically the last step of the pipeline that
-pushed the new tag - by calling the [Deploy Service](/api-reference/deploy-service) endpoint with the tag you just
-published:
+pushed the new tag - by calling the [Deploy Service](/api-reference/deployments/deploy-service) endpoint with the tag
+you just published:
 
 ```sh
 curl -X POST https://sdk.localops.co/v1/environments/<envId>/services/<serviceId>/deploy \
@@ -145,8 +145,8 @@ console.
 
 <Note>
   All three shapes are the same endpoint - it takes `commit_id`, `docker_image_tag` or `helm_chart_version` depending
-  on how the service was created. See the [Deploy Service](/api-reference/deploy-service) reference for the full
-  request and response schema.
+  on how the service was created. See the [Deploy Service](/api-reference/deployments/deploy-service) reference for the
+  full request and response schema.
 </Note>
 
 ## Manual deployment

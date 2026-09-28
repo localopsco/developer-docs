@@ -244,7 +244,8 @@
             "group": "Getting Started",
             "icon": "rocket",
             "pages": [
-              "api/getting-started"
+              "api/getting-started",
+              "api/workflows"
             ]
           },
           {
@@ -271,6 +272,12 @@
       ]
     }
   },
+  "redirects": [
+    {
+      "source": "/api-reference",
+      "destination": "/api-reference/environments/get-environment"
+    }
+  ],
   "api": {
     "playground": {
       "display": "interactive"
