@@ -1,0 +1,250 @@
+---
+title: Aurora (Postgres & MySQL)
+description: Provision Amazon Aurora clusters - MySQL/Postgres
+---
+
+Your service(s) may want a database that scales its capacity on its own, or that offers a separate endpoint for
+read-only traffic. This guide will show you steps to create and access Amazon Aurora clusters that offer fully managed
+Postgres/MySQL compatible databases.
+
+Aurora separates storage from compute. One cluster owns a single storage volume that grows on its own, and one or more
+compute instances attach to it - a **writer** that handles all writes, plus optional **readers** that serve read-only
+traffic from the same volume. Since readers share the writer's storage, adding one gives you read capacity immediately,
+with no data copy to manage.
+
+<Tip>
+  Use the [`rds`](/environment/services/aws/rds) dependency for a single, straightforward database instance. Choose
+  `aurora` when you want a separate read endpoint, faster failover, or capacity that scales itself.
+</Tip>
+
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more Aurora clusters, you can add `ops.json` in the root directory of Github repo
+you've connected for the service.
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add Aurora clusters as a dependency, like below.
+
+```json
+{
+  "dependencies": {
+    "aurora": {
+      "clusters": [
+        {
+          "id": "orders",
+          "prefix": "orders",
+          "engine": "aurora-postgres",
+          "version": "16.4",
+          "db_name": "orders",
+          "serverless": {
+            "min_acu": 0.5,
+            "max_acu": 16
+          },
+          "replicas": 1,
+          "maintenance_window": "sun:05:00-sun:06:00",
+          "cluster_parameters": [
+            {
+              "name": "rds.force_ssl",
+              "value": "1",
+              "apply_method": "pending-reboot"
+            }
+          ],
+          "parameters": [
+            {
+              "name": "max_connections",
+              "value": "2000",
+              "apply_method": "pending-reboot"
+            }
+          ],
+          "exports": {
+            "DATABASE_URL": "$dsn",
+            "DATABASE_RO_URL": "$readerDsn",
+            "DB_HOST": "$address",
+            "DB_PORT": "$port",
+            "DB_NAME": "$dbName",
+            "DB_USER": "$username",
+            "DB_PASSWORD": "$password"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+You can add as many Aurora clusters as you want.
+
+Arguments you can add in each cluster object above:
+
+1. `id` - Alphanumeric string. Must be unique amongst the clusters you've declared above. Changing this string will
+   replace the original cluster with new one.
+2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your cluster, to make it recognizable in the
+   AWS console.
+3. `engine` - Provide either `aurora-postgres` or `aurora-mysql`. Required.
+4. `version` - Pick a version for your cluster - `16.4` style for Postgres, `8.0.mysql_aurora.3.06.0` style for MySQL.
+   Ensure Aurora supports it, by referring to AWS docs -
+   [Postgres](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraPostgreSQL.Updates.html) /
+   [MySQL](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/AuroraMySQL.Updates.html). Default: `""` - so it
+   will provision the latest version as decided by AWS. Required when you set `parameters` or `cluster_parameters`.
+5. `db_name` - Name of the initial database created in the cluster. Default: `db` + `id`.
+6. `serverless` - Object with `min_acu` and `max_acu`, to run the cluster on **Aurora Serverless v2**. Capacity scales
+   in place between the floor and ceiling you set, in Aurora Capacity Units (ACUs) - one ACU is roughly 2 GiB of memory
+   with proportional CPU. Scaling happens in seconds without a failover or a dropped connection, so this suits traffic
+   that varies through the day. `min_acu` is what you pay for around the clock, so keep it at the smallest value your
+   idle workload tolerates (`0.5` is the floor); `max_acu` is only billed when Aurora actually scales up. Default:
+   `0.5`-`4` ACU. Mutually exclusive with `instance_type`.
+7. `instance_type` - Aurora instance class, e.g., `db.r6g.large`, to run the cluster on **provisioned** instances
+   instead. Every instance in the cluster runs at that size continuously, so cost is predictable and there is no scaling
+   latency - suited for a production database under steady load. All Aurora instance classes are prefixed with `db.` -
+   memory-optimized (`db.r6g`, `db.r7g`) or burstable (`db.t4g`). Refer to
+   [AWS docs](https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/Concepts.DBInstanceClass.html) for available
+   sizes. Mutually exclusive with `serverless` - declaring both is an error.
+8. `replicas` - Number of read replicas provisioned in addition to the writer. Valid values are `0` to `14` (Aurora
+   supports at most 15 instances in a cluster). Default: `0`.
+9. `maintenance_window` - The window to perform maintenance in, in UTC. Syntax: "ddd:hh24:mi-ddd:hh24:mi". Eg:
+   "sun:05:00-sun:06:00". Minimum 30 minutes. Default: assigned by AWS.
+10. `cluster_parameters` - Optional list of DB **cluster** parameter group settings, applied to the whole cluster -
+    every instance shares them. This is where connection and replication settings live: `rds.force_ssl`,
+    `require_secure_transport`, `shared_preload_libraries`.
+11. `parameters` - Optional list of DB parameter group settings, applied **per instance**: `max_connections`,
+    `work_mem`, `statement_timeout`.
+
+    Each entry in `cluster_parameters` and `parameters` is an object with the following keys:
+    - `name` - Name of the parameter. Must be a valid parameter for the chosen `engine` and `version`. If you are
+      unsure which of the two lists it belongs to, check whether the AWS docs list it under *DB cluster parameter group*
+      or *DB parameter group* - putting one in the wrong place is rejected by AWS.
+    - `value` - Value to set for the parameter. Always specified as a string.
+    - `apply_method` - When the change should take effect. Required. One of `immediate` or `pending-reboot`. Static
+      parameters only accept `pending-reboot`.
+
+    Setting either list requires an explicit `version`, since the engine version determines which parameters exist.
+
+12. `skip_preview` - Set to `true` to not create this cluster for ephemeral preview services. Default: `false`.
+13. `preview_only` - Set to `true` to create this cluster *only* for ephemeral preview services. Default: `false`.
+14. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+    the properties of the Aurora cluster provisioned. See below for available properties.
+
+<Warning>
+  Changing `id`, `db_name` or switching `engine` between Postgres and MySQL will delete & replace the original Aurora
+  cluster with a new, empty one - the database name and master username are derived from `id`. Treat `id` as permanent
+  once the cluster holds data you care about. Switching between Serverless v2 and provisioned is *not* destructive - the
+  instances are resized and the data stays put.
+</Warning>
+
+Available properties of the Aurora cluster to use in `exports`:
+
+1. `$name` - Name of the Aurora cluster.
+2. `$arn` - Amazon resource name of the cluster. Eg., `arn:aws:rds:..`
+3. `$endpoint` - The writer connection endpoint in `address:port` format.
+4. `$address` - DNS address of the writer endpoint.
+5. `$readerEndpoint` - The reader connection endpoint in `address:port` format.
+6. `$readerAddress` - DNS address of the reader endpoint.
+7. `$port` - The port your code will use to access the cluster - `5432` for Postgres, `3306` for MySQL.
+8. `$dbName` - Name of the database created under the cluster.
+9. `$username` - Username of the master database user.
+10. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by Aurora in
+    AWS Secrets Manager. Your code can read the password from Secrets Manager using this `$passwordArn`.
+11. `$password` - The plaintext password of the user `$username`. LocalOps resolves the password from AWS Secrets
+    Manager and injects it directly as an environment variable, so your code can use it without calling the Secrets
+    Manager API. Treat this value as a secret.
+12. `$dsn` - Ready-to-use connection string for the **writer**, in the standard URL form for the chosen engine (e.g.,
+    `postgres://$username:$password@$address:5432/$dbName`). Treat this value as a secret since it embeds the password.
+13. `$readerDsn` - Same, for the **reader** endpoint.
+
+Placeholder names are case-sensitive, and an unrecognized one fails the deployment with a message naming the offending
+variable - so a typo surfaces immediately instead of becoming an empty environment variable at runtime.
+
+### Reading and writing:
+
+A cluster gives you two endpoints, and using both is the main reason to choose Aurora:
+
+- **Writer** (`$dsn`, `$endpoint`, `$address`) - send all writes here. It always points at the current writer and
+  follows automatically if Aurora promotes a replica during failover, so your code doesn't have to reconnect to a new
+  address.
+- **Reader** (`$readerDsn`, `$readerEndpoint`, `$readerAddress`) - distributes connections across your read replicas.
+  Point reports, analytics, search and any read-heavy background job here to keep that load off the writer.
+
+With `replicas: 0` the reader endpoint resolves to the writer, so it is safe to wire both into your app from day one and
+add replicas later without a code change.
+
+<Note>
+  Replicas are typically milliseconds behind the writer, but not zero. If a request writes a row and then immediately
+  reads it back, read that one through the writer (`$dsn`).
+</Note>
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in
+any of your active environment points at the same repository as source and when a deployment is triggered.
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing.
+  Resources declared in the `dependencies` object will be provisioned before your code starts to run.
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in
+  one of the properties above. ACU range, replica count, instance type, parameters and maintenance window are all
+  applied in place.
+- Keys in `exports` object will be passed as enviroment variables to your service.
+- When the service is deleted, the provisioned Aurora clusters are deleted from the cloud account immediately &
+  automatically, after taking a final snapshot.
+- A first deployment takes several minutes - Aurora provisions the cluster before the instances, and the writer must be
+  available before your containers start.
+
+Each service that declares an `aurora` dependency gets its own cluster. To have several services share one database,
+declare it in the `ops.json` of a single service and pass the connection details to the other services as
+[secrets](/environment/services/secrets).
+
+### Private only access:
+
+Aurora clusters can be accessed from your code just as usual using your SQL-compatible DB libraries or ORMs.
+
+All Aurora clusters are created only in the private subnets of the same VPC where your environment is running. And they
+are attached with following security group.
+
+Ingress:
+
+1. From source: `10.0.0.0/16` (Your environment's VPC CIDR IP range)
+2. At port: `5432` (for Postgres) or `3306` (for MySQL)
+3. Protocol: `TCP`
+
+So only workload/containers/servers from within your environment's VPC can access the Aurora cluster. There is no way to
+make the cluster publicly reachable through `ops.json`.
+
+This means you cannot point `psql` or a desktop SQL client at the database directly from your laptop. To get an
+interactive SQL shell, or to reach the database from a GUI client, connect from inside the cluster using the LocalOps
+CLI - see [Connect to your database](/cli/usage#connect-to-your-database).
+
+### Reading Database password:
+
+AWS generates the master password, stores it in your AWS account's Secrets Manager and rotates it automatically.
+LocalOps grants your service permission to read that secret, so `$password` and `$dsn` always reflect the current value
+as of your last deployment.
+
+Since the password is rotated periodically, the `$password` and `$dsn` values injected at container start can go stale
+between rotations. Also export `$passwordArn` and have your code fall back to reading the current password from AWS
+Secrets Manager using that ARN whenever a DB connection fails with a bad-password / auth error, then retry the
+connection with the freshly fetched password.
+
+### Pre-configured for production use:
+
+All Aurora clusters are pre-configured for production use.
+
+1. Daily backup is enabled. With 30-day retention for each backup.
+2. Encryption is enabled to safeguard data at rest.
+3. Enhanced monitoring is enabled at 60-second resolution.
+4. A final snapshot is created automatically when the cluster is about to get deleted.
+5. Changes are deferred to the maintenance window, so a deployment doesn't cause an unplanned restart.
+
+### Ephemeral preview environments:
+
+For speed and cost savings, preview services created for
+[pull request previews](https://localops.co/blog/introducing-pull-request-previews) get a deliberately smaller, cheaper
+cluster:
+
+1. The writer only - `replicas` is ignored.
+2. Encryption at rest and the final snapshot on teardown are turned off.
+3. Backup retention is one day, the minimum Aurora allows.
+4. Changes are applied immediately rather than deferred to the maintenance window.
+
+Every preview service still gets its **own cluster**, and a Serverless v2 cluster bills continuously even at `0.5` ACU
+for as long as the preview exists. If that isn't worth it, set `skip_preview: true` and point previews at a shared
+database using a regular [environment variable](/environment/services/secrets).

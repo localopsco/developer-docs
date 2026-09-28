@@ -1,6 +1,6 @@
 ---
-title: Configure ops.json
-description: Configure services programmatically using ops.json
+title: ops.json magic
+description: Define health checks, configure ingress, cloud resources and more with a simple JSON file
 ---
 
 ## Overview
@@ -13,6 +13,7 @@ Using service configuration `ops.json`, you can spin up
 - Crons
 - Health checks
 - Cloud dependencies like S3, RDS, SQS queue, etc
+- Volumes - scratch space, durable disks and secret files
 - Sidecar containers
 - and more..
 
@@ -247,7 +248,12 @@ When a socket cannot be created with your container on the defined port, health 
 }
 ```
 
-## Request timeouts
+## Configure ingress
+
+Each environment runs an nginx ingress in front of your services. These settings control how it handles requests on
+their way to your containers - how long it waits, how much it will buffer, and whether it terminates TLS at all.
+
+### Request timeouts
 
 You can tune how long the platform keeps client connections to your service open. This is useful for real-time
 applications that rely on long-lived TCP connections (eg., websockets, server-sent events, long polling, streaming
@@ -257,21 +263,93 @@ APIs).
 {
   "send_timeout": 600,
   "read_timeout": 600,
-  "connection_timeout": 300
 }
 ```
 
-| Field                | Description                                                                                                                                                          | Default |
+| Field                | Description                                                                                                                                                          | Default (sec) |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- |
-| `send_timeout`       | Maximum time (in seconds) to wait between successive write operations when sending a response to the client. The connection is closed if the client stops reading.   | `60`    |
-| `read_timeout`       | Maximum time (in seconds) to wait between successive read operations when receiving a request from the client. The connection is closed if the client stops sending. | `60`    |
-| `connection_timeout` | Maximum time (in seconds) to wait while establishing a connection with the upstream service (your container) before giving up.                                       | `60`    |
+| `connection_timeout` | Maximum time (in seconds) platform waits to establish a succesful tcp connection with your service containers, before giving up.                                        | `10`    |
+| `send_timeout`       | Maximum time (in seconds) between two successive writes from platform to your service when processing a request from clients.                                         | `120`    |
+| `read_timeout`       | Maximum time (in seconds) between two successive read operations that platform waits to read responses from your service while sending them to client                 | `120`    |
 
 <Note>The maximum allowed value for each of these timeouts is `3600` seconds (1 hour).</Note>
 
-<Note>These timeouts apply only to `web` (external) and `internal` service types, as they govern incoming HTTP requests routed through the ingress.</Note>
+<Note>These timeouts apply only to `web` (external), as they govern incoming HTTP requests from public internet routed through platform's ingress.</Note>
 
-## SSL passthrough
+### Request body size
+
+Every environment's ingress accepts request bodies up to `30` MB by default. A client sending more than that gets a
+`413 Request Entity Too Large` back from the ingress, before the request reaches your container.
+
+If your service accepts larger uploads - file attachments, media, bulk imports - raise the limit with
+`request_body_size`, in whole MB:
+
+```json
+{
+  "request_body_size": 100
+}
+```
+
+| Field               | Description                                                                        | Default (MB) |
+| ------------------- | ---------------------------------------------------------------------------------- | ------------ |
+| `request_body_size` | Maximum size (in MB) of a request body the platform accepts for this service.      | `30`         |
+
+The maximum allowed value is `1024` MB (1 GB). A larger value is clamped to it. A zero or negative value is ignored and
+the `30` MB default is used.
+
+<Note>`request_body_size` applies only to `web` (external) services, as it governs incoming HTTP requests from the
+public internet routed through the platform's ingress. It is also ignored when
+[`ssl_passthrough`](#ssl-passthrough) is enabled, because the ingress forwards those connections without inspecting
+HTTP.</Note>
+
+<Tip>
+  For very large files, prefer uploading directly to object storage with a presigned URL instead of routing the bytes
+  through your service. The ingress buffers the whole body before it forwards the request, so large uploads add latency
+  and load regardless of this setting.
+</Tip>
+
+### Response buffers
+
+The platform's ingress reads each response from your service into a set of fixed-size buffers before it forwards the
+response to the client. The first buffer has to hold the whole set of response headers. By default your service gets
+`8` buffers of `8` KB each.
+
+Services that return large headers - long `Set-Cookie` values, SSO or JWT tokens, big `Authorization` headers - can
+overflow that first buffer. When they do, the ingress fails the request with a `502 Bad Gateway`, and its logs carry
+`upstream sent too big header while reading response header from upstream`. Raise `proxy_buffer_size` (in KB) to fix
+it:
+
+```json
+{
+  "proxy_buffer_size": 32,
+  "proxy_buffers": 16
+}
+```
+
+| Field               | Description                                                                                  | Default | Allowed range |
+| ------------------- | -------------------------------------------------------------------------------------------- | ------- | ------------- |
+| `proxy_buffer_size` | Size (in KB) of each buffer. The first one must fit your service's entire response headers.  | `8`     | `4` to `64`   |
+| `proxy_buffers`     | How many of those buffers the ingress uses per in-flight response.                           | `8`     | `2` to `32`   |
+
+Both take whole integers. A value outside the allowed range is clamped to the nearest limit. A zero or negative value
+is ignored and the default is used.
+
+Fixing a `502` on response headers needs only `proxy_buffer_size`. `proxy_buffers` controls how much of the response
+body the ingress holds in memory while streaming it - raising it can help a service that returns large responses to
+slow clients, and leaving it alone is fine. Declaring either field applies the pair, so a service that sets only one
+still buffers against the default for the other.
+
+<Note>These settings apply only to `web` (external) services, and are ignored when
+[`ssl_passthrough`](#ssl-passthrough) is enabled, because the ingress forwards those connections without inspecting
+HTTP.</Note>
+
+<Note>
+  These buffers are per in-flight response, in an ingress controller shared by every service in the environment, which
+  is why the ceiling is deliberately low. A response larger than `proxy_buffer_size` x `proxy_buffers` is not failed -
+  the ingress spills the remainder to disk and keeps streaming it.
+</Note>
+
+### SSL passthrough
 
 By default, the environment's nginx ingress terminates TLS for incoming traffic and forwards plain HTTP to your service. If your service needs to handle TLS termination itself (eg., for mTLS, custom certificate handling, or protocols that require end-to-end TLS), set `ssl_passthrough` to `true`:
 
@@ -282,6 +360,302 @@ By default, the environment's nginx ingress terminates TLS for incoming traffic 
 ```
 
 When `ssl_passthrough` is enabled, the ingress forwards the raw TLS connection to your container without decrypting it. For this to work, set your service's port to `443` so the ingress can route HTTPS traffic directly to it. Your container must present a valid TLS certificate on that port.
+
+## Deploy timeout
+
+When you push a change, LocalOps waits for the new version of your service to roll out and become ready. By default it
+waits for 5 minutes. If the rollout hasn't become ready by then, the deployment is failed.
+
+If your service genuinely needs longer - large images, slow warm up, heavy work done at container startup - set
+`deploy_timeout` (in seconds):
+
+```json
+{
+  "deploy_timeout": 900
+}
+```
+
+| Field            | Description                                                                                          | Default |
+| ---------------- | ---------------------------------------------------------------------------------------------------- | ------- |
+| `deploy_timeout` | Time (in seconds) to wait for your service's rollout to become ready, before failing the deployment. | `300`   |
+
+Allowed range is `60` (1 minute) to `1200` (20 minutes). If you declare a value outside this range, LocalOps clamps it
+to the nearest limit and tells you so in the deployment logs. A zero or negative value is ignored and the default is
+used.
+
+<Note>
+  Services running on Windows node groups wait for `900` seconds (15 minutes) by default, as image pull and container
+  startup are slower there.
+</Note>
+
+<Note>
+  `deploy_timeout` covers only the wait for your service to become ready. Cloning your repository, building the image
+  and pushing it happen before this, and are not governed by this setting.
+</Note>
+
+Every deployment logs the wait it is going to use, like
+`Waiting up to 15m0s for this service's rollout to become ready`. Check your deployment logs to confirm that the value
+you declared was picked up.
+
+## Autoscaling
+
+Add an `autoscaling` block to add and remove replicas with load, instead of running a fixed number of containers all
+day. Scale on CPU or memory utilization, on time-of-day windows, or both:
+
+```json
+{
+  "autoscaling": {
+    "min_replicas": 2,
+    "max_replicas": 10,
+    "target_cpu": 70
+  }
+}
+```
+
+`max_replicas` is required and is never defaulted - it is the ceiling on what this service can cost. `min_replicas` is
+optional and falls back to your service's existing container count. `target_cpu` and `target_memory` are percentages of
+each pod's CPU and memory request, so the service needs a minimum CPU or memory set under the Scaling tab for them to
+work.
+
+Preview environments never autoscale, and neither do cron services, job services or services declaring a `disk`
+volume.
+
+See [Autoscaling](/environment/services/autoscaling) for the full guidance - schedules, the replica bounds, setting the
+same config from the console instead, and what gets clamped rather than failing your deployment.
+
+## BEAM clustering
+
+If you run Elixir or Erlang services, add `beam_cluster_id` with the same value in every service you want clustered
+together. LocalOps labels all their pods alike and creates a shared headless service whose DNS returns every member
+pod's IP, then injects `LOPS_BEAM_CLUSTER_NAME` and `LOPS_BEAM_CLUSTER_DNS` so `libcluster` can discover peers.
+
+```json
+{
+  "beam_cluster_id": "myapp"
+}
+```
+
+To cluster across regions, also set `beam_dns_name` to a record in a private DNS zone shared by all your regional VPCs.
+LocalOps keeps that record pointed at the environment's pods so nodes in other regions can find them.
+
+```json
+{
+  "beam_cluster_id": "b2bapp",
+  "beam_dns_name": "mumbai.mesh.acmecorp.internal"
+}
+```
+
+See [BEAM clustering](/environment/services/beam-clustering) for the full guidance — wiring up `libcluster`, clustering
+across regions, the release config you still own, and how previews, jobs and crons behave.
+
+## Privileged containers
+
+Some workloads need to reach the node they run on - eBPF agents, kernel module loaders, low level profilers, or code
+that talks to host devices. These need more privileges than a normal container gets. Declare `unsafe.privileged` to run
+your service's container in privileged mode:
+
+```json
+{
+  "unsafe": { "privileged": true }
+}
+```
+
+This applies only to your service's own container. [Init jobs](/environment/services/ops-json#init-jobs) and
+[processes](/environment/services/ops-json#configuring-processes) continue to run unprivileged, so the extra privilege
+stays limited to the workload that asked for it.
+
+<Warning>
+  A privileged container can access host devices and effectively bypasses container isolation on the node it runs on.
+  Only enable this when your workload genuinely requires node level access, and keep such code in a dedicated service
+  instead of your main application service.
+</Warning>
+
+Leaving `unsafe` out, or setting `"privileged": false`, keeps the default behaviour - your service runs unprivileged.
+
+## Volumes
+
+Your service may need scratch space to write temporary files, a durable disk that survives restarts, or a set of
+certificate files mounted into a well known path.
+
+Declare them once under the top-level `volumes` key and LocalOps provisions them for you. There are no Kubernetes
+manifests to write and no storage class to pick. The same declaration works identically on AWS and GCP, and it drives
+both the service running in your environment and the [Helm chart you generate](/use-cases/self-hosted) for customers.
+
+```json
+{
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    { "name": "run", "mount_path": "/var/run", "kind": "mem" },
+    {
+      "name": "tmpfiles",
+      "mount_path": "/app/src/tmpfiles",
+      "kind": "disk",
+      "size": "10Gi",
+      "expose": true
+    },
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls",
+      "expose": true
+    }
+  ]
+}
+```
+
+Volumes apply to the service itself. Every container that runs for the service gets the mounts, including the
+[init jobs](/environment/services/ops-json#init-jobs) that run before it starts.
+
+### Volume arguments
+
+| Key           | Required      | Description                                                                                                                                                                    |
+| ------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`        | Yes           | Your identifier for the volume. Lowercase letters, numbers and `-`, starting and ending with a letter or number, at most 59 characters, unique within the service. This is also the key you will see in the generated Helm chart, so pick something you are happy reading later. |
+| `mount_path`  | Yes           | Absolute path inside the container. Must be unique within the service.                                                                                                          |
+| `kind`        | Yes           | One of `mem`, `disk` or `secret`. See [Kinds of volumes](/environment/services/ops-json#kinds-of-volumes) below.                                                                 |
+| `size`        | `disk` only   | A quantity like `10Gi` or `512Mi`. Required for `disk`. Optional on `mem`, where it changes the behaviour. Not accepted on `secret`.                                             |
+| `secret_name` | `secret` only | Name of the Kubernetes secret to mount. Not accepted on other kinds.                                                                                                            |
+| `expose`      | No            | Publishes one setting for this volume into the generated chart's `values.yaml`. Valid on `disk` and `secret` only.                                                              |
+
+### Kinds of volumes
+
+#### `mem` - scratch space
+
+Scratch space that is discarded when the container goes away. This is what you want for paths like `/tmp` and
+`/var/run` when your image runs with a read-only root filesystem.
+
+By default it is backed by the disk of the machine your service runs on. Add a `size` and you get a RAM disk instead.
+
+```json
+{
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    { "name": "cache", "mount_path": "/cache", "kind": "mem", "size": "256Mi" }
+  ]
+}
+```
+
+The first one is backed by the machine's disk. The second is a 256Mi RAM disk.
+
+<Warning>
+  A RAM disk counts against the memory limit of your service. Size it deliberately - files written there consume the
+  same memory your application code needs.
+</Warning>
+
+#### `disk` - durable storage
+
+Storage that survives restarts and rescheduling. `size` is required.
+
+Disks are encrypted, are created in the same zone as the service that uses them, and can be grown later by raising
+`size` and deploying again.
+
+Each replica of your service gets its own disk and keeps it across restarts, rather than all replicas sharing one.
+
+```json
+{
+  "volumes": [
+    { "name": "tmpfiles", "mount_path": "/app/src/tmpfiles", "kind": "disk", "size": "10Gi" }
+  ]
+}
+```
+
+Disks are available on [web](/environment/services/web), [internal](/environment/services/internal) and
+[worker](/environment/services/workers) services.
+
+<Note>
+  Disks are not available on [cron](/environment/services/cronjob) or [job](/environment/services/job) services, where
+  each run gets a fresh short-lived container and durable storage does not mean much. Declaring one there fails the
+  deployment.
+</Note>
+
+#### `secret` - mount a secret as files
+
+Mounts an existing Kubernetes secret into the container as read-only files. Each key in the secret becomes a file
+inside `mount_path`.
+
+```json
+{
+  "volumes": [
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls"
+    }
+  ]
+}
+```
+
+A secret with a key called `cert` shows up at `/etc/temporal/tls/cert`.
+
+This works on every service type. The secret must already exist in the same environment - LocalOps mounts it, it does
+not create it for you. To pass values as environment variables instead, use
+[secrets](/environment/services/secrets).
+
+### Volumes in the generated Helm chart
+
+The same `ops.json` drives the [Helm chart you generate](/use-cases/self-hosted) from your environment, so your service
+behaves the same when a customer installs it in their own EKS or GKE cluster.
+
+Volumes marked `expose: true` show up in the chart's `values.yaml` under `persistence`, keyed by the `name` you chose.
+Volumes you don't mark do not appear there at all - they are still mounted, they are just not something the person
+installing the chart can change.
+
+```yaml
+webapp:
+  replicaCount: 3
+  persistence:
+    # /app/src/tmpfiles
+    'tmpfiles':
+      size: 10Gi
+    # /etc/temporal/tls
+    'temporal-tls':
+      secretName: ''
+```
+
+A `disk` exposes its `size`:
+
+```bash
+helm install acme ./chart --set webapp.persistence.tmpfiles.size=50Gi
+```
+
+A `secret` exposes its `secretName` and defaults to blank. The mount is only created when a name is supplied, so a
+stock install neither mounts it nor requires the secret to exist. That matters when the feature backed by that secret
+is turned off for a given customer. To enable it:
+
+```bash
+helm install acme ./chart --set webapp.persistence.temporal-tls.secretName=my-tls
+```
+
+Mount paths and kinds stay fixed. They are part of how your app works, rather than something whoever installs the chart
+should be changing - `size` and `secretName` are the only settings exposed.
+
+<Note>
+  `expose` only affects the generated chart. In a LocalOps environment, a declared `secret` volume is always mounted,
+  because you control both the `ops.json` and the secret.
+</Note>
+
+### Validation
+
+The `volumes` block is checked before anything is deployed. A problem fails the deployment with a message naming the
+entry, instead of leaving you with a container that won't start. These are rejected:
+
+- A missing or malformed `name`, a duplicate `name`, or a duplicate `mount_path`
+- A `mount_path` that is not an absolute path
+- A missing or unknown `kind`
+- A `disk` without a `size`, or a `size` that is not a valid quantity like `10Gi`
+- A `disk` on a `cron` or `job` service
+- A `secret` without a `secret_name`, or a `secret` with a `size`
+- `secret_name` on a `mem` or `disk` volume
+- `expose` on a `mem` volume
+
+<Note>
+  Volumes apply to the service's own containers. They are not added to additional processes declared under
+  [`processes`](/environment/services/ops-json#configuring-processes).
+</Note>
+
+<Note>Volumes are supported on AWS and GCP today. Azure support is coming soon.</Note>
 
 ## Automatic provisioning of cloud resources
 
@@ -445,21 +819,22 @@ permissions in the pre-configured IAM role.
 ### Supported cloud resources
 
 As of now, you can define the following dependencies in `ops.json`. We plan to grow this list to cover other services in
-AWS. Please get in touch with us at help\@localops.co if you need anything specific.
+AWS. Please get in touch with us at support\@localops.co if you need anything specific.
 
-1. **Amazon S3 buckets** - for static object storage (files, pictures, etc.,).
-   [Learn more](/environment/services/aws/s3)
-2. **Amazon RDS Instances** - for hosting Postgres, MySQL databases. [Learn more](/environment/services/aws/rds)
-3. **Amazon Elastic cache clusters** - for caching, queues, pub/sub.
-   [Learn more](/environment/services/aws/elasti-cache)
-4. **Amazon SNS topics** - for pub/sub capabilities. [Learn more](/environment/services/aws/sns)
-5. **Amazon SQS queues** - for queueing (standard/FIFO) capabilities. [Learn more](/environment/services/aws/sqs)
+| Resource | Use it for | Docs |
+| --- | --- | --- |
+| Amazon S3 buckets | Static object storage (files, pictures, etc.,) | [S3](/environment/services/aws/s3) |
+| Amazon RDS instances | Hosting Postgres, MySQL databases | [RDS](/environment/services/aws/rds) |
+| Amazon Aurora clusters | Auto-scaling Postgres/MySQL, read endpoint | [Aurora](/environment/services/aws/aurora) |
+| Amazon ElastiCache | Caching, queues, pub/sub | [ElastiCache](/environment/services/aws/elasti-cache) |
+| Amazon SNS topics | Pub/sub capabilities | [SNS](/environment/services/aws/sns) |
+| Amazon SQS queues | Queueing (standard/FIFO) capabilities | [SQS](/environment/services/aws/sqs) |
 
 ### Configured for production use, by default
 
 All cloud resources are configured with production-grade security:
 
-- **Encryption at rest**: Enabled by default, for all data storage services (S3, RDS, Elastic Cache)
+- **Encryption at rest**: Enabled by default, for all data storage services (S3, RDS, Aurora, Elastic Cache)
 - **Network isolation**: Resources are deployed within your environment's VPC wherever applicable.
 - **Private only**: Resources are deployed for private access only, from within your environment's VPC wherever
   applicable.
@@ -769,7 +1144,7 @@ Export values:
 5. `$pass` - Password to use while authenticating into this server. LocalOps creates this for you and passes it to you
    via this variable.
 
-Get in touch with us at help\@localops.co if you want more queueing servers supported.
+Get in touch with us at support\@localops.co if you want more queueing servers supported.
 
 <Warning>Changing `id` or `prefix` will swap the resource with a new one in the next deployment. </Warning>
 
@@ -863,6 +1238,31 @@ Here's a comprehensive `ops.json` example:
 
 ```json
 {
+  "beam_cluster_id": "myapp",
+  "deploy_timeout": 900,
+  "autoscaling": {
+    "min_replicas": 2,
+    "max_replicas": 10,
+    "target_cpu": 70,
+    "schedules": [{ "start": "0 9 * * 1-5", "end": "0 18 * * 1-5", "timezone": "Asia/Kolkata", "replicas": 6 }]
+  },
+  "volumes": [
+    { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
+    {
+      "name": "tmpfiles",
+      "mount_path": "/app/src/tmpfiles",
+      "kind": "disk",
+      "size": "10Gi",
+      "expose": true
+    },
+    {
+      "name": "temporal-tls",
+      "mount_path": "/etc/temporal/tls",
+      "kind": "secret",
+      "secret_name": "temporal-tls",
+      "expose": true
+    }
+  ],
   "init": [
     {
       "id": "migrate",
@@ -957,6 +1357,28 @@ Here's a comprehensive `ops.json` example:
             "MY_RDS_INSTANCE_USERNAME": "$username",
             "MY_RDS_INSTANCE_PASSWORD_ARN": "$passwordArn",
             "MY_RDS_INSTANCE_DB_NAME": "$dbName"
+          }
+        }
+      ]
+    },
+    "aurora": {
+      "clusters": [
+        {
+          "id": "orders",
+          "prefix": "orders",
+          "engine": "aurora-postgres",
+          "version": "16.4",
+          "serverless": {
+            "min_acu": 0.5,
+            "max_acu": 16
+          },
+          "replicas": 1,
+          "exports": {
+            "MY_AURORA_CLUSTER_DSN": "$dsn",
+            "MY_AURORA_CLUSTER_READER_DSN": "$readerDsn",
+            "MY_AURORA_CLUSTER_ADDRESS": "$address",
+            "MY_AURORA_CLUSTER_PORT": "$port",
+            "MY_AURORA_CLUSTER_DB_NAME": "$dbName"
           }
         }
       ]

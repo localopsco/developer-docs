@@ -2,9 +2,10 @@
 title: Usage
 ---
 
-LocalOps CLI `ops` can be used to get shell access to the underlying Kubernetes cluster of an environment.
+LocalOps CLI `ops` can be used to read logs from your services, get shell access to them and to their databases,
+forward their ports to your machine, and reach the underlying Kubernetes cluster of an environment.
 
-```sh
+```
 LocalOps CLI
 
 Usage:
@@ -12,10 +13,15 @@ Usage:
 
 Available Commands:
   completion        Generate the autocompletion script for the specified shell
+  connect           Open a shell in a service's pod
+  get-token         Print a Kubernetes ExecCredential for an app environment cluster
   help              Help about any command
   login             Login to LocalOps Account
   logout            Logout of LocalOps Account
-  update-kubeconfig Update current context to environment Kubernetes cluster
+  logs              Show logs from a service running in an environment
+  project           Show and switch the active project
+  proxy             Forward a service's port to localhost
+  update-kubeconfig Update current context to app environment kubernetes cluster
   version           LocalOps CLI Version
 
 Flags:
@@ -24,19 +30,272 @@ Flags:
 Use "ops [command] --help" for more information about a command.
 ```
 
-To get shell access, you need to
+### How it works
 
-1. Login to your LocalOps account
-2. Use `ops` CLI to set Kubernetes context of `kubectl` CLI to point at the environment's Kubernetes cluster.
-3. Then use `kubectl` to inspect the cluster.
+For the things you reach for most often - reading logs, opening a shell, forwarding a port, connecting to a database -
+`ops logs`, `ops connect` and `ops proxy` talk to your environment directly. You need neither `kubectl` nor the pod and
+namespace names:
+
+1. Login to your LocalOps account with `ops login`
+2. Run `ops logs`, `ops connect` or `ops proxy` against an environment and service by name
+
+To inspect anything else in the cluster - deployments, jobs, secrets, events - point `kubectl` at the environment
+instead:
+
+1. Login to your LocalOps account with `ops login`
+2. Set the Kubernetes context of `kubectl` to point at the environment's cluster with `ops update-kubeconfig`
+3. Then use `kubectl` to inspect the cluster
 
 ### Login to LocalOps
-
-Login to LocalOps account using your email address.
 
 ```sh
 ops login
 ```
+
+## Basic usage
+
+Reading logs, opening a shell and forwarding a port - each of these takes an environment and a service by name.
+
+### Stream logs from a service
+
+`ops logs` streams logs from a service straight to your terminal:
+
+```sh
+ops logs --env staging --svc api
+```
+
+`--env` and `--svc` take the environment and service **names** shown in your dashboard, or their ids. `--svc` is
+required; `--env` falls back to the `ENV` environment variable when you leave it out.
+
+The stream stays open and prints new lines as they arrive - press `Ctrl-C` to stop. Pass `--follow=false` for a snapshot
+that prints and exits.
+
+When a service runs more than one pod, all of them are read at once and every line is prefixed with the pod it came
+from, so you can tell replicas apart:
+
+```
+[api-7d9f8b6c4-2xk9p] GET /health 200
+[api-7d9f8b6c4-mn4vt] GET /orders 201
+```
+
+| Flag                | Default | Description                                                                  |
+| ------------------- | ------- | ---------------------------------------------------------------------------- |
+| `-e, --env`         | `$ENV`  | Environment name or id                                                       |
+| `-s, --svc`         | -       | Service name or id (required)                                                |
+| `-f, --follow`      | `true`  | Keep the stream open and print new lines as they arrive                      |
+| `-n, --tail`        | `100`   | Number of recent lines to show. `0` shows everything the cluster still holds |
+| `-S, --since`       | -       | Only show logs newer than this, e.g. `15m` or `2h`                           |
+| `-T, --timestamps`  | `false` | Prefix each line with its timestamp                                          |
+| `-i, --interactive` | `false` | Pick a single pod to read, instead of reading all of them                    |
+| `-p, --project`     | -       | Project id to use, instead of the session's active project                   |
+
+```sh
+ops logs --env staging --svc api --tail 500 --timestamps
+ops logs --env staging --svc api --since 15m
+ops logs --env staging --svc api --follow=false
+```
+
+<Note>
+  `--tail` and `--since` apply to each pod, not to the service as a whole -
+  `--tail 100` against a service with three pods can print up to 300 lines.
+  Lines are printed as they arrive rather than merged into one chronological
+  order, so add `--timestamps` when ordering across replicas matters.
+</Note>
+
+### Shell into a service
+
+`ops connect` opens a shell inside a pod of your service, without looking up pod or namespace names:
+
+```sh
+ops connect --env staging --svc api
+```
+
+That gives you `/bin/sh` on the first ready pod. To use a different shell, or to run a single command and exit, put it
+after `--`:
+
+```sh
+ops connect --env staging --svc api -- /bin/bash
+ops connect --env staging --svc api -- printenv DATABASE_URL
+```
+
+| Flag                | Default | Description                                                   |
+| ------------------- | ------- | ------------------------------------------------------------- |
+| `-e, --env`         | `$ENV`  | Environment name or id                                        |
+| `-s, --svc`         | -       | Service name or id (required)                                 |
+| `-i, --interactive` | `false` | Pick which pod to open, instead of taking the first ready one |
+| `-p, --project`     | -       | Project id to use, instead of the session's active project    |
+
+Both commands take the default pod selection silently so they stay usable in scripts. Add `-i` when you want to choose
+instead. On a service with several pods it shows a list of them, and the first entry keeps the default behaviour:
+
+```sh
+ops logs -e staging -s api -i
+ops connect -e staging -s api -i
+```
+
+<Warning>
+  `ops connect` puts you on a live container serving traffic. Anything you
+  change inside it is lost the next time the pod restarts or is replaced by a
+  [deployment](/environment/services/deploy) - use it to inspect and debug, and
+  make lasting changes through your repo instead.
+</Warning>
+
+### Forward a service port to localhost
+
+`ops proxy` opens a tunnel from your machine to a service running in an environment, so you can reach an internal
+service as though it were running locally:
+
+```sh
+ops proxy --env staging --svc api
+```
+
+It runs in the foreground and closes the tunnel when you stop it with `Ctrl-C`. By default it binds the same port
+locally that the service listens on, taken from the service's configuration.
+
+| Flag                | Default            | Description                                                |
+| ------------------- | ------------------ | ---------------------------------------------------------- |
+| `-e, --env`         | `$ENV`             | Environment name or id                                     |
+| `-s, --svc`         | -                  | Service name or id (required)                              |
+| `-L, --local-port`  | the remote port    | Local port to bind                                         |
+| `-R, --remote-port` | the service's port | Port on the service to forward to                          |
+| `-i, --interactive` | `false`            | Pick which pod to forward from                             |
+| `-p, --project`     | -                  | Project id to use, instead of the session's active project |
+
+```sh
+ops proxy --env staging --svc api --local-port 9000
+ops proxy --env staging --svc api --remote-port 9090 --local-port 9000
+```
+
+<Note>
+  The tunnel attaches to a single pod, so it does not load balance across
+  replicas. That is usually what you want when debugging, but it means
+  restarting that pod ends the tunnel.
+</Note>
+
+## Connect to your databases or cache
+
+Resources provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
+[ElastiCache clusters](/environment/services/aws/elasti-cache) - live in the private subnets of your environment's VPC
+and only accept connections from inside it. There is no public endpoint to point `psql` at from your laptop, by design.
+So you connect from a throwaway pod inside the cluster instead.
+
+`ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
+to the database, and clean it up when you exit.
+
+<Note>
+  These commands only reach resources you provisioned through `ops.json` - for
+  example an [RDS instance](/environment/services/aws/rds) or an [ElastiCache
+  cluster](/environment/services/aws/elasti-cache). LocalOps creates those
+  inside your environment's VPC and injects their credentials into your
+  service, which is what `--dep` reads. A database you host or manage yourself
+  is not reachable this way.
+</Note>
+
+### First, export `$dsn`
+
+Export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
+port, username, password and database name already filled in and correctly escaped. It is also what the `--dep` commands
+below look for, so they will not find a database without it:
+
+```json ops.json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "app-db",
+          "prefix": "appdb",
+          "engine": "postgres",
+          "version": "17.5",
+          "exports": {
+            "DATABASE_URL": "$dsn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy once, and every container of that service has `DATABASE_URL` in its environment.
+
+<Warning>
+  `$dsn` embeds the database password, so handle the value exactly as you would
+  a password. Don't paste it into tickets, Slack messages or shared docs, don't
+  commit it, and don't save it into a GUI client's connection profile - read it
+  from a pod each time you need it. When `managed_password` is `true`, RDS
+  rotates the password on its own schedule, so a copied URL is both a leaked
+  secret and a value with an expiry date.
+</Warning>
+
+### Open a psql shell
+
+```sh
+ops connect --env staging --svc api --dep
+```
+
+That starts a `postgres:17-alpine` pod in your environment, hands it the same database credential your service uses, and
+drops you at a `psql` prompt. Exit the shell and the pod is deleted.
+
+Bare `--dep` picks the dependency for you when the service has exactly one database. Name it when there are several -
+either by its `ops.json` id or by the variable it exports:
+
+```sh
+ops connect --env staging --svc api --dep app-db
+```
+
+<Note>
+  Only Postgres is supported today. MySQL and Redis are coming soon.
+  `--db-image` overrides the client image if you need a specific `psql`
+  version.
+</Note>
+
+<Tip>
+  The credential is never read by the CLI or printed to your terminal. The
+  client pod is given the same Kubernetes Secret reference your service has, so
+  the password is injected by the cluster. It stays out of your shell history
+  and out of your scrollback.
+</Tip>
+
+### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
+
+```sh
+ops proxy --env staging --svc api --dep app-db
+```
+
+That relays the private database endpoint to your machine and prints the connection details to use:
+
+```
+  psql -h localhost -p 5432 -U appuser -d appdb -W
+  password: <the database password>
+```
+
+Point your GUI client at `localhost` on that port with those credentials, and leave the command running while you work.
+`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if `5432` is already taken locally:
+
+```sh
+ops proxy --env staging --svc api --dep app-db --local-port 15432
+```
+
+<Warning>
+  Use SSL mode `require` rather than `verify-full`. The database's certificate
+  is issued for its real hostname, not `localhost`, so certificate verification
+  through the tunnel will fail. For `psql` that means `PGSSLMODE=require`, since
+  `psql` has no `sslmode` flag.
+</Warning>
+
+<Warning>
+  Every recipe on this page connects you to a real database. On production
+  environments, prefer read-only queries and keep in mind that anything you run
+  has immediate effect - there is no staging step between your prompt and your
+  customers' data.
+</Warning>
+
+## Advanced workflows
+
+The commands above cover the day-to-day work without leaving the CLI. Reach for `kubectl` and [k9s](https://k9scli.io/)
+when you need to inspect anything else in the cluster - deployments, jobs, secrets, events - or to reach a pod that is
+not one of your own services.
 
 ### Set kubernetes context
 
@@ -65,7 +324,7 @@ To see all cluster resources across all namespaces:
 kubectl get all --all-namespaces
 ```
 
-### Monitor pods with k9s
+### Monitor pods faster than kubectl with k9s
 
 [k9s](https://k9scli.io/) is a terminal-based UI that makes it easy to monitor and manage Kubernetes resources. After
 setting up your kubeconfig with `ops update-kubeconfig`, simply launch k9s:
@@ -89,11 +348,16 @@ From the k9s interface you can:
 - Delete, describe, or edit resources interactively
 
 <Tip>
-  Install k9s via Homebrew with `brew install derailed/k9s/k9s` on macOS, or see the [k9s installation
-  guide](https://k9scli.io/topics/install/) for other platforms.
+  Install k9s via Homebrew with `brew install derailed/k9s/k9s` on macOS, or see
+  the [k9s installation guide](https://k9scli.io/topics/install/) for other
+  platforms.
 </Tip>
 
 ### Shell into a pod
+
+[`ops connect`](#shell-into-a-service) is the shortest way to get a shell of one of your own services. Reach for
+`kubectl` when you need a shell on a pod that is not a LocalOps service - a database pod, or something you installed
+into the cluster yourself.
 
 To get a shell inside a running pod, first identify the pod name in the `app-services` namespace:
 
@@ -108,7 +372,97 @@ kubectl exec -it <pod-name> -n app-services -- /bin/sh
 ```
 
 <Note>
-  Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails, try `/bin/bash`.
+  Some containers may use `/bin/bash` instead of `/bin/sh`. If `/bin/sh` fails,
+  try `/bin/bash`.
 </Note>
 
-You can also use k9s to get a shell — select a pod and press `s` to open a shell session directly.
+#### Shell into a pod using k9s
+
+[k9s](#monitor-pods-faster-than-kubectl-with-k9s) gets you the same shell in fewer keystrokes, and it saves you from
+having to know the pod name up front. Launch it against your services with `k9s -n app-services`, press `/` and type
+part of your service name to filter the list, move to the pod you want with the arrow keys, and press `s`. k9s opens an
+interactive shell inside that pod - the equivalent of the `kubectl exec` command above. If the pod runs more than one
+container (say your service plus a sidecar), press `Enter` on the pod first to list its containers, highlight the one
+you want, and press `s` there instead.
+
+When you are done, type `exit` or press `Ctrl-d` to close the shell and drop back into the k9s pod list, and `Esc` to
+back out of any k9s view. Unlike a hand-written `kubectl exec`, k9s tries a few common shells rather than a single
+hard-coded path, so the `/bin/sh` versus `/bin/bash` guesswork above usually doesn't come up.
+
+<Warning>
+  A shell opened this way is a shell on a live container serving traffic.
+  Anything you change inside it is lost the next time the pod restarts or is
+  replaced by a [deployment](/environment/services/deploy) - use it to inspect
+  and debug, and make lasting changes through your repo instead.
+</Warning>
+
+### Connect to a database with kubectl
+
+These recipes do the same work as [`ops connect --dep` and `ops proxy --dep`](#connect-to-your-databases-or-cache) by
+hand. Reach for them when you need something `--dep` does not cover yet - a MySQL shell, or a dependency that exports
+discrete fields rather than `$dsn`.
+
+**Use `DATABASE_URL` instead of typing out `<USERNAME>`, `<PASSWORD>` and `<HOST>` yourself.** Hand-assembling the
+URL means looking up four separate values, escaping any special characters in the password correctly, and leaving
+credentials in your shell history - and it breaks silently the moment RDS rotates the password. Reading `$dsn` off a
+pod avoids all of that.
+
+List your pods, then read the variable off any pod belonging to that service:
+
+```sh
+kubectl get pods -n app-services
+```
+
+```sh
+kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL
+```
+
+Start a one-shot client pod in the same namespace, passing the DSN straight from the running pod into the new one. The
+URL never lands in your shell history, and the client pod is deleted the moment you exit:
+
+```sh
+kubectl run db-client -n app-services -it --rm --restart=Never --image=postgres:17-alpine \
+  --env="PGURL=$(kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL)" \
+  -- sh -c 'psql "$PGURL"'
+```
+
+MySQL is the same command with a different image and client. Use `mysqlsh`, which ships in the official `mysql:8` image
+and accepts the connection URL as-is - `--sql` starts it in SQL mode so it behaves like the classic `mysql` prompt:
+
+```sh
+kubectl run db-client -n app-services -it --rm --restart=Never --image=mysql:8 \
+  --env="DBURL=$(kubectl exec -n app-services <pod-name> -- printenv DATABASE_URL)" \
+  -- sh -c 'mysqlsh --sql "$DBURL"'
+```
+
+Reach for `mysqlsh` rather than the classic `mysql` client here, which takes discrete `-h` / `-u` / `-p` flags and no
+URL. Pick a client image whose major version matches your server too - an older client against a newer server can fail
+on newer authentication methods.
+
+If you haven't exported `$dsn` yet, you can still connect by spelling the credentials out and reading each value from
+`kubectl exec -n app-services <pod-name> -- printenv | grep -i db`, but adding `$dsn` to `exports` is a one-line change
+that makes every command above shorter and safer.
+
+Or relay the endpoint by hand, with a TCP forwarder pod and a port-forward to it:
+
+```sh
+kubectl run rds-proxy -n app-services --image=alpine/socat --port=5432 -- \
+  tcp-listen:5432,fork,reuseaddr tcp-connect:<HOST>:5432
+```
+
+```sh
+kubectl port-forward -n app-services pod/rds-proxy 5432:5432
+```
+
+Leave that running and point your GUI client at `localhost:5432`. Take the username, password and database name from the
+`DATABASE_URL` you read above rather than looking them up separately - most clients let you paste the whole URL and fill
+the fields in for you. Use SSL mode `require` rather than `verify-full`, since the certificate is issued for the
+database's real hostname, not `localhost`. Delete the forwarder when you're done:
+
+```sh
+kubectl delete pod rds-proxy -n app-services
+```
+
+Ephemeral [preview databases](/environment/services/ops-json#isolated-databases) run as pods in the cluster rather than
+as RDS instances, so they need no forwarder at all - `kubectl port-forward -n app-services pod/<db-pod> 5432:5432`
+reaches them directly.

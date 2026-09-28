@@ -5,7 +5,12 @@ title: Deploy a service
 Deployment can be started for a service either manually from LocalOps console or by pushing new code to the configured
 service repo and branch name.
 
-### Automatic deployments
+## Automatic deployments
+
+How a deployment gets triggered depends on what the service was created from - a source repo, a Docker image, or a Helm
+chart.
+
+### GitHub/GitLab repos
 
 Whenever your team pushes new code to Git repository, LocalOps can automatically pull the hcanges, build them as Docker
 images very quickly and deploy seamlessly on the corresponding environment.
@@ -35,14 +40,125 @@ service section to see the logs.
   https://console.localops.co/profile
 </Note>
 
-### Manual deployment
+### Docker images
+
+A service created from a [Docker image](/environment/services/docker) has no repo to watch, so there is no push event to
+react to. Trigger the deployment from wherever you publish the image - typically the last step of the pipeline that
+pushed the new tag - by calling the [Deploy Service](/api-reference/deploy-service) endpoint with the tag you just
+published:
+
+```sh
+curl -X POST https://sdk.localops.co/v1/environments/<envId>/services/<serviceId>/deploy \
+  -H "Authorization: Bearer $LOCALOPS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"docker_image_tag": "1.4.2"}'
+```
+
+From CI, run that call as the step right after your image push:
+
+<Tabs>
+  <Tab title="GitHub Actions" default>
+    Use our [deploy action](https://github.com/localopsco/deploy-action) rather than calling the endpoint by hand:
+
+    ```yaml
+    - name: Trigger LocalOps Deployment
+      uses: localopsco/deploy-action@v0
+      with:
+        api_token: ${{ secrets.LOCALOPS_API_TOKEN }}
+        environment_id: 'f0fc03c6-0698-49f4-a05d-380c46091df1'
+        service_id: '0cd0179a-fb84-45c7-ac85-f51aac92599d'
+        docker_image_tag: ${{ github.sha }}
+    ```
+
+    Store the token as an encrypted secret. Pass exactly one of `commit_id`, `docker_image_tag` or
+    `helm_chart_version` - whichever matches how the service was created.
+
+  </Tab>
+  <Tab title="GitLab CI">
+    ```yaml
+    deploy:
+      stage: deploy
+      image: curlimages/curl:latest
+      variables:
+        TAG: $CI_COMMIT_SHA
+      script:
+        - |
+          curl -fsS -X POST \
+            "https://sdk.localops.co/v1/environments/$LOCALOPS_ENV_ID/services/$LOCALOPS_SERVICE_ID/deploy" \
+            -H "Authorization: Bearer $LOCALOPS_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"docker_image_tag\": \"$TAG\"}"
+    ```
+
+    Add `LOCALOPS_API_KEY`, `LOCALOPS_ENV_ID` and `LOCALOPS_SERVICE_ID` under **Settings > CI/CD > Variables**, and mask
+    the API key.
+
+  </Tab>
+</Tabs>
+
+<Tip>
+  Tag images with something immutable - the commit SHA works well - so each deployment points at exactly one build.
+</Tip>
+
+### Helm charts
+
+A service created from a [Helm chart](/environment/services/helm-charts) works the same way, with the chart version in
+place of the image tag:
+
+```sh
+curl -X POST https://sdk.localops.co/v1/environments/<envId>/services/<serviceId>/deploy \
+  -H "Authorization: Bearer $LOCALOPS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"helm_chart_version": "2.1.0"}'
+```
+
+Call it from the job that publishes the chart, so a newly pushed chart version rolls out without anyone opening the
+console.
+
+<Tabs>
+  <Tab title="GitHub Actions" default>
+    ```yaml
+    - name: Trigger LocalOps Deployment
+      uses: localopsco/deploy-action@v0
+      with:
+        api_token: ${{ secrets.LOCALOPS_API_TOKEN }}
+        environment_id: 'f0fc03c6-0698-49f4-a05d-380c46091df1'
+        service_id: '0cd0179a-fb84-45c7-ac85-f51aac92599d'
+        helm_chart_version: '2.1.0'
+    ```
+  </Tab>
+  <Tab title="GitLab CI">
+    ```yaml
+    deploy:
+      stage: deploy
+      image: curlimages/curl:latest
+      script:
+        - |
+          curl -fsS -X POST \
+            "https://sdk.localops.co/v1/environments/$LOCALOPS_ENV_ID/services/$LOCALOPS_SERVICE_ID/deploy" \
+            -H "Authorization: Bearer $LOCALOPS_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"helm_chart_version\": \"$CHART_VERSION\"}"
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  All three shapes are the same endpoint - it takes `commit_id`, `docker_image_tag` or `helm_chart_version` depending
+  on how the service was created. See the [Deploy Service](/api-reference/deploy-service) reference for the full
+  request and response schema.
+</Note>
+
+## Manual deployment
 
 1. Click on "environments" on the left
 2. Navigate into the relevant environment
 3. Navigate to Services tab
 4. Click on the service where you want to trigger new deployment
 5. On the top right corner, click on "Deploy".
-6. Verify the commit details put on the confirmation window
+6. Verify the details on the confirmation window - the commit for a repo-based service, the image tag for a
+   [Docker image](/environment/services/docker) service, or the chart version for a
+   [Helm chart](/environment/services/helm-charts) service
 7. Click on "Confirm" to proceed.
 
 A new deployment will start. Navigate to "Deployments" tab within the same services section to see the logs.

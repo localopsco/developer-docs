@@ -329,6 +329,14 @@ See [Secrets documentation](/environment/services/secrets) for more details.
 3. Test your application endpoints
 4. Update your DNS to point to the new LocalOps environment
 
+Once it is up, the [LocalOps CLI](/cli/install-macos) gives you two useful checks from your terminal - streaming the
+service's logs, and opening a SQL shell on the migrated database to confirm the data landed:
+
+```sh
+ops logs --env production --svc web
+ops connect --env production --svc web --dep
+```
+
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
 
 ## Built-in observability

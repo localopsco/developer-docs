@@ -19,9 +19,7 @@ All your code is deployed and run as service(s) in the managed kubernetes cluste
 You can provision additional cloud resources within the same VPC & subnets and they can be accessed from within your
 service(s) privately.
 
-To do this, we expose IDs of the above entities within LocalOps environment dashboard:
-
-<img src="./images/vpc-id.png" />
+To do this, we expose IDs of the above entities within LocalOps environment dashboard.
 
 ### Manual
 
@@ -155,8 +153,6 @@ const db = new aws.rds.Instance('exampleDb', {
 LocalOps creates all resources with two standard tags for any given environment. So that you can take inventory of all
 resources in the cloud, analyse cost per environment in Cost analysis console in the cloud account and more. These tags
 are exposed within environment Dashboard page.
-
-<img src="./images/vpc-tags.png" />
 
 When you extend environments with custom cloud resources, you can attach the same tags so that you can see both the
 resources managed by LocalOps and those you created outside LocalOps for the same environment.

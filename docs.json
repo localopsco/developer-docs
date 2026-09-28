@@ -53,11 +53,22 @@
               "guides/languages/python",
               "guides/languages/go",
               "guides/languages/dotnet",
+              "guides/languages/elixir",
               "guides/spa/nextjs",
               "guides/spa/react",
               "guides/spa/angular",
               "guides/spa/ember",
               "guides/spa/vue"
+            ]
+          },
+          {
+            "group": "CLI",
+            "icon": "terminal",
+            "pages": [
+              "cli/install-windows",
+              "cli/install-macos",
+              "cli/install-linux",
+              "cli/usage"
             ]
           },
           {
@@ -72,7 +83,8 @@
                   "accounts/azure"
                 ]
               },
-              "accounts/connect-github"
+              "accounts/connect-github",
+              "accounts/connect-gitlab"
             ]
           },
           {
@@ -81,7 +93,6 @@
             "pages": [
               "environment/inside",
               "environment/create",
-              "environment/extend-with-iac",
               {
                 "group": "Monitoring",
                 "pages": [
@@ -102,6 +113,7 @@
                   }
                 ]
               },
+              "environment/extend-with-iac",
               "environment/security",
               "environment/shared-responsibilities",
               "environment/delete",
@@ -113,18 +125,21 @@
             "icon": "server",
             "pages": [
               "environment/services/create",
-              "environment/services/ops-json",
               "environment/services/deploy",
+              "environment/services/ops-json",
               "environment/services/web",
               "environment/services/internal",
               "environment/services/workers",
               "environment/services/job",
               "environment/services/cronjob",
+              "environment/services/db-migrations",
+              "environment/services/autoscaling",
               {
                 "group": "AWS services",
                 "pages": [
                   "environment/services/aws/s3",
                   "environment/services/aws/rds",
+                  "environment/services/aws/aurora",
                   "environment/services/aws/elasti-cache",
                   "environment/services/aws/opensearch",
                   "environment/services/aws/sqs",
@@ -134,6 +149,7 @@
               "environment/services/docker",
               "environment/services/helm-charts",
               "environment/services/micro-services",
+              "environment/services/beam-clustering",
               "environment/services/secrets",
               "environment/services/custom-domain",
               "environment/services/client-ip",
@@ -151,16 +167,6 @@
               "environment/services/instrument/golang",
               "environment/services/instrument/dotnet",
               "environment/services/instrument/erlang"
-            ]
-          },
-          {
-            "group": "CLI",
-            "icon": "terminal",
-            "pages": [
-              "cli/install-macos",
-              "cli/install-linux",
-              "cli/install-windows",
-              "cli/usage"
             ]
           },
           {

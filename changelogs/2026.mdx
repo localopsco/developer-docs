@@ -4,6 +4,362 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 11, 2026">
+
+## New options in ops.json: bigger uploads, fewer surprise errors
+
+We have raised the platform limits that teams most often hit when they onboard, so a normal app should now run
+without touching any of this. Four new `ops.json` options let you set your own limits when your service needs more.
+
+### `request_body_size`: bigger uploads work out of the box
+
+Every environment's ingress used to reject any request body over 1 MB, so an ordinary file upload came back as a
+`413 Request Entity Too Large` before it ever reached your container. The platform now accepts **30 MB** by default, in
+line with what other hosting platforms allow.
+
+If your service takes bigger uploads - attachments, media, bulk imports - raise the limit yourself with
+`request_body_size`, in whole MB:
+
+```json ops.json
+{
+  "request_body_size": 100
+}
+```
+
+Anything up to 1 GB is allowed. [Read the docs](/environment/services/ops-json#request-body-size).
+
+### `proxy_buffer_size` and `proxy_buffers`: fix `502`s caused by large response headers
+
+Apps that hand back long headers - SSO redirects, big session cookies, fat JWTs - could fail with a
+`502 Bad Gateway`, because the ingress reserved only a small buffer for a response's headers. That buffer is now
+bigger by default, and you can size it yourself when your app needs more:
+
+```json ops.json
+{
+  "proxy_buffer_size": 32,
+  "proxy_buffers": 16
+}
+```
+
+`proxy_buffer_size` is the size of each buffer in KB and is the one that fixes the `502`. `proxy_buffers` is how many
+of them the ingress uses while streaming a response, and is usually fine left alone.
+[Read the docs](/environment/services/ops-json#response-buffers).
+
+### `send_timeout`, `read_timeout` and `connection_timeout`: slow requests get more room
+
+The ingress waits longer before giving up on your service. Sending and reading now allow **120 seconds** each, up from
+60, and connecting to your container is capped at 10 seconds so a genuinely dead container fails fast instead of
+hanging. Slow reports, large downloads and chatty websocket handshakes stop getting cut off for no obvious reason.
+
+You can still set `send_timeout`, `read_timeout` and `connection_timeout` per service, up to an hour.
+[Read the docs](/environment/services/ops-json#request-timeouts).
+
+### `deploy_timeout`: give slow-starting services longer to deploy
+
+A deployment waits 5 minutes for your new version to become ready, then fails. That is too short for services with
+large images or heavy startup work, so you can now extend it:
+
+```json ops.json
+{
+  "deploy_timeout": 900
+}
+```
+
+Anything from 1 to 20 minutes is allowed. Every deployment logs the wait it is using, so you can confirm your value was
+picked up. Services on Windows node groups already get 15 minutes by default.
+[Read the docs](/environment/services/ops-json#deploy-timeout).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="September 9, 2026">
+
+## CLI v3.1.0 - Connect with pg shell or set up port forwarding
+
+We added two new commands that let you connect to the RDS Postgres shell directly from your dev laptop. All without signing into bastion servers or any other step.
+
+```sh
+ops connect --env prod --svc web --dep appdb
+```
+Above command opens a postgres shell so you can start querying the database.
+
+```sh
+ops proxy --env prod --svc web --dep appdb
+```
+This command sets up port-forwarding so you can use GUI tools to connect to the same postgres database with host set to localhost and port set to 5432.
+
+All of this will soon work for redis, mysql and sql server too! Stay tuned!
+
+#### New CLI menu
+
+![Build context](./images/2026/pgshell.png)
+
+You can find these commands to copy-paste, from the new "CLI" tab in Environment/Service dashboard.
+
+#### Install/upgrade to v3.1.0
+
+Both commands ship in CLI **v3.1.0**. If you're new to the CLI, install it with Homebrew and sign in:
+
+```sh
+brew install localopsco/tap/ops
+ops login
+```
+
+Already have `ops`? Upgrade in place:
+
+```sh
+brew update && brew upgrade ops
+```
+
+Both commands take more options than shown here, like `-i`. See the [CLI docs](/cli/usage) for the full list, and for
+the rest of the commands.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+
+<Update label="September 7, 2026">
+
+## CLI v3.0.4 — Shell into a service and tail its logs with one command
+
+Getting a shell inside a running service used to mean pointing your kubeconfig at the environment, listing pods in
+`app-services` and picking the right one before `kubectl exec`. Two new CLI commands cut that down to a single line
+each.
+
+```sh
+ops connect --env "ProdUS" --svc web
+```
+
+opens a shell in your service, so you can do ad-hoc script runs or drop into your Django / Rails / other application
+shell.
+
+```sh
+ops logs --env "ProdUS" --svc web
+```
+
+tails logs in real time. You don't have to open Grafana just to watch what a service is printing.
+
+#### New shell tab
+
+![Build context](./images/2026/CLI-release-screenshot.png)
+
+You can find these commands to copy-paste, from the new "Shell" tab in Service dashboard.
+
+#### Install/upgrade to v3.0.4
+
+Both commands ship in CLI **v3.0.4**. If you're new to the CLI, install it with Homebrew and sign in:
+
+```sh
+brew install localopsco/tap/ops
+ops login
+```
+
+Already have `ops`? Upgrade in place:
+
+```sh
+brew update && brew upgrade ops
+```
+
+Both commands take more options than shown here, like `-i`. See the [CLI docs](/cli/usage) for the full list, and for
+the rest of the commands.
+
+## Cluster your BEAM nodes across regions
+
+Elixir services running in separate regional environments can now form a single cluster. Keep `beam_cluster_id`
+identical everywhere, and give each environment its own record in a private DNS zone that every regional VPC can
+resolve:
+
+```json ops.json
+{
+  "beam_cluster_id": "b2bapp",
+  "beam_dns_name": "mumbai.mesh.acmecorp.internal"
+}
+```
+
+LocalOps creates that record and keeps it pointed at the environment's pods as they scale, restart and get
+rescheduled. Add one libcluster topology per region — the local nodes via `LOPS_BEAM_CLUSTER_DNS`, each peer region by
+its `beam_dns_name` — and the mesh forms. The regional VPCs still need routable connectivity between them.
+[Read the docs](/environment/services/beam-clustering#cluster-across-regions).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="September 2, 2026">
+
+## Monorepos fully supported with custom Build Context path
+
+![Build context](./images/2026/buildcontext.png)
+
+In favor of simplicity, teams host all their code within a single git repository. And organize subsystems within multiple sub-directories like client/, server/, ui/ etc., each having their own Dockerifle.
+
+So far, you can give a custom Dockerfile path while creating services - like client/Dockerfile, server/Dockerfile and so on. 
+
+From today, you can also set a custom build context path to inform our plaform where to trigger `docker build` from. Either from the root of the git repo (default option), or from any other path.
+
+```
+docker build -f <DockerfilePath> -t ImageName:ImageTag <BuildContextPath>
+```
+
+## EKS control plane logs visible within Grafana
+
+EKS clusters managed via LocalOps platform will now start to log all its control plane logs to CloudWatch which are in turn visible in the in-built grafana dashboard.
+
+So your advanced users get to understand how the underlying cluster works, whenever needed.
+
+### Other enhancements:
+1. Increased project description length to let teams describe their projects in full 
+2. Several security enhancements to zero out CVEs the 3rd party docker images
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="August 28, 2026">
+
+## Persist data, mount certs, and grab scratch space
+
+Your service may need scratch space for temporary files, a durable disk that survives restarts, or certificate files
+mounted at a well known path. Declare all three as volumes in `ops.json` and LocalOps mounts them for you:
+
+```json
+{
+  "volumes": [
+    { "name": "scratch", "mount_path": "/tmp/scratch", "kind": "mem", "size": "512Mi" },
+    { "name": "data", "mount_path": "/var/lib/data", "kind": "disk", "size": "10Gi", "expose": true },
+    { "name": "certs", "mount_path": "/etc/certs", "kind": "secret", "secret_name": "my-tls-certs" }
+  ]
+}
+```
+
+`mem` is scratch discarded at shutdown — add a `size` to make it a RAM disk. `disk` is encrypted, persists across
+restarts and gets one disk per replica. `secret` mounts a Kubernetes secret read-only, each key becoming a file. Disk
+volumes aren't available on cron and job services, and support covers AWS and GCP.
+
+The same declaration drives the Helm chart you generate for customers. Volumes marked `expose: true` land in the
+chart's `values.yaml` under `persistence`, so whoever installs it can size the disk or point at their own secret:
+
+```yaml
+api:
+  persistence:
+    # /var/lib/data
+    'data':
+      size: 10Gi
+```
+
+Everything else stays fixed — mount paths and kinds are part of how your app works, not an install-time choice.
+[Read the docs](/environment/services/ops-json#volumes).
+
+## Let your Elixir nodes find each other
+
+Phoenix PubSub, a distributed registry, or any coordinated work across replicas needs your BEAM nodes to discover each
+other first. Add one field to `ops.json`, using the same value in every service that belongs together:
+
+```json
+{
+  "beam_cluster_id": "myapp"
+}
+```
+
+Each service gets `LOPS_BEAM_CLUSTER_NAME` and `LOPS_BEAM_CLUSTER_DNS` injected at runtime — point libcluster's
+Kubernetes DNS strategy at the latter, and set `RELEASE_DISTRIBUTION`, `RELEASE_NODE` and `RELEASE_COOKIE` yourself.
+Rebuild to apply, and note that previews cluster separately from production.
+[Read the docs](/environment/services/beam-clustering).
+
+## Run VMs inside your services on GCP
+
+Firecracker microVMs, Android emulators, CI runners that build and boot disk images — workloads that need a real VM
+couldn't run on LocalOps before, because the underlying nodes didn't permit a guest hypervisor.
+
+Now you can enable nested virtualization on a GCP node group from the Node groups section, picking an Intel-based
+machine type, then assign the services that need VMs to it. KVM is available inside the container, so anything
+shelling out to QEMU/KVM behaves as it would on a bare VM.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="August 20, 2026">
+
+## Restrict who can reach your services with IP allowlists
+
+![Service IP whitelist](./images/2026/service-ip-whitelist.png)
+
+Some of your services shouldn't be open to the whole internet. An internal admin panel, a partner-facing API, a
+staging web app — you want these reachable only from your office network, your VPN, or a specific customer's egress
+IPs.
+
+There's now a **Security** tab in the service dashboard where you can do exactly that.
+
+Add the IP addresses and CIDR ranges that should be allowed to reach the service, and everything else gets turned away
+at the ingress:
+
+```
+203.0.113.0/24
+198.51.100.7
+10.20.0.0/16
+```
+
+Leave the list empty and the service stays open to all IPs — which is how every service behaves today, so nothing
+changes until you explicitly add entries.
+
+### Preview services and cloned environments
+
+Preview services inherit the allowlist from their parent service automatically, so a locked-down service stays locked
+down across its previews. Cloning an environment also copies each service's allowlist to the clone. Neither needs
+anything from you.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="August 12, 2026">
+
+## Passing secrets securely for Helm Charts
+
+Secrets section is now available for Helm Chart services too! 
+
+![Chart secrets](./images/2026/helm-secrets.png)
+
+So teams can now create secrets for Helm charts in the secrets editor. This will encrypt and save secrets in AWS parameter store (in the case of AWS) and save them as secret in Kubernetes cluster.
+
+And in values.yaml passed as setting in Helm chart service, the k8s secret can be referenced. Like this, for example with postgers chart: 
+
+  ```yaml
+  auth:
+    existingSecret: "db-adm69f6-secrets"
+    secretKeys:
+      adminPasswordKey: "postgrespassword"
+      userPasswordKey: "password"
+````
+
+  You can find the `existingSecret` name in secrets section.
+
+
+...instead of passing them in plaintext like this: 
+
+  ```yaml
+  auth:
+    postgresPassword: "mysecretpass"
+    username: "myuser"
+    password: "myuserpass"
+    database: "mydb"
+  ````
+
+
+
+### Custom domain for chart services 
+
+Say your helm chart exposes services to the public world. For eg - you're self-hosting Supabase which has a dashboard that must be exposed to the world. 
+
+New "Custom domain" section in the service dashboad will now provide instructions on how to expose this service.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="August 7, 2026">
 
 ## New search bar

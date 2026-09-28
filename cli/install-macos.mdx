@@ -2,38 +2,31 @@
 title: Install on macOS
 ---
 
-## Prerequisites
+## Install LocalOps CLI
 
-- [kubectl](https://kubernetes.io/docs/reference/kubectl/) installed to access your LocalOps environment.
+To quickly install or update the LocalOps CLI on your macOS distribution, run one of the following commands in your
+terminal:
 
-### Install kubectl
+<Tabs>
+  <Tab title="Homebrew" default>
+    ```bash
+    brew install localopsco/tap/ops
+    ```
+  </Tab>
+  <Tab title="Install script">
+    ```bash
+    bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
+    ```
 
-The Kubernetes command-line tool (kubectl) allows you to run commands against Kubernetes clusters. You can use kubectl
-to inspect and manage cluster resources, and view logs.
+    This script downloads and installs the `ops` CLI to your system's PATH.
 
-Refer to the [official Kubernetes documentation](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos) for
-installation instructions for your specific MacOS distribution.
+    <Note>You may be prompted to enter your password during the installation process.</Note>
 
-If you are using Homebrew, you can install kubectl with the following command:
+    You can view the source code for the installation script on
+    [GitHub](https://github.com/localopsco/lops-cli/blob/main/install.sh).
 
-```bash
-brew install kubectl
-```
-
-### Install LocalOps CLI
-
-To quickly install or update the LocalOps CLI on your macOS distribution, run the following command in your terminal:
-
-```bash
-bash -c "$(curl -fsSL https://cli.localops.co/install.sh)"
-```
-
-This script downloads and installs the `ops` CLI to your system's PATH.
-
-<Note>You may be prompted to enter your password during the installation process.</Note>
-
-You can view the source code for the installation script on
-[GitHub](https://github.com/localopsco/lops-cli/blob/main/install.sh).
+  </Tab>
+</Tabs>
 
 ## Download Binaries
 

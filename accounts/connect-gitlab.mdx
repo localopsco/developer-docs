@@ -1,0 +1,329 @@
+---
+title: Connect GitLab account
+description: Connect gitlab.com or your self-managed GitLab to LocalOps for push-to-deploy, merge request previews, and deployment status.
+---
+
+When you use LocalOps, your teams can simply push code to GitLab projects to deploy them continuously on their
+respective environments (staging, production, etc). To provide this push-to-deploy experience, you have to connect your
+GitLab account and its projects.
+
+LocalOps connects to GitLab over **OAuth 2.0**. Once connected, LocalOps can list your projects and branches, deploy
+services from them, auto-deploy on push, create preview environments for merge requests, and report deployment status
+back to GitLab.
+
+Two setups are supported:
+
+|                              | Where your code lives                                                        | Who owns the OAuth app                    |
+| ---------------------------- | ---------------------------------------------------------------------------- | ----------------------------------------- |
+| **LocalOps Cloud (SaaS)**    | `gitlab.com`                                                                 | LocalOps — nothing to register            |
+| **LocalOps Private Instance** | Your self-managed GitLab (GitLab CE/EE, self-hosted, or GitLab Dedicated)    | You — register it once on your GitLab     |
+
+## How it works
+
+At a high level, the integration is a webhook plus a short-lived, read-only clone credential:
+
+<Steps>
+  <Step title="You authorize LocalOps on GitLab" icon="key">
+    You grant LocalOps access as a specific GitLab user. LocalOps stores an OAuth token and can then see exactly the
+    projects that user is a member of.
+  </Step>
+  <Step title="You create a service from a project and branch" icon="cube">
+    Your projects and branches show up as options when you create a LocalOps service. You pick which branch each
+    environment tracks.
+  </Step>
+  <Step title="LocalOps registers a webhook on the project" icon="link">
+    One webhook per project, listening for **push** and **merge request** events. LocalOps creates, reconciles, and
+    removes it for you.
+  </Step>
+  <Step title="A push or merge request arrives" icon="code-branch">
+    LocalOps verifies the webhook signature, checks that the pusher is a member of your LocalOps organization, and
+    matches the branch against your services.
+  </Step>
+  <Step title="LocalOps clones and deploys" icon="rocket">
+    It mints a read-only deploy token that lives only for that build, clones your code, builds it, and deploys to the
+    target environment — then revokes the token.
+  </Step>
+  <Step title="GitLab gets the result back" icon="circle-check">
+    Deployment status is posted onto the commit, and merge requests get a comment linking to their preview environment.
+  </Step>
+</Steps>
+
+LocalOps never stores a long-lived credential to your source code, and never needs write access to your branches. For
+the exact objects created in your projects, see
+[What LocalOps creates in your GitLab projects](#what-localops-creates-in-your-gitlab-projects).
+
+## LocalOps Cloud (SaaS) with gitlab.com
+
+### Before you start
+
+You need:
+
+- A LocalOps account, signed in as a member of your organization.
+- A **gitlab.com user account** that is a member of the projects you want to deploy.
+- That user must have at least the **Maintainer** role on each project you intend to deploy. See
+  [What role does my GitLab user need?](#what-role-does-my-gitlab-user-need) below.
+
+### Steps to connect
+
+<Steps>
+  <Step title="Sign in to LocalOps" />
+  <Step title="Navigate to the `Code repos` section" />
+  <Step title="Click on `Connect GitLab`" />
+  <Step title="Authorize the LocalOps application">
+    You'll be redirected to gitlab.com and asked to authorize the **LocalOps** application with the `api` scope. Review
+    and click **Authorize**.
+  </Step>
+  <Step title="Confirm the connection">
+    You'll land back on the Code repos page with your GitLab account listed as an active connection.
+  </Step>
+</Steps>
+
+That's it. Your projects will now appear when you create a new service and choose GitLab as the source.
+
+### Notes
+
+- The connection is tied to **the GitLab user who authorized it**, not to a group. LocalOps sees exactly the projects
+  that user is a member of — nothing more.
+- The connection is shared across your whole LocalOps organization. Any member of your org can create services from the
+  connected projects.
+- You can connect **more than one** GitLab account to the same LocalOps organization. Each is listed separately.
+- If you re-authorize with a GitLab account that's already connected, LocalOps refreshes the existing connection instead
+  of creating a duplicate.
+
+<Note>
+  **Using gitlab.com is not a requirement of LocalOps Cloud.** If you're on LocalOps Cloud but your code is on a
+  self-managed GitLab that is reachable from the public internet, you can still connect it — you'll register an OAuth
+  application on your GitLab as described below, using the LocalOps Cloud redirect URI. Contact support for the exact
+  redirect URI for your region.
+</Note>
+
+## LocalOps Private Instance with self-managed GitLab
+
+If you run LocalOps as a private instance (for example, inside your own VPC), you connect it to your own GitLab by
+registering an OAuth application on your GitLab and handing LocalOps three values: the **GitLab URL**, the
+**Application ID**, and the **Secret**.
+
+### Step 1 — Register an OAuth application on your GitLab
+
+Choose the scope that matches how widely you want the integration available:
+
+| Where to register                | Path in GitLab                                    | Use when                                            |
+| -------------------------------- | ------------------------------------------------- | --------------------------------------------------- |
+| **Instance-wide** (recommended)  | **Admin Area → Applications → New application**   | One integration for the whole GitLab instance       |
+| **Group-owned**                  | **Group → Settings → Applications**               | Scope the integration to a single top-level group   |
+| **User-owned**                   | **User Settings → Applications**                  | Trying it out, or a single-team pilot               |
+
+Fill in:
+
+| Field            | Value                                                            |
+| ---------------- | ---------------------------------------------------------------- |
+| **Name**         | `LocalOps`                                                       |
+| **Redirect URI** | `https://<your-localops-host>/api/v1/callbacks/gitlab/oauth`     |
+| **Confidential** | Checked                                                          |
+| **Scopes**       | `api` — and nothing else                                         |
+
+Replace `<your-localops-host>` with the origin your users reach LocalOps at (the same value as your instance's
+`APP_ORIGIN`). The path must be exactly `/api/v1/callbacks/gitlab/oauth`.
+
+Click **Save application**, then copy the **Application ID** and **Secret**. GitLab shows the Secret only once.
+
+<Note>
+  **Why the `api` scope?** LocalOps needs to *write* to your projects — register a webhook, mint a short-lived
+  read-only deploy token for each clone, post merge request comments, and set commit statuses. GitLab's `read_api` and
+  `read_repository` scopes cannot do any of those. `api` is the narrowest OAuth scope GitLab offers that covers them.
+  The effective blast radius is bounded by the **role of the user who authorizes**, not by the scope — so connect using
+  a purpose-made service account rather than an instance administrator.
+</Note>
+
+### Step 2 — Hand the credentials to your LocalOps administrator
+
+Give the **GitLab URL**, **Application ID**, and **Secret** from Step 1 to whoever administers your LocalOps instance.
+They set these three values on the instance:
+
+```bash
+GITLAB_URL=https://gitlab.internal.example.com
+GITLAB_APP_CLIENT_ID=<application-id>
+GITLAB_APP_CLIENT_SECRET=<secret>
+```
+
+<Warning>
+  The Secret is a credential for your GitLab. Send it over a secret manager or another channel your team already trusts
+  for secrets — not over chat or email.
+</Warning>
+
+Wait for your administrator to confirm the values are in place before moving on to Step 3. Until then, **Connect
+GitLab** has nothing to point at and the authorization will fail.
+
+### Step 3 — Connect from LocalOps
+
+Once your administrator has configured the instance, connecting is a single click — the GitLab URL and application
+credentials are already known, so there's nothing to type in.
+
+<Steps>
+  <Step title="Sign in to LocalOps" />
+  <Step title="Navigate to the `Code repos` section" />
+  <Step title="Click on `Connect GitLab`" />
+  <Step title="Authorize the LocalOps application">
+    You'll be redirected to your GitLab to authorize, then returned to LocalOps with your account listed as an active
+    connection.
+  </Step>
+</Steps>
+
+### Network and TLS requirements
+
+Connectivity has to work in **three** directions. Getting one of these wrong is the most common cause of a failed
+setup.
+
+| Direction                                | Purpose                                                                          | Must allow                                                        |
+| ---------------------------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| LocalOps → GitLab                        | OAuth token exchange, project/branch/commit reads, webhook + deploy-token management | HTTPS to your GitLab host                                     |
+| GitLab → LocalOps                        | Webhook delivery for push and merge request events                               | HTTPS to `https://<your-localops-host>/api/v1/webhooks/gitlab/*`  |
+| Your Space (deployment target) → GitLab  | `git clone` during a build                                                       | HTTPS to your GitLab host                                         |
+
+**TLS:** LocalOps registers webhooks with SSL verification enabled, and validates your GitLab's certificate on outbound
+API calls. Both endpoints must present a certificate signed by a CA the other side trusts. Self-signed certificates that
+aren't in the trust store will cause silent webhook delivery failures and API errors.
+
+**Clock sync:** Webhook signatures are rejected if the delivery timestamp is more than **5 minutes** off from LocalOps'
+clock. Keep both hosts on NTP.
+
+**GitLab version:** Any actively supported GitLab release works. GitLab **19.0 and later** signs webhook deliveries with
+an HMAC signature, which LocalOps prefers and verifies automatically. Older versions fall back to a shared-secret token
+check — also supported, but weaker. No configuration change is needed either way; LocalOps detects and uses the stronger
+method as soon as your instance supports it.
+
+## What role does my GitLab user need?
+
+This applies to **both** setups. The GitLab user who authorizes the connection is the identity LocalOps acts as, so that
+user's role determines what LocalOps can do.
+
+**Minimum: `Maintainer` on every project you want to deploy.** `Owner` also works.
+
+Here's why, operation by operation:
+
+| What LocalOps does                                       | GitLab API                                                  | Minimum role   |
+| -------------------------------------------------------- | ----------------------------------------------------------- | -------------- |
+| List the projects available to you                       | `GET /projects?membership=true`                             | Guest          |
+| List branches, read commits                              | `GET /repository/branches`, `GET /repository/commits`       | Reporter       |
+| Comment on merge requests (preview environment links)    | `POST /merge_requests/:iid/notes`                           | Reporter       |
+| Report deployment status on commits                      | `POST /statuses/:sha`                                       | Developer      |
+| Create, list, and remove the LocalOps webhook            | `.../hooks`                                                 | **Maintainer** |
+| Mint and revoke short-lived clone credentials            | `.../deploy_tokens`                                         | **Maintainer** |
+
+Only projects where the user is a **Maintainer** or **Owner** can be fully deployed. A project where the user is only a
+Developer will show up in the list, but webhook registration and clone-credential creation will fail.
+
+### Recommended: use a dedicated service account
+
+Rather than connecting a person's account, create a GitLab service account (GitLab Premium/Ultimate) or a dedicated bot
+user, and add it as a **Maintainer** to only the projects LocalOps should deploy. This gives you:
+
+- Least privilege — LocalOps can't see projects you didn't grant.
+- No breakage when a team member leaves or rotates their credentials.
+- Clean attribution — LocalOps-created webhooks, tokens, and MR comments are clearly identifiable.
+
+<Warning>
+  Do **not** connect using an instance administrator account. The `api` scope would then grant LocalOps administrative
+  reach across your entire GitLab instance.
+</Warning>
+
+## One more step: enable auto-deploy for your team
+
+**Auto-deploy on push only triggers if the person who pushed is a member of your LocalOps organization, identified
+through their GitLab account.**
+
+LocalOps matches the pusher by their GitLab user ID against LocalOps members who have linked GitLab as a sign-in method.
+If there's no match, the push is received and logged, but no deployment starts.
+
+So, for each team member whose pushes should trigger deploys:
+
+1. They must be a member of your LocalOps organization.
+2. They must **sign in to LocalOps with GitLab**, or link GitLab to their existing LocalOps account under account
+   settings.
+
+<Tip>
+  This is a deliberate safety control — it prevents an outside contributor's merged commit from deploying to your
+  environments. If a push you expected to deploy didn't, this is the first thing to check.
+</Tip>
+
+## What LocalOps creates in your GitLab projects
+
+Everything below is created automatically and cleaned up automatically. You don't need to configure any of it.
+
+**A webhook**, on each project that has at least one LocalOps service:
+
+- URL: `https://<your-localops-host>/api/v1/webhooks/gitlab/<connection-id>`
+- Events: **Push** and **Merge request**
+- SSL verification: enabled
+- Signed with a per-connection secret that LocalOps verifies on every delivery
+
+LocalOps keeps exactly one such webhook per project and reconciles continuously — duplicates and hooks left behind by an
+address change are removed on their own. Webhooks from other LocalOps connections on the same project are never touched.
+When the last LocalOps service using a project is deleted, the webhook is removed.
+
+**A deploy token**, per deployment:
+
+- Name: `localops-deploy-<deployment-id>`
+- Scope: `read_repository` only — read-only, and cannot write, delete, or read anything but that project's code
+- Expires: **48 hours** after creation
+- Revoked as soon as the deployment reaches a final state
+
+A fresh token is minted for every build and thrown away afterwards, so no long-lived credential to your code is ever
+stored. The 48-hour expiry is a backstop in case revocation is missed. If minting a deploy token fails, LocalOps falls
+back to the connection's OAuth token for that single clone.
+
+## Disconnecting
+
+Go to **Code repos**, open the connection, and click **Disconnect**. The stored tokens and credentials are deleted from
+LocalOps immediately, and the action is recorded in your audit log.
+
+Two things to be aware of:
+
+- **Revoke authorization on GitLab too.** Disconnecting in LocalOps deletes LocalOps' copy of the tokens but does not
+  revoke the grant on GitLab's side. To fully revoke, go to your GitLab **User Settings → Applications → Authorized
+  applications** and remove **LocalOps**.
+- **Webhooks are not removed by disconnecting.** LocalOps needs the connection's credentials to delete a webhook, and
+  disconnecting removes them first. Any remaining LocalOps webhooks on your projects will simply fail to deliver. To
+  clean them up, either delete the LocalOps services using those projects *before* disconnecting, or remove the hooks
+  manually under **Project → Settings → Webhooks** (they'll have a URL containing `/api/v1/webhooks/gitlab/`). Any
+  outstanding deploy tokens expire on their own within 48 hours.
+
+## Troubleshooting
+
+**"Failed to exchange OAuth code with GitLab"**
+
+The redirect URI on your GitLab OAuth application doesn't match, or the Application ID / Secret is wrong. Confirm the
+redirect URI is exactly `https://<your-localops-host>/api/v1/callbacks/gitlab/oauth` — scheme, host, and path all have
+to match character for character.
+
+**"Invalid or expired state. Please try connecting GitLab again."**
+
+The authorization took too long, or you opened the authorize link in a different browser session. Start over from
+**Connect GitLab**.
+
+**A project is missing from the list**
+
+LocalOps only sees projects where the connected GitLab user is a **member**. Group-level visibility isn't enough — add
+the user (or your service account) as a member of the project, at Maintainer level.
+
+**Service creation fails on webhook registration**
+
+The connected user isn't a Maintainer or Owner on that project. Raise the role and retry.
+
+**"GitLab connection token expired. Please reconnect GitLab."**
+
+LocalOps refreshes access tokens automatically, but the refresh token itself was revoked or expired — usually because
+someone removed the authorization on GitLab, or the OAuth application's secret was rotated. Reconnect the account.
+
+**Pushes don't trigger a deployment**
+
+Check, in order:
+
+1. Auto-deploy is enabled on the service.
+2. The push was to the branch the service is configured to track.
+3. The person who pushed has linked their GitLab account to LocalOps and is a member of your LocalOps organization (see
+   [above](#one-more-step-enable-auto-deploy-for-your-team)).
+4. The webhook is delivering — **Project → Settings → Webhooks → Edit → Recent events**. A `401` means a signature
+   mismatch (check clock sync); a timeout or TLS error means GitLab can't reach LocalOps.
+
+Note that push deployments are skipped for **Jobs** (one-off tasks) by design, and for branch deletions.
