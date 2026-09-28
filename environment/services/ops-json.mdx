@@ -397,6 +397,32 @@ Every deployment logs the wait it is going to use, like
 `Waiting up to 15m0s for this service's rollout to become ready`. Check your deployment logs to confirm that the value
 you declared was picked up.
 
+## Autoscaling
+
+Add an `autoscaling` block to add and remove replicas with load, instead of running a fixed number of containers all
+day. Scale on CPU or memory utilization, on time-of-day windows, or both:
+
+```json
+{
+  "autoscaling": {
+    "min_replicas": 2,
+    "max_replicas": 10,
+    "target_cpu": 70
+  }
+}
+```
+
+`max_replicas` is required and is never defaulted - it is the ceiling on what this service can cost. `min_replicas` is
+optional and falls back to your service's existing container count. `target_cpu` and `target_memory` are percentages of
+each pod's CPU and memory request, so the service needs a minimum CPU or memory set under the Scaling tab for them to
+work.
+
+Preview environments never autoscale, and neither do cron services, job services or services declaring a `disk`
+volume.
+
+See [Autoscaling](/environment/services/autoscaling) for the full guidance - schedules, the replica bounds, setting the
+same config from the console instead, and what gets clamped rather than failing your deployment.
+
 ## BEAM clustering
 
 If you run Elixir or Erlang services, add `beam_cluster_id` with the same value in every service you want clustered
@@ -1214,6 +1240,12 @@ Here's a comprehensive `ops.json` example:
 {
   "beam_cluster_id": "myapp",
   "deploy_timeout": 900,
+  "autoscaling": {
+    "min_replicas": 2,
+    "max_replicas": 10,
+    "target_cpu": 70,
+    "schedules": [{ "start": "0 9 * * 1-5", "end": "0 18 * * 1-5", "timezone": "Asia/Kolkata", "replicas": 6 }]
+  },
   "volumes": [
     { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
     {
