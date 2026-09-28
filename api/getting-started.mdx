@@ -6,7 +6,8 @@ description: Authentication, response format and error handling for the LocalOps
 ## Overview
 
 The LocalOps API lets you manage environments, services, deployments, custom domains and secrets programmatically - from
-the LocalOps SDK, a CLI wrapper or your CI pipeline.
+the LocalOps SDK, a CLI wrapper or your CI pipeline. It also reads an environment's network edges and workload identity,
+so you can point your own DNS, firewall allowlists and IAM policies at it.
 
 It is a small, deliberately separate surface from the LocalOps console. Every operation the API supports is listed under
 **Endpoints** in the sidebar.
@@ -57,8 +58,8 @@ Your account also needs an active plan. If your subscription is not `active` or 
 API requests are not tied to a user. [Audit log](/team/audit-logs) entries for actions taken through the API show
 **`API Token`** as the actor, and deployments created this way have a zero UUID in `created_by_id`.
 
-Service creates, updates and deletes, secret updates, and custom domain creates and verifications are all written to the
-audit log.
+Service creates, updates and deletes, secret updates, and custom domain creates, verifications and force deploys are all
+written to the audit log.
 
 ## Response format
 
@@ -104,8 +105,8 @@ The `errors` array is present only on validation failures, and can be `null` whe
 
 <Warning>
   Check `error_code` rather than the HTTP status to decide whether a request was at fault. Some business rule
-  violations, such as `Ops Json is only supported for docker image source` or `Enable Preview is allowed only for
-  service type web`, are returned as `500` with `error_code: validation`.
+  violations, such as `Ops Json is only supported for docker image and helm chart sources` or `Enable Preview is allowed
+  only for service type web`, are returned as `500` with `error_code: validation`.
 </Warning>
 
 ### Always send a body
@@ -136,6 +137,28 @@ Observe the real outcome by polling:
 
 There are no idempotency keys. Retrying a deploy creates another deployment. Retrying a preview deploy for the same pull
 request reuses the existing preview service, indicated by `is_new: false`, but starts another rollout.
+
+## Coming soon
+
+Some endpoints in the sidebar carry a **`COMING SOON`** badge. They are published so you can plan an integration against
+them, but they are not live yet - those paths return `404` today, and their shapes may change before release.
+
+Every asynchronous action will run as an **operation** with its own status, error and logs, so a failure tells you why
+instead of leaving you to guess. Alongside the two Operations endpoints, this adds an `op_id` to responses you already
+use, without changing any existing field:
+
+| Endpoint                                                    | New field                                  |
+| ----------------------------------------------------------- | ------------------------------------------ |
+| `POST /v1/environments/{envId}/services/{serviceId}/deploy` | `data.op_id`, next to `data.deployment_id` |
+| `DELETE /v1/environments/{envId}/services/{serviceId}`      | `data.op_id`                               |
+| `PUT /v1/environments/{envId}/secrets`                      | `data.op_id`                               |
+| `PUT /v1/environments/{envId}/services/{serviceId}/secrets` | `data.op_id`                               |
+
+The `op_ids` and `ops` fields on `GET /v1/deployments/{deploymentId}`, empty today, will be filled in with the
+deployment's operations at the same time.
+
+Creating and deleting environments, deleting a custom domain, and cancelling an in flight deployment are also on the
+way.
 
 ## No list endpoints
 

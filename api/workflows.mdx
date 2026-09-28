@@ -6,6 +6,133 @@ description: End to end recipes for the LocalOps API
 These recipes chain the endpoints in the sidebar. All of them assume the `Authorization: Bearer <api_token>` header
 described in [Getting Started](/api/getting-started), and a base URL of `https://sdk.localops.co`.
 
+## Onboard a bring-your-own-cloud (BYOC) customer - headless
+
+The end to end recipe for a [BYOC edition](/use-cases/byoc): your product running inside the customer's own AWS, GCP or
+Azure account. Every step below is an API call, so onboarding a customer is a script you run once per customer rather
+than a walk through the console. The recipes further down this page cover each step in more detail.
+
+<Steps>
+  <Step title="Provision the environment in their cloud" icon="cloud">
+    `POST /v1/environments` with the customer's `cloud_connection_id`, the `project_id` to file it under, and the
+    region they want - `aws-us-east-1`, `gcp-us-central1`, and so on. Pass `custom_cidr` when their network team needs
+    the VPC in a particular range.
+
+    Then poll `GET /v1/environments/{envId}` until `state` is `available`.
+
+    <Note>
+      `POST /v1/environments` is badged **COMING SOON** and returns `404` today - create the environment in the console
+      for now. Every step after this one is live.
+    </Note>
+
+  </Step>
+  <Step title="Add your services" icon="plus">
+    `POST /v1/environments/{envId}/services` once per service - API, workers, cron jobs, frontend. Each one can come
+    from a GitHub or GitLab repo, a Docker image or a Helm chart, with its own `replica_count`, CPU and memory.
+
+    Keep each `data.service.id` - there is no list endpoint to look them up again. Adding a service to a customer later
+    is the same call.
+
+    See [Create a Helm service and deploy it](#create-a-helm-service-and-deploy-it) and
+    [Deploy a git service from CI](#deploy-a-git-service-from-ci).
+
+  </Step>
+  <Step title="Set their secrets" icon="key">
+    `PUT /v1/environments/{envId}/secrets` for values every service in the environment shares, and
+    `PUT /v1/environments/{envId}/services/{serviceId}/secrets` for the ones scoped to a single service.
+
+    This is where per customer configuration lives - their database URLs, their API keys, their license terms.
+
+    See [Update secrets safely](#update-secrets-safely) - these writes replace the whole set.
+
+  </Step>
+  <Step title="Deploy" icon="rocket">
+    `POST /v1/environments/{envId}/services/{serviceId}/deploy` with a `commit_id`, a `docker_image_tag` or a
+    `helm_chart_version`, then poll `GET /v1/deployments/{deploymentId}` until `success` or `failed`.
+
+    See [Deploy a git service from CI](#deploy-a-git-service-from-ci).
+
+  </Step>
+  <Step title="Attach their domain" icon="globe">
+    `POST /v1/environments/{envId}/services/{serviceId}/custom-domains` returns the exact DNS records for the customer
+    to create. Once they resolve, `POST .../custom-domains/{customDomainId}/verify` checks them and cuts traffic over.
+
+    See [Attach a custom domain](#attach-a-custom-domain).
+
+  </Step>
+  <Step title="Hand over the network details" icon="shield-check">
+    `GET /v1/environments/{envId}` returns the `ingress_host` to point DNS at, the `public_nat_ips` to allowlist and
+    the `svc_role_arn` to name in their resource policies - the three things the customer's network and security teams
+    ask for during review.
+
+    See [Point your own DNS and allowlists at an environment](#point-your-own-dns-and-allowlists-at-an-environment).
+
+  </Step>
+</Steps>
+
+### Ship a release to every customer
+
+Once customers are onboarded, a rollout is the same call against each environment id:
+
+```bash
+while read -r ENV_ID SERVICE_ID; do
+  curl -X POST https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/deploy \
+    -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"docker_image_tag": "1.4.0", "note": "rollout 1.4.0"}'
+done < customer-envs.txt
+```
+
+Each call returns a `deployment_id`, so you can gate the next customer on the previous one reaching `success` and stage
+the rollout across your install base.
+
+<Tip>
+  Keep a record of every customer's `envId` and `serviceId` as you create them. The API has no list endpoint, so these
+  identifiers are the only handle you have on a customer's environment.
+</Tip>
+
+## Point your own DNS and allowlists at an environment
+
+`GET /v1/environments/{envId}` reads three fields live from the environment's infrastructure on every call. They are
+what you need to connect your own DNS, firewalls and cloud IAM to a LocalOps environment.
+
+```bash
+curl -H "Authorization: Bearer $LOCALOPS_API_TOKEN" \
+  https://sdk.localops.co/v1/environments/$ENV_ID
+```
+
+```json
+{
+  "message": "success",
+  "data": {
+    "environment": {
+      "state": "available",
+      "cloud_region_code": "aws-us-east-1",
+      "ingress_host": "k8s-ingress-a1b2c3d4.elb.us-east-1.amazonaws.com",
+      "public_nat_ips": ["43.204.246.44"],
+      "svc_role_arn": "arn:aws:iam::123456789012:role/lops-prod-a1b2-svc-role"
+    }
+  }
+}
+```
+
+| Field            | What to do with it                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ingress_host`   | Point a DNS record at it. A `CNAME` when it is a hostname (AWS), an `A` record when it is an IP address (GCP).                             |
+| `public_nat_ips` | Allowlist these addresses in your own firewalls and database security groups. This is where the environment's outbound traffic comes from. |
+| `svc_role_arn`   | Name it as a principal in your own bucket, queue and KMS key policies. **AWS only** - it is always empty on GCP.                           |
+
+All three are empty until the environment is provisioned, so poll until the one you need is set.
+
+<Note>
+  `svc_role_arn` is an identifier, not a credential. Naming it in a resource policy grants nothing until you also set up
+  the trust in your own account. And `public_nat_ips` can change, so re-read it after infrastructure changes rather than
+  caching it indefinitely.
+</Note>
+
+To have LocalOps manage a domain for you instead, with certificates and verification, use
+[Attach a custom domain](#attach-a-custom-domain) below.
+
 ## Create a Helm service and deploy it
 
 <Steps>
@@ -140,6 +267,17 @@ For a `docker_image` service, send `docker_image_tag` instead. For `helm_chart`,
   </Step>
 </Steps>
 
+If you have verified the domain yourself and the live DNS check keeps failing, `force-deploy` is the escape hatch:
+
+```bash
+curl -X POST \
+  https://sdk.localops.co/v1/environments/$ENV_ID/services/$SERVICE_ID/custom-domains/$CUSTOM_DOMAIN_ID/force-deploy \
+  -H "Authorization: Bearer $LOCALOPS_API_TOKEN"
+```
+
+It deploys the domain without checking DNS and points the service at it. Because it skips verification, every call is
+written to the audit log as `CUSTOM_DOMAIN_FORCE_DEPLOY`.
+
 ## Wire one service to another
 
 Services inside the same environment reach each other over an in cluster DNS alias.
@@ -157,6 +295,20 @@ Services inside the same environment reach each other over an in cluster DNS ali
     Secret writes do not roll themselves out. Trigger a deployment for the consuming service.
   </Step>
 </Steps>
+
+The same response carries `ops_dependencies` - the cloud resources the service declares in its
+[ops.json](/environment/services/ops-json). Each one lists the environment variables it injects, so you can discover
+what a service already gets without reading its repo:
+
+```json
+{
+  "id": "orders-primary",
+  "kind": "rds",
+  "exports": { "DATABASE_URL": "$dsn", "DB_HOST": "$address" }
+}
+```
+
+The `$...` tokens are resolved when the variables are injected into your container. The API returns them as declared.
 
 ## Update secrets safely
 

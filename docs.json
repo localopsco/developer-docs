@@ -272,6 +272,12 @@
       ]
     }
   },
+  "redirects": [
+    {
+      "source": "/api-reference",
+      "destination": "/api-reference/environments/get-environment"
+    }
+  ],
   "api": {
     "playground": {
       "display": "interactive"
