@@ -4,6 +4,85 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 29, 2026">
+
+## MySQL, Redis and Valkey in the CLI, and generate FedRAMP compliant Helm charts
+
+### `ops connect` and `ops proxy` now speak MySQL, Redis and Valkey
+
+Reaching a database inside your environment from your laptop used to work for Postgres only. A service using MySQL, or
+an [ElastiCache](/environment/services/aws/elasti-cache) Redis or Valkey cluster, needed a hand-rolled jump pod.
+
+Both commands now cover all of them:
+
+| Dependency  | Engine        | Shell client | Client image         |
+| ----------- | ------------- | ------------ | -------------------- |
+| RDS         | Postgres      | `psql`       | `postgres:17-alpine` |
+| RDS         | MySQL         | `mysql`      | `mysql:8.4`          |
+| ElastiCache | Redis, Valkey | `redis-cli`  | `redis:7-alpine`     |
+
+`ops connect --dep` starts a short-lived client pod inside your environment, hands it the same connection details your
+service uses and opens that engine's own prompt. Exit the shell and the pod is deleted:
+
+```sh
+ops connect --env us-prod --svc api --dep app-db
+mysql>
+```
+
+```sh
+ops connect --env us-prod --svc api --dep sessions
+redis-cli>
+```
+
+`ops proxy --dep` covers the same dependencies for a local GUI client - TablePlus, DataGrip, DBeaver or RedisInsight -
+by relaying the private endpoint to a port on your machine and printing the credentials to use with it.
+
+`--dep` finds a database through its `$dsn` export and a cache through `$endpoint`, so your `ops.json` needs one of
+them. Memcached clusters are not supported.
+
+See [Connect to your databases or cache](/cli/usage#connect-to-your-databases-or-cache) for naming a specific
+dependency, overriding the client image, choosing a local port, and the SSL modes to use through a tunnel.
+
+**Coming next: SQL Server.** Support for SQL Server instances through the same `--dep` flag is in progress.
+
+### Generate FedRAMP compliant Helm charts, with zero-CVE images
+
+Teams operating under FedRAMP or NIST 800-53 ask two things of every Helm chart you hand them: can it run under the
+`restricted` Pod Security Standard, and what is inside the images.
+
+**The Helm charts you generate support `restricted`.** Generate a chart from the LocalOps console and distribute it to
+your customers with a [license token](/api/no-access-delivery/license-tokens), which authenticates every pull of the
+chart and its private images. Pod and container security options are exposed as values, so your customer sets Pod
+Security Standards per deployment rather than patching the chart:
+
+```yaml
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ['ALL']
+```
+
+Set only the keys you need. A workload that requires more - a host-reading agent, a process that must run as root - is
+relaxed on its own, without changing the rest.
+
+**Our own images carry zero CVEs.** Every image LocalOps builds and publishes is rebuilt on a minimal base and scanned
+before release, so a customer's scan during onboarding returns no findings from our side of the Helm chart.
+
+Services defined in `ops.json` control node level access through
+[`unsafe.privileged`](/environment/services/ops-json#privileged-containers).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="September 28, 2026">
 
 ## Public API - run environments on any cloud, headless
