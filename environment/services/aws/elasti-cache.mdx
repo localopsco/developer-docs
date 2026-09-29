@@ -91,6 +91,10 @@ Available properties of the ElastiCache cluster to use in `exports`:
 4. `$address` - Specifies the DNS address of the ElastiCache master node.
 5. `$port` - Specifies the port you will use to access the cluster node.
 
+Export `$endpoint`, or `$address` and `$port`, and you can open `redis-cli` against the cluster or reach it from a local
+GUI client with the LocalOps CLI - see
+[Connect to your databases or cache](/cli/usage#connect-to-your-databases-or-cache).
+
 ### Lifecycle:
 
 If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in

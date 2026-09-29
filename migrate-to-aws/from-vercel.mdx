@@ -159,6 +159,7 @@ Add an `ops.json` file to the root of your repository:
           "instance_type": "db.t4g.small",
           "publicly_accessible": false,
           "exports": {
+            "DATABASE_URL": "$dsn",
             "DATABASE_HOST": "$address",
             "DATABASE_NAME": "$dbName",
             "DATABASE_USER": "$username",
@@ -212,18 +213,17 @@ const result = await sql`SELECT * FROM users`;
 
 // After (standard pg client)
 import { Pool } from 'pg';
-const pool = new Pool({
-  host: process.env.DATABASE_HOST,
-  database: process.env.DATABASE_NAME,
-  user: process.env.DATABASE_USER,
-  password: await getPasswordFromSecretsManager(),
-});
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const result = await pool.query('SELECT * FROM users');
 ```
 
 <Tip>
-  If you used `ops.json` to create RDS, the password is stored in AWS Secrets Manager. Use the AWS SDK to retrieve it
-  using the `DATABASE_PASSWORD_ARN` environment variable.
+  `DATABASE_URL` comes from the `$dsn` export in `ops.json`: a complete connection URL with the host, database, username
+  and password already filled in and escaped. It embeds the password, so treat the value as a secret.
+
+If you created the database manually (Option B), add `DATABASE_URL` as a [secret](/environment/services/secrets) on your
+service yourself, in the form `postgresql://<user>:<password>@<rds-endpoint>:5432/<database>` - percent-encode any
+special characters in the password.
 </Tip>
 
 ## Step 4: Migrate Vercel KV (Redis) to ElastiCache
@@ -241,7 +241,7 @@ If you're using Vercel KV, migrate to Amazon ElastiCache:
           "engine": "redis",
           "node_type": "cache.t4g.micro",
           "exports": {
-            "REDIS_HOST": "$endpoint",
+            "REDIS_HOST": "$address",
             "REDIS_PORT": "$port"
           }
         }
@@ -329,12 +329,13 @@ See [Secrets documentation](/environment/services/secrets) for more details.
 3. Test your application endpoints
 4. Update your DNS to point to the new LocalOps environment
 
-Once it is up, the [LocalOps CLI](/cli/install-macos) gives you two useful checks from your terminal - streaming the
-service's logs, and opening a SQL shell on the migrated database to confirm the data landed:
+Once it is up, the [LocalOps CLI](/cli/install-macos) gives you a few useful checks from your terminal - streaming the
+service's logs, opening a SQL shell on the migrated database to confirm the data landed, and a `redis-cli` on the cache:
 
 ```sh
 ops logs --env production --svc web
-ops connect --env production --svc web --dep
+ops connect --env production --svc web --dep main-db
+ops connect --env production --svc web --dep cache
 ```
 
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.

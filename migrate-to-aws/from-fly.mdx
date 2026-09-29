@@ -178,6 +178,7 @@ Add an `ops.json` file to the root of your repository:
           "instance_type": "db.t4g.small",
           "publicly_accessible": false,
           "exports": {
+            "DATABASE_URL": "$dsn",
             "DATABASE_HOST": "$address",
             "DATABASE_NAME": "$dbName",
             "DATABASE_USER": "$username",
@@ -242,9 +243,8 @@ DATABASE_PASSWORD=your-db-password
 ```
 
 <Tip>
-  If you used `ops.json` to create RDS, the password is stored in AWS Secrets
-  Manager. Use the AWS SDK to retrieve it using the `DATABASE_PASSWORD_ARN`
-  environment variable.
+  If you used `ops.json` to create RDS, there is nothing to add here: the `$dsn`
+  export gives your service `DATABASE_URL`, with the password already filled in.
 </Tip>
 
 ## Step 4: Migrate Fly Redis (Upstash) to ElastiCache
@@ -262,7 +262,7 @@ If you're using Upstash Redis on Fly.io, migrate to Amazon ElastiCache:
           "engine": "redis",
           "node_type": "cache.t4g.micro",
           "exports": {
-            "REDIS_HOST": "$endpoint",
+            "REDIS_HOST": "$address",
             "REDIS_PORT": "$port"
           }
         }
@@ -311,14 +311,13 @@ See [Secrets documentation](/environment/services/secrets) for more details.
 
 ## Step 6: Update your application
 
-Update your application to use the new environment variables:
+If you created RDS with `ops.json`, your application keeps reading `DATABASE_URL`, just as it did on Fly.io - no code
+change. The `$dsn` export fills it in with a complete connection URL, password included and already escaped.
+
+If you created the database manually, build the URL from the secrets you added in step 3.4 instead:
 
 ```javascript
-// Before (Fly.io DATABASE_URL)
-const connectionString = process.env.DATABASE_URL;
-
-// After (LocalOps)
-const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}`;
+const connectionString = `postgresql://${process.env.DATABASE_USER}:${encodeURIComponent(process.env.DATABASE_PASSWORD)}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}`;
 ```
 
 ## Step 7: Deploy and verify
@@ -381,17 +380,20 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Fly CLI equivalents
 
-The [LocalOps CLI](/cli/install-macos) covers the two `flyctl` commands you probably ran most often:
+The [LocalOps CLI](/cli/install-macos) covers the `flyctl` commands you probably ran most often:
 
-| Fly CLI           | LocalOps CLI                                        |
-| ----------------- | --------------------------------------------------- |
-| `fly logs`        | [`ops logs`](/cli/usage#stream-logs-from-a-service) |
-| `fly ssh console` | [`ops connect`](/cli/usage#shell-into-a-service)    |
-| `fly proxy`       | [`ops proxy`](/cli/usage#forward-a-service-port-to-localhost) |
+| Fly CLI                | LocalOps CLI                                                  |
+| ---------------------- | ------------------------------------------------------------- |
+| `fly logs`             | [`ops logs`](/cli/usage#stream-logs-from-a-service)           |
+| `fly ssh console`      | [`ops connect`](/cli/usage#shell-into-a-service)              |
+| `fly proxy`            | [`ops proxy`](/cli/usage#forward-a-service-port-to-localhost) |
+| `fly postgres connect` | [`ops connect --dep`](/cli/usage#open-a-database-shell)       |
+| `fly redis connect`    | [`ops connect --dep`](/cli/usage#open-a-database-shell)       |
 
 ```sh
 ops logs --env production --svc web
 ops connect --env production --svc web
+ops connect --env production --svc web --dep main-db
 ```
 
 Both take the environment and service names you see in your dashboard, so there is no machine id to look up first. When

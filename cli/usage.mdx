@@ -176,26 +176,31 @@ ops proxy --env staging --svc api --remote-port 9090 --local-port 9000
 
 Resources provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
 [ElastiCache clusters](/environment/services/aws/elasti-cache) - live in the private subnets of your environment's VPC
-and only accept connections from inside it. There is no public endpoint to point `psql` at from your laptop, by design.
-So you connect from a throwaway pod inside the cluster instead.
+and only accept connections from inside it. There is no public endpoint to point a database client at from your laptop,
+by design. So you connect from a throwaway pod inside the cluster instead.
 
 `ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
-to the database, and clean it up when you exit.
+to the database or cache, and clean it up when you exit. They work with:
+
+| Dependency  | Engine        | Shell client | Client image         |
+| ----------- | ------------- | ------------ | -------------------- |
+| RDS         | Postgres      | `psql`       | `postgres:17-alpine` |
+| RDS         | MySQL         | `mysql`      | `mysql:8.4`          |
+| ElastiCache | Redis, Valkey | `redis-cli`  | `redis:7-alpine`     |
 
 <Note>
-  These commands only reach resources you provisioned through `ops.json` - for
-  example an [RDS instance](/environment/services/aws/rds) or an [ElastiCache
-  cluster](/environment/services/aws/elasti-cache). LocalOps creates those
-  inside your environment's VPC and injects their credentials into your
-  service, which is what `--dep` reads. A database you host or manage yourself
-  is not reachable this way.
+  These commands only reach resources you provisioned through `ops.json` - for example an [RDS
+  instance](/environment/services/aws/rds) or an [ElastiCache cluster](/environment/services/aws/elasti-cache). LocalOps
+  creates those inside your environment's VPC and injects their connection details into your service, which is what
+  `--dep` reads. A database you host or manage yourself is not reachable this way.
 </Note>
 
-### First, export `$dsn`
+### First, export the connection details
 
-Export `$dsn` in your `ops.json`. It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
-port, username, password and database name already filled in and correctly escaped. It is also what the `--dep` commands
-below look for, so they will not find a database without it:
+`--dep` finds a dependency by what its `exports` in `ops.json` hand to your service, so it needs one of these.
+
+**For a database, export `$dsn`.** It is a complete, ready-to-use connection URL that LocalOps assembles for you - host,
+port, username, password and database name already filled in and correctly escaped:
 
 ```json ops.json
 {
@@ -217,77 +222,114 @@ below look for, so they will not find a database without it:
 }
 ```
 
-Deploy once, and every container of that service has `DATABASE_URL` in its environment.
+A MySQL instance is the same, with `"engine": "mysql"`.
+
+**For a Redis cache, export `$endpoint`** - or `$address` together with `$port`. ElastiCache needs no password, so the
+address is all `--dep` needs:
+
+```json ops.json
+{
+  "dependencies": {
+    "elasticache": {
+      "clusters": [
+        {
+          "id": "sessions",
+          "prefix": "sessions",
+          "engine": "redis",
+          "version": "7.0",
+          "instance_type": "cache.t4g.small",
+          "exports": {
+            "REDIS_ENDPOINT": "$endpoint"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy once, and every container of that service has those variables in its environment.
 
 <Warning>
-  `$dsn` embeds the database password, so handle the value exactly as you would
-  a password. Don't paste it into tickets, Slack messages or shared docs, don't
-  commit it, and don't save it into a GUI client's connection profile - read it
-  from a pod each time you need it. When `managed_password` is `true`, RDS
-  rotates the password on its own schedule, so a copied URL is both a leaked
-  secret and a value with an expiry date.
+  `$dsn` embeds the database password, so handle the value exactly as you would a password. Don't paste it into tickets,
+  Slack messages or shared docs, don't commit it, and don't save it into a GUI client's connection profile - read it
+  from a pod each time you need it. When `managed_password` is `true`, RDS rotates the password on its own schedule, so
+  a copied URL is both a leaked secret and a value with an expiry date.
 </Warning>
 
-### Open a psql shell
+### Open a database shell
 
 ```sh
 ops connect --env staging --svc api --dep
 ```
 
-That starts a `postgres:17-alpine` pod in your environment, hands it the same database credential your service uses, and
-drops you at a `psql` prompt. Exit the shell and the pod is deleted.
+That starts a client pod in your environment and drops you at the engine's own prompt - `psql`, `mysql` or `redis-cli`
+from the table above. Exit the shell and the pod is deleted.
 
-Bare `--dep` picks the dependency for you when the service has exactly one database. Name it when there are several -
-either by its `ops.json` id or by the variable it exports:
+Bare `--dep` picks the dependency for you when the service has exactly one database or cache. Name it when there are
+several - either by its `ops.json` id or by the variable it exports:
 
 ```sh
 ops connect --env staging --svc api --dep app-db
+ops connect --env staging --svc api --dep sessions
 ```
 
 <Note>
-  Only Postgres is supported today. MySQL and Redis are coming soon.
-  `--db-image` overrides the client image if you need a specific `psql`
-  version.
+  Memcached clusters are not supported. `--db-image` overrides the client image, for example to match your MySQL
+  server's major version - an older client against a newer server can fail on newer authentication methods.
 </Note>
 
 <Tip>
-  The credential is never read by the CLI or printed to your terminal. The
-  client pod is given the same Kubernetes Secret reference your service has, so
-  the password is injected by the cluster. It stays out of your shell history
-  and out of your scrollback.
+  A database password is never read by the CLI or printed to your terminal. The client pod is given the same Kubernetes
+  Secret reference your service has, so the password is injected by the cluster. It stays out of your shell history and
+  out of your scrollback.
 </Tip>
 
-### Use a local GUI client (TablePlus, DataGrip, pgAdmin)
+### Use a local GUI client (TablePlus, DataGrip, DBeaver, RedisInsight)
 
 ```sh
 ops proxy --env staging --svc api --dep app-db
 ```
 
-That relays the private database endpoint to your machine and prints the connection details to use:
+That relays the private endpoint to your machine and prints the connection details to use for that engine:
 
 ```
   psql -h localhost -p 5432 -U appuser -d appdb -W
   password: <the database password>
 ```
 
-Point your GUI client at `localhost` on that port with those credentials, and leave the command running while you work.
-`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if `5432` is already taken locally:
+```
+  mysql -h 127.0.0.1 -P 3306 -u appuser -p appdb
+  password: <the database password>
+```
+
+```
+  redis-cli -h 127.0.0.1 -p 6379
+```
+
+Point your GUI client at that host and port with those credentials, and leave the command running while you work.
+`Ctrl-C` closes the tunnel and removes the relay pod. Pass `--local-port` if the port is already taken locally - by a
+database you run on your own machine, for example:
 
 ```sh
 ops proxy --env staging --svc api --dep app-db --local-port 15432
 ```
 
+<Note>
+  MySQL's details use `127.0.0.1` rather than `localhost` on purpose: the `mysql` client treats `localhost` as its local
+  socket and never reaches the tunnel.
+</Note>
+
 <Warning>
-  Use SSL mode `require` rather than `verify-full`. The database's certificate
-  is issued for its real hostname, not `localhost`, so certificate verification
-  through the tunnel will fail. For `psql` that means `PGSSLMODE=require`, since
-  `psql` has no `sslmode` flag.
+  Don't verify the database certificate's hostname through the tunnel. The certificate is issued for the database's real
+  hostname, not your machine, so that check fails. For Postgres use SSL mode `require` rather than `verify-full` -
+  `PGSSLMODE=require` for `psql`, which has no `sslmode` flag. For MySQL use `--ssl-mode=REQUIRED` rather than
+  `VERIFY_IDENTITY`.
 </Warning>
 
 <Warning>
-  Every recipe on this page connects you to a real database. On production
-  environments, prefer read-only queries and keep in mind that anything you run
-  has immediate effect - there is no staging step between your prompt and your
+  Every recipe on this page connects you to a real database. On production environments, prefer read-only queries and
+  keep in mind that anything you run has immediate effect - there is no staging step between your prompt and your
   customers' data.
 </Warning>
 
@@ -399,8 +441,8 @@ hard-coded path, so the `/bin/sh` versus `/bin/bash` guesswork above usually doe
 ### Connect to a database with kubectl
 
 These recipes do the same work as [`ops connect --dep` and `ops proxy --dep`](#connect-to-your-databases-or-cache) by
-hand. Reach for them when you need something `--dep` does not cover yet - a MySQL shell, or a dependency that exports
-discrete fields rather than `$dsn`.
+hand. Reach for them when you need something `--dep` does not cover yet - a database that exports discrete fields rather
+than `$dsn`, or a client `--dep` does not run, like `mysqlsh`.
 
 **Use `DATABASE_URL` instead of typing out `<USERNAME>`, `<PASSWORD>` and `<HOST>` yourself.** Hand-assembling the
 URL means looking up four separate values, escaping any special characters in the password correctly, and leaving
