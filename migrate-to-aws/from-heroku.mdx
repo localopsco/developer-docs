@@ -288,14 +288,15 @@ custom dashboards to visualize application-specific metrics and logs.
 
 ## Heroku CLI equivalents
 
-The [LocalOps CLI](/cli/install-macos) covers the two commands you probably ran most often:
+The [LocalOps CLI](/cli/install-macos) covers the commands you probably ran most often:
 
-| Heroku CLI           | LocalOps CLI                                        |
-| -------------------- | --------------------------------------------------- |
-| `heroku logs --tail` | [`ops logs`](/cli/usage#stream-logs-from-a-service) |
-| `heroku run bash`    | [`ops connect`](/cli/usage#shell-into-a-service)    |
-| `heroku config`      | `ops connect --env <env> --svc <svc> -- printenv`   |
-| `heroku pg:psql`     | [`ops connect --dep`](/cli/usage#open-a-psql-shell) |
+| Heroku CLI           | LocalOps CLI                                            |
+| -------------------- | ------------------------------------------------------- |
+| `heroku logs --tail` | [`ops logs`](/cli/usage#stream-logs-from-a-service)     |
+| `heroku run bash`    | [`ops connect`](/cli/usage#shell-into-a-service)        |
+| `heroku config`      | `ops connect --env <env> --svc <svc> -- printenv`       |
+| `heroku pg:psql`     | [`ops connect --dep`](/cli/usage#open-a-database-shell) |
+| `heroku redis:cli`   | [`ops connect --dep`](/cli/usage#open-a-database-shell) |
 
 ```sh
 ops logs --env production --svc web

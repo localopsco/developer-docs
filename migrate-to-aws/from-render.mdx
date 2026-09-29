@@ -137,6 +137,7 @@ Add an `ops.json` file to the root of your repository:
           "instance_type": "db.t4g.small",
           "publicly_accessible": false,
           "exports": {
+            "DATABASE_URL": "$dsn",
             "DATABASE_HOST": "$address",
             "DATABASE_NAME": "$dbName",
             "DATABASE_USER": "$username",
@@ -236,21 +237,19 @@ Export your environment variables from Render and add them to LocalOps:
 
 ## Step 4: Update your application
 
-If your application uses `DATABASE_URL` (Render's default), update it to use individual environment variables:
+If you created RDS with `ops.json`, your application keeps reading `DATABASE_URL` - Render's default - with no code
+change. The `$dsn` export fills it in with a complete connection URL: host, database, username and password, already
+escaped.
+
+If you created the database manually (Option B), build the URL from the secrets you added in step 2.4 instead:
 
 ```javascript
-// Before (Render)
-const connectionString = process.env.DATABASE_URL;
-
-// After (LocalOps)
-const connectionString = `postgresql://${process.env.DATABASE_USER}:${password}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}`;
+const connectionString = `postgresql://${process.env.DATABASE_USER}:${encodeURIComponent(process.env.DATABASE_PASSWORD)}@${process.env.DATABASE_HOST}/${process.env.DATABASE_NAME}`;
 ```
 
-<Tip>
-  If you used `ops.json` to create RDS, the password is stored in AWS Secrets
-  Manager. Use the AWS SDK to retrieve it using the `DATABASE_PASSWORD_ARN`
-  environment variable.
-</Tip>
+<Warning>
+  `DATABASE_URL` embeds the database password. Treat the value as a secret - don't log it or paste it anywhere.
+</Warning>
 
 ## Step 5: Deploy and verify
 
@@ -264,7 +263,7 @@ service's logs, and opening a SQL shell on the migrated database to confirm the 
 
 ```sh
 ops logs --env production --svc web
-ops connect --env production --svc web --dep
+ops connect --env production --svc web --dep main-db
 ```
 
 See [Custom domain setup](/environment/services/custom-domain) for DNS configuration.
