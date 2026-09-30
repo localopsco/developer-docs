@@ -4,6 +4,40 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="September 30, 2026">
+
+## Full size editors for ops.json and Helm values
+
+The `ops.json` and Helm values boxes on the service form showed a handful of lines at a time. Fine for a short config,
+cramped for anything real.
+
+Both now carry an **Edit** button that opens a full size editor beside the form:
+
+- **Line numbers** in the gutter, so a line an error message points at is easy to land on.
+- **Syntax highlighting** for JSON and YAML.
+- **Indentation markers** - a vertical guide down each nesting level, so you can tell at a glance which block a key sits
+  under.
+- **Room to work** - the editor runs the full height of the window instead of the few lines the inline box showed.
+
+Edit freely, save, and the form picks up your changes.
+
+![Full size editor for ops.json](./images/2026/OpsFullSizeEditor.png)
+
+[`ops.json`](/environment/services/ops-json) is one file, committed next to your code, that declares everything LocalOps
+sets up around a service on each deploy - init jobs, health checks, cloud resources, volumes, crons, autoscaling and
+ingress. Push a change and the environment reshapes itself to match.
+
+Which is why it grows, and why scrolling it a handful of lines at a time stops being workable.
+
+Helm values have grown for a second reason. Since
+[secrets became available for Helm chart services](/changelogs/2026#august-12-2026) in August, a `values.yaml` carries
+`existingSecret` and `secretKeys` references on top of everything the chart already ships. The full size editor gives
+you enough of the file on screen to find what you are editing.
+
+![Full size editor for Helm values](./images/2026/HelmFullSizeEditor.png)
+
+</Update>
+
 <Update label="September 29, 2026">
 
 ## MySQL, Redis and Valkey in the CLI, and generate FedRAMP compliant Helm charts
@@ -87,9 +121,8 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## Public API - run environments on any cloud, headless
 
-The LocalOps API is public. Everything you have been doing by clicking through the console - creating services,
-shipping them, rotating secrets, attaching domains - you can now do from code, with an account API token and nothing
-else.
+The LocalOps API is public. Everything you have been doing by clicking through the console - creating services, shipping
+them, rotating secrets, attaching domains - you can now do from code, with an account API token and nothing else.
 
 It is a small, deliberately separate surface from the console - every endpoint is listed in the
 [API reference](/api-reference). Owners and admins can read the token from the LocalOps console, and every request
@@ -123,8 +156,8 @@ Read and replace secrets at the environment level or per service. Register a cus
 exact DNS records to create, then verifies them and cuts traffic over.
 
 <Warning>
-  Writing secrets is a full replace, not a merge. Read the whole set, change what you need and write the whole set
-  back - anything you leave out is deleted.
+  Writing secrets is a full replace, not a merge. Read the whole set, change what you need and write the whole set back
+  - anything you leave out is deleted.
 </Warning>
 
 ### Wire your own infrastructure to an environment
@@ -143,15 +176,15 @@ account - onboarding has meant repeating the same console steps for every custom
 each service, wire the secrets, attach the domain, deploy. For a dev tool company signing enterprise customers, that
 loop grows linearly with the customer list, and it is the part that does not scale.
 
-Here is the whole thing, end to end, as API calls. Once the customer has connected their cloud account, this is a
-script you run once per customer:
+Here is the whole thing, end to end, as API calls. Once the customer has connected their cloud account, this is a script
+you run once per customer:
 
 1. **Provision an environment in their cloud.** `POST /v1/environments` with the customer's cloud connection and the
    region they want - `aws-us-east-1`, `gcp-us-central1`, and so on. Poll `GET /v1/environments/{envId}` until `state`
-   is `available`. *(This one endpoint is still coming soon - see below. Everything after it is live today.)*
-2. **Add your services.** `POST /v1/environments/{envId}/services` once per service - API, workers, cron jobs,
-   frontend. Each one can come from a GitHub or GitLab repo, a Docker image or a Helm chart, with its own CPU, memory
-   and replica counts. Adding a new service to a customer later is the same call.
+   is `available`. _(This one endpoint is still coming soon - see below. Everything after it is live today.)_
+2. **Add your services.** `POST /v1/environments/{envId}/services` once per service - API, workers, cron jobs, frontend.
+   Each one can come from a GitHub or GitLab repo, a Docker image or a Helm chart, with its own CPU, memory and replica
+   counts. Adding a new service to a customer later is the same call.
 3. **Set their secrets.** `PUT /v1/environments/{envId}/secrets` for values every service shares, and
    `PUT /v1/environments/{envId}/services/{serviceId}/secrets` for the ones scoped to a single service. This is where
    per-customer configuration lives - their database URLs, their API keys, their license terms.
@@ -160,8 +193,8 @@ script you run once per customer:
 5. **Attach their domain.** `POST …/custom-domains` returns the exact DNS records for the customer to create, and
    `POST …/custom-domains/{customDomainId}/verify` checks them and cuts traffic over once they resolve.
 6. **Hand over the network details.** `GET /v1/environments/{envId}` gives you the `ingress_host` to point DNS at, the
-   egress IP addresses to allowlist and the IAM role to name in their resource policies - the three things their
-   network and security teams ask for during review.
+   egress IP addresses to allowlist and the IAM role to name in their resource policies - the three things their network
+   and security teams ask for during review.
 
 From then on, shipping a release to every customer you have is the same program with a different environment id:
 
@@ -179,10 +212,9 @@ staged rollout across your install base, written in whatever your team already u
 
 ### What is next
 
-Per-operation status and logs, so a failure tells you why. Creating and deleting environments. Deleting a custom
-domain. Cancelling an in-flight deployment. All of them are already published in the
-[API reference](/api-reference) with a **`COMING SOON`** badge, so you can design against them today - they return
-`404` until they ship.
+Per-operation status and logs, so a failure tells you why. Creating and deleting environments. Deleting a custom domain.
+Cancelling an in-flight deployment. All of them are already published in the [API reference](/api-reference) with a
+**`COMING SOON`** badge, so you can design against them today - they return `404` until they ship.
 
 ### Next up: MCPs
 
@@ -207,8 +239,8 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## New options in ops.json: bigger uploads, fewer surprise errors
 
-We have raised the platform limits that teams most often hit when they onboard, so a normal app should now run
-without touching any of this. Four new `ops.json` options let you set your own limits when your service needs more.
+We have raised the platform limits that teams most often hit when they onboard, so a normal app should now run without
+touching any of this. Four new `ops.json` options let you set your own limits when your service needs more.
 
 ### `request_body_size`: bigger uploads work out of the box
 
@@ -229,9 +261,9 @@ Anything up to 1 GB is allowed. [Read the docs](/environment/services/ops-json#r
 
 ### `proxy_buffer_size` and `proxy_buffers`: fix `502`s caused by large response headers
 
-Apps that hand back long headers - SSO redirects, big session cookies, fat JWTs - could fail with a
-`502 Bad Gateway`, because the ingress reserved only a small buffer for a response's headers. That buffer is now
-bigger by default, and you can size it yourself when your app needs more:
+Apps that hand back long headers - SSO redirects, big session cookies, fat JWTs - could fail with a `502 Bad Gateway`,
+because the ingress reserved only a small buffer for a response's headers. That buffer is now bigger by default, and you
+can size it yourself when your app needs more:
 
 ```json ops.json
 {
@@ -240,8 +272,8 @@ bigger by default, and you can size it yourself when your app needs more:
 }
 ```
 
-`proxy_buffer_size` is the size of each buffer in KB and is the one that fixes the `502`. `proxy_buffers` is how many
-of them the ingress uses while streaming a response, and is usually fine left alone.
+`proxy_buffer_size` is the size of each buffer in KB and is the one that fixes the `502`. `proxy_buffers` is how many of
+them the ingress uses while streaming a response, and is usually fine left alone.
 [Read the docs](/environment/services/ops-json#response-buffers).
 
 ### `send_timeout`, `read_timeout` and `connection_timeout`: slow requests get more room
@@ -255,8 +287,8 @@ You can still set `send_timeout`, `read_timeout` and `connection_timeout` per se
 
 ### `deploy_timeout`: give slow-starting services longer to deploy
 
-A deployment waits 5 minutes for your new version to become ready, then fails. That is too short for services with
-large images or heavy startup work, so you can now extend it:
+A deployment waits 5 minutes for your new version to become ready, then fails. That is too short for services with large
+images or heavy startup work, so you can now extend it:
 
 ```json ops.json
 {
@@ -276,17 +308,21 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## CLI v3.1.0 - Connect with pg shell or set up port forwarding
 
-We added two new commands that let you connect to the RDS Postgres shell directly from your dev laptop. All without signing into bastion servers or any other step.
+We added two new commands that let you connect to the RDS Postgres shell directly from your dev laptop. All without
+signing into bastion servers or any other step.
 
 ```sh
 ops connect --env prod --svc web --dep appdb
 ```
+
 Above command opens a postgres shell so you can start querying the database.
 
 ```sh
 ops proxy --env prod --svc web --dep appdb
 ```
-This command sets up port-forwarding so you can use GUI tools to connect to the same postgres database with host set to localhost and port set to 5432.
+
+This command sets up port-forwarding so you can use GUI tools to connect to the same postgres database with host set to
+localhost and port set to 5432.
 
 All of this will soon work for redis, mysql and sql server too! Stay tuned!
 
@@ -317,7 +353,6 @@ the rest of the commands.
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
 </Update>
-
 
 <Update label="September 7, 2026">
 
@@ -377,9 +412,9 @@ resolve:
 }
 ```
 
-LocalOps creates that record and keeps it pointed at the environment's pods as they scale, restart and get
-rescheduled. Add one libcluster topology per region — the local nodes via `LOPS_BEAM_CLUSTER_DNS`, each peer region by
-its `beam_dns_name` — and the mesh forms. The regional VPCs still need routable connectivity between them.
+LocalOps creates that record and keeps it pointed at the environment's pods as they scale, restart and get rescheduled.
+Add one libcluster topology per region — the local nodes via `LOPS_BEAM_CLUSTER_DNS`, each peer region by its
+`beam_dns_name` — and the mesh forms. The regional VPCs still need routable connectivity between them.
 [Read the docs](/environment/services/beam-clustering#cluster-across-regions).
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
@@ -392,11 +427,14 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ![Build context](./images/2026/buildcontext.png)
 
-In favor of simplicity, teams host all their code within a single git repository. And organize subsystems within multiple sub-directories like client/, server/, ui/ etc., each having their own Dockerifle.
+In favor of simplicity, teams host all their code within a single git repository. And organize subsystems within
+multiple sub-directories like client/, server/, ui/ etc., each having their own Dockerifle.
 
-So far, you can give a custom Dockerfile path while creating services - like client/Dockerfile, server/Dockerfile and so on. 
+So far, you can give a custom Dockerfile path while creating services - like client/Dockerfile, server/Dockerfile and so
+on.
 
-From today, you can also set a custom build context path to inform our plaform where to trigger `docker build` from. Either from the root of the git repo (default option), or from any other path.
+From today, you can also set a custom build context path to inform our plaform where to trigger `docker build` from.
+Either from the root of the git repo (default option), or from any other path.
 
 ```
 docker build -f <DockerfilePath> -t ImageName:ImageTag <BuildContextPath>
@@ -404,12 +442,14 @@ docker build -f <DockerfilePath> -t ImageName:ImageTag <BuildContextPath>
 
 ## EKS control plane logs visible within Grafana
 
-EKS clusters managed via LocalOps platform will now start to log all its control plane logs to CloudWatch which are in turn visible in the in-built grafana dashboard.
+EKS clusters managed via LocalOps platform will now start to log all its control plane logs to CloudWatch which are in
+turn visible in the in-built grafana dashboard.
 
 So your advanced users get to understand how the underlying cluster works, whenever needed.
 
 ### Other enhancements:
-1. Increased project description length to let teams describe their projects in full 
+
+1. Increased project description length to let teams describe their projects in full
 2. Several security enhancements to zero out CVEs the 3rd party docker images
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
@@ -437,8 +477,8 @@ mounted at a well known path. Declare all three as volumes in `ops.json` and Loc
 restarts and gets one disk per replica. `secret` mounts a Kubernetes secret read-only, each key becoming a file. Disk
 volumes aren't available on cron and job services, and support covers AWS and GCP.
 
-The same declaration drives the Helm chart you generate for customers. Volumes marked `expose: true` land in the
-chart's `values.yaml` under `persistence`, so whoever installs it can size the disk or point at their own secret:
+The same declaration drives the Helm chart you generate for customers. Volumes marked `expose: true` land in the chart's
+`values.yaml` under `persistence`, so whoever installs it can size the disk or point at their own secret:
 
 ```yaml
 api:
@@ -473,8 +513,8 @@ Firecracker microVMs, Android emulators, CI runners that build and boot disk ima
 couldn't run on LocalOps before, because the underlying nodes didn't permit a guest hypervisor.
 
 Now you can enable nested virtualization on a GCP node group from the Node groups section, picking an Intel-based
-machine type, then assign the services that need VMs to it. KVM is available inside the container, so anything
-shelling out to QEMU/KVM behaves as it would on a bare VM.
+machine type, then assign the services that need VMs to it. KVM is available inside the container, so anything shelling
+out to QEMU/KVM behaves as it would on a bare VM.
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
@@ -486,9 +526,8 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ![Service IP whitelist](./images/2026/service-ip-whitelist.png)
 
-Some of your services shouldn't be open to the whole internet. An internal admin panel, a partner-facing API, a
-staging web app — you want these reachable only from your office network, your VPN, or a specific customer's egress
-IPs.
+Some of your services shouldn't be open to the whole internet. An internal admin panel, a partner-facing API, a staging
+web app — you want these reachable only from your office network, your VPN, or a specific customer's egress IPs.
 
 There's now a **Security** tab in the service dashboard where you can do exactly that.
 
@@ -518,40 +557,40 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## Passing secrets securely for Helm Charts
 
-Secrets section is now available for Helm Chart services too! 
+Secrets section is now available for Helm Chart services too!
 
 ![Chart secrets](./images/2026/helm-secrets.png)
 
-So teams can now create secrets for Helm charts in the secrets editor. This will encrypt and save secrets in AWS parameter store (in the case of AWS) and save them as secret in Kubernetes cluster.
+So teams can now create secrets for Helm charts in the secrets editor. This will encrypt and save secrets in AWS
+parameter store (in the case of AWS) and save them as secret in Kubernetes cluster.
 
-And in values.yaml passed as setting in Helm chart service, the k8s secret can be referenced. Like this, for example with postgers chart: 
+And in values.yaml passed as setting in Helm chart service, the k8s secret can be referenced. Like this, for example
+with postgers chart:
 
-  ```yaml
-  auth:
-    existingSecret: "db-adm69f6-secrets"
-    secretKeys:
-      adminPasswordKey: "postgrespassword"
-      userPasswordKey: "password"
-````
+```yaml
+auth:
+  existingSecret: 'db-adm69f6-secrets'
+  secretKeys:
+    adminPasswordKey: 'postgrespassword'
+    userPasswordKey: 'password'
+```
 
-  You can find the `existingSecret` name in secrets section.
+You can find the `existingSecret` name in secrets section.
 
+...instead of passing them in plaintext like this:
 
-...instead of passing them in plaintext like this: 
+```yaml
+auth:
+  postgresPassword: 'mysecretpass'
+  username: 'myuser'
+  password: 'myuserpass'
+  database: 'mydb'
+```
 
-  ```yaml
-  auth:
-    postgresPassword: "mysecretpass"
-    username: "myuser"
-    password: "myuserpass"
-    database: "mydb"
-  ````
+### Custom domain for chart services
 
-
-
-### Custom domain for chart services 
-
-Say your helm chart exposes services to the public world. For eg - you're self-hosting Supabase which has a dashboard that must be exposed to the world. 
+Say your helm chart exposes services to the public world. For eg - you're self-hosting Supabase which has a dashboard
+that must be exposed to the world.
 
 New "Custom domain" section in the service dashboad will now provide instructions on how to expose this service.
 
@@ -565,17 +604,19 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 Managing more than a handful of services in your environment?
 
-Checkout the new search bar in services section that lets you search for services by their name or branch name or anything you remember about them.
+Checkout the new search bar in services section that lets you search for services by their name or branch name or
+anything you remember about them.
 
 ![Search services](./images/2026/services-search.png)
 
-### New demo section 
+### New demo section
 
-When users sign up for first time, they are greeted a new brand new demo section that takes them live through the core product UX in just 2 mins.
+When users sign up for first time, they are greeted a new brand new demo section that takes them live through the core
+product UX in just 2 mins.
 
-- create environment 
-- deploy services 
-- repeat! 
+- create environment
+- deploy services
+- repeat!
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
@@ -587,7 +628,7 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 We sent a bunch of fixes this time, as reported by our users:
 
-- Fixed an issue where console refreshes adhoc when picking a repo in service form 
+- Fixed an issue where console refreshes adhoc when picking a repo in service form
 - Hide the replica count when service is stopped and avoid showing "0/0" as count
 - Post service creation, showed an appropriate message to ask user to deploy with correct branch name
 - Allowed user to picker large cpu and memory rquirements for their service(s) under Scaling tab
@@ -603,10 +644,16 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 A few fixes to make cloning an environment more reliable:
 
-- **Clone environments across projects.** You can now clone an environment into a different project, not just within the same project — handy for promoting a setup from one project to another.
-- **More reliable global secrets page.** The global secrets page in a cloned environment now loads consistently on the first try instead of occasionally appearing empty, and the page stays safely locked until your secrets have fully loaded.
-- **Service references in `ops.json` are now rewritten correctly.** When you clone an environment, service alias references (e.g. `$svc-123`) in `ops.json` are updated to point at the corresponding services in the new environment — matching how secrets are already remapped.
-- **Helm charts are no longer skipped.** Helm-based services are now reliably included when cloning an environment, instead of occasionally being left out.
+- **Clone environments across projects.** You can now clone an environment into a different project, not just within the
+  same project — handy for promoting a setup from one project to another.
+- **More reliable global secrets page.** The global secrets page in a cloned environment now loads consistently on the
+  first try instead of occasionally appearing empty, and the page stays safely locked until your secrets have fully
+  loaded.
+- **Service references in `ops.json` are now rewritten correctly.** When you clone an environment, service alias
+  references (e.g. `$svc-123`) in `ops.json` are updated to point at the corresponding services in the new environment —
+  matching how secrets are already remapped.
+- **Helm charts are no longer skipped.** Helm-based services are now reliably included when cloning an environment,
+  instead of occasionally being left out.
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
@@ -616,20 +663,28 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## Lots of little fixes (and some tighter access control)
 
-Team and account management endpoints now enforce **owner/admin roles**. Inviting or removing members, cancelling invitations, changing member roles, listing members and invitations, managing API tokens, registry and license-token access, and account domain changes are all now restricted to owners and admins. Members without the right role receive a clear permission error instead of the action going through.
+Team and account management endpoints now enforce **owner/admin roles**. Inviting or removing members, cancelling
+invitations, changing member roles, listing members and invitations, managing API tokens, registry and license-token
+access, and account domain changes are all now restricted to owners and admins. Members without the right role receive a
+clear permission error instead of the action going through.
 
 ## Clearer error messages
 
-- Domain verification failures now return a specific `DOMAIN_VERIFICATION_FAILED` error instead of a generic 4xx, so you can tell exactly what went wrong.
-- Verbose internal authentication validation errors are no longer surfaced in API responses, keeping error output clean and actionable.
+- Domain verification failures now return a specific `DOMAIN_VERIFICATION_FAILED` error instead of a generic 4xx, so you
+  can tell exactly what went wrong.
+- Verbose internal authentication validation errors are no longer surfaced in API responses, keeping error output clean
+  and actionable.
 
 ## Fixes
 
 - Environment creation could sometimes fail in fresh Google Cloud projects — this has been fixed.
-- Private instance lookups and updates are more robust — consistent handling of not-found instances and a fix for an edge case when updating an instance with no changed fields.
-- Fixed the LocalOps CLI rendering CLI flags: the Geist Mono ligature no longer swallows the space before double-dash (`--`) flags.
+- Private instance lookups and updates are more robust — consistent handling of not-found instances and a fix for an
+  edge case when updating an instance with no changed fields.
+- Fixed the LocalOps CLI rendering CLI flags: the Geist Mono ligature no longer swallows the space before double-dash
+  (`--`) flags.
 
-No new buttons to click this week — just a bunch of things that quietly stopped misbehaving. Your future self, running `deploy` at 2am, thanks us.
+No new buttons to click this week — just a bunch of things that quietly stopped misbehaving. Your future self, running
+`deploy` at 2am, thanks us.
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
@@ -641,15 +696,19 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ![Connect a Google Cloud account in LocalOps](./images/2026/gcp-support-july-3.png)
 
-You can now spin up environments and deploy services on **Google Cloud** — just the way it works on AWS. The underlying cloud specifics are abstracted out, so your teams get the same developer experience regardless of whether they run on Google Cloud or AWS.
+You can now spin up environments and deploy services on **Google Cloud** — just the way it works on AWS. The underlying
+cloud specifics are abstracted out, so your teams get the same developer experience regardless of whether they run on
+Google Cloud or AWS.
 
-To get started, add a new connection, pick **Google Cloud**, and follow the setup flow. See [Connect a Google Cloud account](https://docs.localops.co/accounts/gcp) for the full walkthrough.
+To get started, add a new connection, pick **Google Cloud**, and follow the setup flow. See
+[Connect a Google Cloud account](https://docs.localops.co/accounts/gcp) for the full walkthrough.
 
 If you don't see Google Cloud as an option, write to us at support@localops.co to get access.
 
 ## Update the CLI to v3.0.3
 
-To use Google Cloud support, update the LocalOps CLI to **v3.0.3**. See the [CLI install guide](https://docs.localops.co/cli/usage) for how to update.
+To use Google Cloud support, update the LocalOps CLI to **v3.0.3**. See the
+[CLI install guide](https://docs.localops.co/cli/usage) for how to update.
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
@@ -659,15 +718,20 @@ Questions? Email us at support@localops.co or ping us in your Slack Connect supp
 
 ## GitLab support
 
-You can now connect your GitLab repositories to LocalOps and enable continuous deployments on any cloud — your own cloud or your customer's cloud. Once connected, every push triggers a deployment through the same pipeline you already use, so GitLab-hosted teams get the full BYOC, single-tenant and self-hosted experience without changing where their code lives.
+You can now connect your GitLab repositories to LocalOps and enable continuous deployments on any cloud — your own cloud
+or your customer's cloud. Once connected, every push triggers a deployment through the same pipeline you already use, so
+GitLab-hosted teams get the full BYOC, single-tenant and self-hosted experience without changing where their code lives.
 
 ## Changelog for each Helm chart version
 
-When generating a Helm chart, you can now add a changelog describing what changed in that version. The changelog is optional, supports Markdown, and appears in the chart's release history — so the teams installing your chart can see exactly what each version brings.
+When generating a Helm chart, you can now add a changelog describing what changed in that version. The changelog is
+optional, supports Markdown, and appears in the chart's release history — so the teams installing your chart can see
+exactly what each version brings.
 
 ![Add a changelog when publishing a Helm chart version](./images/2026/helm-chart-changelog-publish-june-30.png)
 
-The changelog shows up against every version under **Available Versions**, with a short summary and the full text expandable inline.
+The changelog shows up against every version under **Available Versions**, with a short summary and the full text
+expandable inline.
 
 ![Helm chart versions with their changelogs](./images/2026/helm-chart-changelog-versions-june-30.png)
 
@@ -681,13 +745,14 @@ Questions about either feature? Email us at support@localops.co or ping us in yo
 
 New doc explaining which header to trust for the real client IP based on how your service is fronted. The short version:
 
-| Setup                                           | Read this header                                                      |
-| ----------------------------------------------- | --------------------------------------------------------------------- |
-| No CDN, HTTP                                    | `X-Real-IP` (or `X-Forwarded-For`)                                    |
-| No CDN, HTTPS (via SSL-passthrough multiplexer) | `X-Real-IP` (or `X-Forwarded-For`)                                    |
+| Setup                                           | Read this header                                                                          |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| No CDN, HTTP                                    | `X-Real-IP` (or `X-Forwarded-For`)                                                        |
+| No CDN, HTTPS (via SSL-passthrough multiplexer) | `X-Real-IP` (or `X-Forwarded-For`)                                                        |
 | Behind CDN                                      | `X-Forwarded-For[0]` — or the CDN's own header like `CF-Connecting-IP` / `True-Client-IP` |
 
-See [Client IP](https://docs.localops.co/environment/services/client-ip) for the full guidance, spoofing notes, and Node / Python / Go / Elixir examples.
+See [Client IP](https://docs.localops.co/environment/services/client-ip) for the full guidance, spoofing notes, and Node
+/ Python / Go / Elixir examples.
 
 </Update>
 
@@ -695,7 +760,9 @@ See [Client IP](https://docs.localops.co/environment/services/client-ip) for the
 
 ## New warning when marking a Helm chart field as non-sensitive
 
-When editing a Helm chart's values in the console, switching a previously sensitive field to non-sensitive now prompts a confirmation dialog listing every affected key. This guards against accidentally exposing credentials or other confidential data — once a value is marked non-sensitive, it is stored and rendered in plain text.
+When editing a Helm chart's values in the console, switching a previously sensitive field to non-sensitive now prompts a
+confirmation dialog listing every affected key. This guards against accidentally exposing credentials or other
+confidential data — once a value is marked non-sensitive, it is stored and rendered in plain text.
 
 ![Mark a secret as non-sensitive confirmation dialog](./images/2026/non-sensitive-secret-warning-june-12.png)
 
@@ -705,7 +772,10 @@ When editing a Helm chart's values in the console, switching a previously sensit
 
 ## `DEPLOYMENT_ID` and `LOPS_INSTANCE_ID` built-in secrets
 
-Every service now receives `DEPLOYMENT_ID` and `LOPS_INSTANCE_ID` as built-in environment variables. Both carry the same 24-character alphanumeric value (as unique as a UUIDv4) — unique per LocalOps-managed environment, and unique per Helm install of charts generated by LocalOps. Use either to tag logs, metrics or external resources with the originating environment.
+Every service now receives `DEPLOYMENT_ID` and `LOPS_INSTANCE_ID` as built-in environment variables. Both carry the same
+24-character alphanumeric value (as unique as a UUIDv4) — unique per LocalOps-managed environment, and unique per Helm
+install of charts generated by LocalOps. Use either to tag logs, metrics or external resources with the originating
+environment.
 
 See [Built-in secrets](https://docs.localops.co/environment/services/secrets#built-in-secrets) for the full list.
 
@@ -715,7 +785,10 @@ See [Built-in secrets](https://docs.localops.co/environment/services/secrets#bui
 
 ## Import environment
 
-You can now create a new environment from one or more existing environments in just a few clicks via **Import environment**. In a brand new environment, click the 3-dots on the top right and choose "Import from environment". Pick a source environment and import — all services, secrets and cloud resources (RDS, ElastiCache, S3, etc.) are copied over, with inter-dependencies preserved, so you can start deploying as soon as the import finishes.
+You can now create a new environment from one or more existing environments in just a few clicks via **Import
+environment**. In a brand new environment, click the 3-dots on the top right and choose "Import from environment". Pick
+a source environment and import — all services, secrets and cloud resources (RDS, ElastiCache, S3, etc.) are copied
+over, with inter-dependencies preserved, so you can start deploying as soon as the import finishes.
 
 ![Import from environment menu](./images/2026/import-env-dropdown-june-5.png)
 
@@ -725,7 +798,11 @@ You can now create a new environment from one or more existing environments in j
 
 ## `managed_password` toggle for RDS
 
-RDS instances in `ops.json` now accept a `managed_password` boolean. The default is `true`, where AWS RDS generates the master password, stores it in its own AWS Secrets Manager entry, and rotates it automatically. Setting it to `false` makes LocalOps generate a cryptographically unique string and use it as the RDS master password instead — the password is then not rotated, so this mode is not recommended. Regardless of which mode you pick, use `$password` and `$dsn` in `exports` to fetch the current password and connection string; LocalOps resolves them transparently in both cases.
+RDS instances in `ops.json` now accept a `managed_password` boolean. The default is `true`, where AWS RDS generates the
+master password, stores it in its own AWS Secrets Manager entry, and rotates it automatically. Setting it to `false`
+makes LocalOps generate a cryptographically unique string and use it as the RDS master password instead — the password
+is then not rotated, so this mode is not recommended. Regardless of which mode you pick, use `$password` and `$dsn` in
+`exports` to fetch the current password and connection string; LocalOps resolves them transparently in both cases.
 
 ```json
 {
@@ -756,7 +833,11 @@ See [RDS](https://docs.localops.co/environment/services/aws/rds) for details.
 
 ## OpenSearch as a dependency
 
-You can now declare Amazon OpenSearch domains under `dependencies.opensearch.domains` in `ops.json`. LocalOps provisions production-tuned domains by default — 3-node multi-AZ quorum, encryption at rest, node-to-node encryption, HTTPS-only with TLS 1.2, fine-grained access control with an auto-generated master user in AWS Secrets Manager, and audit logging to CloudWatch. Preview environments are automatically scaled down to a single node. See [OpenSearch](https://docs.localops.co/environment/services/aws/opensearch) for the full reference.
+You can now declare Amazon OpenSearch domains under `dependencies.opensearch.domains` in `ops.json`. LocalOps provisions
+production-tuned domains by default — 3-node multi-AZ quorum, encryption at rest, node-to-node encryption, HTTPS-only
+with TLS 1.2, fine-grained access control with an auto-generated master user in AWS Secrets Manager, and audit logging
+to CloudWatch. Preview environments are automatically scaled down to a single node. See
+[OpenSearch](https://docs.localops.co/environment/services/aws/opensearch) for the full reference.
 
 ```json
 {
@@ -781,9 +862,12 @@ You can now declare Amazon OpenSearch domains under `dependencies.opensearch.dom
 
 ## `parameters` for RDS and ElastiCache
 
-Both RDS instances and ElastiCache clusters now accept a `parameters` list in `ops.json` to configure DB / cache parameter group settings inline. LocalOps creates a dedicated parameter group for the resource and keeps it in sync as you add, update or remove entries on subsequent deployments.
+Both RDS instances and ElastiCache clusters now accept a `parameters` list in `ops.json` to configure DB / cache
+parameter group settings inline. LocalOps creates a dedicated parameter group for the resource and keeps it in sync as
+you add, update or remove entries on subsequent deployments.
 
-For RDS, each entry takes a `name`, `value` and an `apply_method` of `immediate` or `pending-reboot` (use the latter for parameters like `shared_preload_libraries` that need a restart):
+For RDS, each entry takes a `name`, `value` and an `apply_method` of `immediate` or `pending-reboot` (use the latter for
+parameters like `shared_preload_libraries` that need a restart):
 
 ```json
 {
@@ -810,11 +894,16 @@ For ElastiCache, each entry is just a `name` and `value`:
 }
 ```
 
-See [RDS](https://docs.localops.co/environment/services/aws/rds) and [ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
+See [RDS](https://docs.localops.co/environment/services/aws/rds) and
+[ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
 
 ## Plaintext `$password` and `$dsn` exports for RDS
 
-RDS exports now include `$password` and `$dsn` alongside the existing `$passwordArn`. `$password` resolves the master user password from AWS Secrets Manager and injects it directly as an environment variable, so your code does not need to call the Secrets Manager API. `$dsn` is a ready-to-use connection string in the form `postgres://$username:$password@$address:5432/$dbName` (or the MySQL equivalent) for libraries that accept a single URL. Treat both values as secrets.
+RDS exports now include `$password` and `$dsn` alongside the existing `$passwordArn`. `$password` resolves the master
+user password from AWS Secrets Manager and injects it directly as an environment variable, so your code does not need to
+call the Secrets Manager API. `$dsn` is a ready-to-use connection string in the form
+`postgres://$username:$password@$address:5432/$dbName` (or the MySQL equivalent) for libraries that accept a single URL.
+Treat both values as secrets.
 
 ```json
 {
@@ -827,13 +916,20 @@ RDS exports now include `$password` and `$dsn` alongside the existing `$password
 
 ## Import managed secrets from other services
 
-Secrets exported via `ops.json` now appear in each service's console secrets section as **managed secrets**. You can pull those exports into any other service in the same environment as a single secret — every key the source service exported is injected as environment variables in the importing service.
+Secrets exported via `ops.json` now appear in each service's console secrets section as **managed secrets**. You can
+pull those exports into any other service in the same environment as a single secret — every key the source service
+exported is injected as environment variables in the importing service.
 
-This is useful for wiring databases, caches and other declared cloud resources into the services that consume them. For example, a boot script job can declare an RDS instance in `ops.json` and export its DSN, username and password; any other service in the same environment can then import them all in one line. See [Importing other service secrets](https://docs.localops.co/environment/services/secrets#importing-other-service-secrets) for the syntax.
+This is useful for wiring databases, caches and other declared cloud resources into the services that consume them. For
+example, a boot script job can declare an RDS instance in `ops.json` and export its DSN, username and password; any
+other service in the same environment can then import them all in one line. See
+[Importing other service secrets](https://docs.localops.co/environment/services/secrets#importing-other-service-secrets)
+for the syntax.
 
 ## Search in the service switcher
 
-The service switcher now has a search bar at the top, so you can jump to a service by typing instead of scrolling. Handy in environments with a long list of services.
+The service switcher now has a search bar at the top, so you can jump to a service by typing instead of scrolling. Handy
+in environments with a long list of services.
 
 </Update>
 
@@ -841,7 +937,9 @@ The service switcher now has a search bar at the top, so you can jump to a servi
 
 ## Deletion protection for critical services
 
-You can now turn on **deletion protection** for a service from its settings. Once enabled, the service cannot be deleted until protection is explicitly turned off — a safety net for production and other critical services where an accidental delete could cause downtime.
+You can now turn on **deletion protection** for a service from its settings. Once enabled, the service cannot be deleted
+until protection is explicitly turned off — a safety net for production and other critical services where an accidental
+delete could cause downtime.
 
 </Update>
 
@@ -849,15 +947,20 @@ You can now turn on **deletion protection** for a service from its settings. Onc
 
 ## ✋ Improvements and bug fixes
 
-We have shipped a handful of bug fixes and small enhancements today to make day-to-day operations smoother. These are the kind of polish that adds up over time. Read on for the highlights.
+We have shipped a handful of bug fixes and small enhancements today to make day-to-day operations smoother. These are
+the kind of polish that adds up over time. Read on for the highlights.
 
 #### <Icon icon="square" iconType="solid" color="#dc2626" /> Stop and start services on demand
 
-Each service dashboard now has a **Stop** button in the top right corner. Use it to scale down a service's replica/container count to `0` on demand, without deleting the service or its configuration. Click start button to bring it back up.
+Each service dashboard now has a **Stop** button in the top right corner. Use it to scale down a service's
+replica/container count to `0` on demand, without deleting the service or its configuration. Click start button to bring
+it back up.
 
 #### Consistent image tag on redeploys
 
-After updating secrets or scaling settings, users can trigger a new deployment. For docker image based services, this deployment was previously pulling the image with the `latest` tag. It now uses the exact image tag from the previous deployment, so redeploys stay consistent with what was last running.
+After updating secrets or scaling settings, users can trigger a new deployment. For docker image based services, this
+deployment was previously pulling the image with the `latest` tag. It now uses the exact image tag from the previous
+deployment, so redeploys stay consistent with what was last running.
 
 </Update>
 
@@ -865,7 +968,10 @@ After updating secrets or scaling settings, users can trigger a new deployment. 
 
 ## Valkey support for ElastiCache
 
-ElastiCache clusters declared in `ops.json` can now use `valkey` as the engine, alongside `redis` and `memcache`. Pick a supported version from the [AWS Valkey versions list](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/supported-engine-versions-valkey.html). See [ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
+ElastiCache clusters declared in `ops.json` can now use `valkey` as the engine, alongside `redis` and `memcache`. Pick a
+supported version from the
+[AWS Valkey versions list](https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/supported-engine-versions-valkey.html).
+See [ElastiCache](https://docs.localops.co/environment/services/aws/elasti-cache) for details.
 
 ```json
 {
@@ -892,7 +998,11 @@ ElastiCache clusters declared in `ops.json` can now use `valkey` as the engine, 
 
 ## SSL passthrough
 
-Services can now handle TLS termination themselves instead of letting the environment's nginx ingress decrypt traffic. Set `ssl_passthrough` to `true` in `ops.json` and configure your service's port to `443` so the ingress forwards raw TLS connections directly to your container. Useful for mTLS, custom certificate handling, or any protocol requiring end-to-end TLS. See [SSL passthrough](https://docs.localops.co/environment/services/ops-json#ssl-passthrough) for details.
+Services can now handle TLS termination themselves instead of letting the environment's nginx ingress decrypt traffic.
+Set `ssl_passthrough` to `true` in `ops.json` and configure your service's port to `443` so the ingress forwards raw TLS
+connections directly to your container. Useful for mTLS, custom certificate handling, or any protocol requiring
+end-to-end TLS. See [SSL passthrough](https://docs.localops.co/environment/services/ops-json#ssl-passthrough) for
+details.
 
 ```json
 {
@@ -906,7 +1016,9 @@ Services can now handle TLS termination themselves instead of letting the enviro
 
 ## Instrument services with internal /metrics endpoint
 
-You can record custom metrics and expose them to in-built prometheus monitoring stack via `/metrics` endpoint. Just add an ops.json file in your repository and declare "metrics" configuration as documented here - [Instrument services](https://docs.localops.co/environment/services/instrument-service) to get started.
+You can record custom metrics and expose them to in-built prometheus monitoring stack via `/metrics` endpoint. Just add
+an ops.json file in your repository and declare "metrics" configuration as documented here -
+[Instrument services](https://docs.localops.co/environment/services/instrument-service) to get started.
 
 ```
 {
@@ -919,29 +1031,38 @@ You can record custom metrics and expose them to in-built prometheus monitoring 
 ```
 
 This can include:
+
 - language run time metrics - NodeJS event loop metrics, JVM metrics, etc.,
 - connection and request metrics like "tcp_connections_open"
 - business metrics like "number_of_payments"
 - transactional metrics like "number_of_emails_sent"
 
-<Note>Pro tip - Checkout the language specific guides to learn how you can unveil advanced metrics & dashaboards in just few mins of setup (eg: [See this Java guide](https://docs.localops.co/environment/services/instrument/java))</Note>
+<Note>
+  Pro tip - Checkout the language specific guides to learn how you can unveil advanced metrics & dashaboards in just few
+  mins of setup (eg: [See this Java guide](https://docs.localops.co/environment/services/instrument/java))
+</Note>
 
-## Request timeouts 
+## Request timeouts
 
-Set timeouts for TCP connections or requests handled by your services. Default timeout 60s may not be suitable for realtime applications with long running connections. Start declaring custom timeout values in ops.json as specificed in developer docs - [Request timeouts](https://docs.localops.co/environment/services/ops-json#request-timeouts).
+Set timeouts for TCP connections or requests handled by your services. Default timeout 60s may not be suitable for
+realtime applications with long running connections. Start declaring custom timeout values in ops.json as specificed in
+developer docs - [Request timeouts](https://docs.localops.co/environment/services/ops-json#request-timeouts).
 
-### Private IPs passed as environment vars 
+### Private IPs passed as environment vars
 
-`POD_IP` and `HOST_IP` are now injected in each service as environment variables. So if your application requires its own IP address, you can fetch and utilize in your business logic. 
+`POD_IP` and `HOST_IP` are now injected in each service as environment variables. So if your application requires its
+own IP address, you can fetch and utilize in your business logic.
 
-Learn more about [built-in environment vars](https://docs.localops.co/environment/services/secrets#built-in-secrets) like these.
+Learn more about [built-in environment vars](https://docs.localops.co/environment/services/secrets#built-in-secrets)
+like these.
 
 ### Other UI enhancements and fixes
+
 1. Saving secrets triggers a "Write secrets" op to keep track of secret updates
-2. While creating new service, search for repositories using the new search bar in the repository picker 
-3. Bug fixes in Member invite workflow 
+2. While creating new service, search for repositories using the new search bar in the repository picker
+3. Bug fixes in Member invite workflow
 4. Bug fixes in preview environments
-5. Other fixes in slack and ms teams notificaitons 
+5. Other fixes in slack and ms teams notificaitons
 
 </Update>
 
@@ -949,15 +1070,16 @@ Learn more about [built-in environment vars](https://docs.localops.co/environmen
 
 ## Projects revampled
 
-We have revamped Projects. You can now create projects and organize environments in them. 
+We have revamped Projects. You can now create projects and organize environments in them.
 
 ### Members
 
-Projects can have members. Unless an org member is also added as a project member, they can't see the project's environments or deploy to them.
+Projects can have members. Unless an org member is also added as a project member, they can't see the project's
+environments or deploy to them.
 
 ### Revampled navigation bar
 
-Sidebar navigation menu is revamped to make it easy to switcher between organization and projects. 
+Sidebar navigation menu is revamped to make it easy to switcher between organization and projects.
 
 Other bug fixes and UI enhancements were made too.
 
