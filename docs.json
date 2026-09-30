@@ -232,7 +232,8 @@
             "icon": "scale-balanced",
             "pages": [
               "terms",
-              "privacy-policy"
+              "privacy-policy",
+              "sub-processors"
             ]
           }
         ]

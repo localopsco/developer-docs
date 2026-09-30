@@ -1,0 +1,47 @@
+---
+title: Sub-processors
+description: The third-party services LocalOps uses to operate its platform and process customer data.
+---
+
+<Note>**Last updated:** September 30, 2026</Note>
+
+## About this page
+
+A sub-processor is a third party that LocalOps engages to process customer data on our behalf while delivering the
+Platform. This page lists our current sub-processors, what each one is used for, and what data it can access.
+
+This page complements our [Privacy Policy](/privacy-policy) and [Data security](/security) documentation. It covers the
+LocalOps SaaS offering. If you run LocalOps in your own cloud account (BYOC or self-hosted), your application data stays
+in your cloud account and is not processed by the sub-processors below, apart from those needed to operate the LocalOps
+control plane itself.
+
+## Platform sub-processors
+
+These services are part of how the LocalOps platform runs.
+
+| Sub-processor       | Purpose                                          | Data processed                                                | Location               |
+| ------------------- | ------------------------------------------------ | ------------------------------------------------------------- | ---------------------- |
+| Amazon Web Services | Platform hosting, compute, storage and databases | All customer data stored by the LocalOps platform             | US (us-west-2, Oregon) |
+| Cloudflare          | DNS, web application firewall and CAPTCHA        | Request metadata, IP addresses                                | Global edge network    |
+| PostHog             | Product analytics                                | Product usage events, account and user identifiers            | United States          |
+| Sentry              | Crash and error reporting                        | Error traces, request metadata, account and user identifiers  | United States          |
+| GitHub              | Source code hosting for the LocalOps platform    | LocalOps source code; no customer application data            | United States          |
+| Depot               | Remote Docker image builds                       | Customer source code and build artifacts during a build       | United States          |
+| Crisp               | In-app chat support                              | Name, email address and the contents of support conversations | European Union         |
+
+The LocalOps platform does not use any sub-processor other than those listed above.
+
+## Internal business tools
+
+LocalOps uses a number of other tools internally to run product development and customer engagement. These tools have no
+access to customer data and are therefore not sub-processors.
+
+## Changes to this list
+
+We update this page whenever we add or remove a sub-processor. To be notified of changes in advance, write to
+[privacy@localops.co](mailto:privacy@localops.co) and we will add you to our notification list.
+
+## Questions
+
+For questions about this list, a copy of our Data Processing Agreement, or to object to a new sub-processor, contact us
+at [privacy@localops.co](mailto:privacy@localops.co).
