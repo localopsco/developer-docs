@@ -1,17 +1,49 @@
 ---
 title: View your environment's resources
+description: Use LocalOps resource tags to find, inventory and analyze the cost of your environment's AWS resources
 ---
 
 We tag all the resources created by LocalOps with specific keys and values that you can use to locate your resources
 from your AWS console.
 
-To view all the resources that belong to your environment
+These tags are useful for:
 
-1. Find the tag keys and values added by LocalOps on your environment's settings page
+- **Inventory** - list every AWS resource that belongs to an environment, so you always know what LocalOps provisioned
+  in your account.
+- **Cost analysis** - break down your AWS bill by environment and see exactly how much each environment costs to run.
+
+## View all resources in an environment
+
+1. Find the tag keys and values added by LocalOps in your environment's **Overview** tab (**Environment > Overview**)
 2. Open the [AWS Resource Explorer](https://resource-explorer.console.aws.amazon.com/resource-explorer/home#/search)
    from your AWS console
+3. Search using the tag key and tag value to view all the resources associated with your application environment. Be
+   sure to replace them with the ones from your environment's **Overview** tab.
 
-3. Use a query such as tag.key:acmecorp.loc.env-id AND tag.value:627e8bb2-2667-46aa-943b-b93d5924fced to view all the
-   resources associated with your application environment. Be sure to edit the tag key and values as needed.
+   Tag key:
 
-4. You can further organize and manage these resources by creating AWS Resource Groups using these tags.
+   ```text
+   tag.key:acmecorp.loc.env-id
+   ```
+
+   Tag value:
+
+   ```text
+   tag.value:627e8bb2-2667-46aa-943b-b93d5924fced
+   ```
+
+4. You can further organize and manage these resources by creating
+   [AWS Resource Groups](https://console.aws.amazon.com/resource-groups/home) using these tags.
+
+## Analyze costs by environment
+
+1. Open the [Cost allocation tags](https://console.aws.amazon.com/billing/home#/tags) page in the AWS Billing console
+2. Find the LocalOps tag key (for example, `acmecorp.loc.env-id`) under **User-defined cost allocation tags** and
+   activate it
+3. Open [AWS Cost Explorer](https://console.aws.amazon.com/cost-management/home#/cost-explorer) and group or filter
+   costs by that tag key to see the spend for each environment
+
+<Note>
+  AWS can take up to 24 hours for a newly activated cost allocation tag to appear in Cost Explorer, and costs are only
+  tracked from the time the tag is activated.
+</Note>
