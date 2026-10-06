@@ -659,8 +659,8 @@ entry, instead of leaving you with a container that won't start. These are rejec
 
 ## Automatic provisioning of cloud resources
 
-Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL database or Redis database
-for caching, background jobs, etc.,
+Your service may need a S3 bucket to store files, RDS instance to host your Postgres/MySQL/SQL Server database or Redis
+database for caching, background jobs, etc.,
 
 You can declare these dependencies once in `ops.json`. LocalOps will provision these resources and ensure they are
 active & enabled for your service to use.
@@ -824,7 +824,7 @@ AWS. Please get in touch with us at support\@localops.co if you need anything sp
 | Resource | Use it for | Docs |
 | --- | --- | --- |
 | Amazon S3 buckets | Static object storage (files, pictures, etc.,) | [S3](/environment/services/aws/s3) |
-| Amazon RDS instances | Hosting Postgres, MySQL databases | [RDS](/environment/services/aws/rds) |
+| Amazon RDS instances | Hosting Postgres, MySQL, SQL Server databases | [RDS](/environment/services/aws/rds) |
 | Amazon Aurora clusters | Auto-scaling Postgres/MySQL, read endpoint | [Aurora](/environment/services/aws/aurora) |
 | Amazon ElastiCache | Caching, queues, pub/sub | [ElastiCache](/environment/services/aws/elasti-cache) |
 | Amazon SNS topics | Pub/sub capabilities | [SNS](/environment/services/aws/sns) |
