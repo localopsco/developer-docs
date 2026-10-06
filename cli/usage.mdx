@@ -186,6 +186,7 @@ to the database or cache, and clean it up when you exit. They work with:
 | ----------- | ------------- | ------------ | -------------------- |
 | RDS         | Postgres      | `psql`       | `postgres:17-alpine` |
 | RDS         | MySQL         | `mysql`      | `mysql:8.4`          |
+| RDS         | SQL Server    | `usql`       | `usql/usql:0.21.6`   |
 | ElastiCache | Redis, Valkey | `redis-cli`  | `redis:7-alpine`     |
 
 <Note>
@@ -222,7 +223,10 @@ port, username, password and database name already filled in and correctly escap
 }
 ```
 
-A MySQL instance is the same, with `"engine": "mysql"`.
+A MySQL instance is the same, with `"engine": "mysql"`. A
+[SQL Server instance](/environment/services/aws/rds#sql-server) is the same with one of the SQL Server engines -
+`sqlserver-ex`, `sqlserver-web`, `sqlserver-se` or `sqlserver-ee`. RDS creates no database on a SQL Server instance, so
+its `$dsn` has no database name and you land in the server's default database.
 
 **For a Redis cache, export `$endpoint`** - or `$address` together with `$port`. ElastiCache needs no password, so the
 address is all `--dep` needs:
@@ -263,8 +267,8 @@ Deploy once, and every container of that service has those variables in its envi
 ops connect --env staging --svc api --dep
 ```
 
-That starts a client pod in your environment and drops you at the engine's own prompt - `psql`, `mysql` or `redis-cli`
-from the table above. Exit the shell and the pod is deleted.
+That starts a client pod in your environment and drops you at the engine's own prompt - `psql`, `mysql`, `usql` or
+`redis-cli` from the table above. Exit the shell and the pod is deleted.
 
 Bare `--dep` picks the dependency for you when the service has exactly one database or cache. Name it when there are
 several - either by its `ops.json` id or by the variable it exports:
@@ -273,6 +277,12 @@ several - either by its `ops.json` id or by the variable it exports:
 ops connect --env staging --svc api --dep app-db
 ops connect --env staging --svc api --dep sessions
 ```
+
+<Note>
+  SQL Server opens in [usql](https://github.com/xo/usql) rather than `sqlcmd`, because Microsoft publishes no `sqlcmd`
+  image that runs on ARM nodes. usql's prompt works like `psql`: end each statement with `;` instead of `GO`, and type
+  `\q` to quit.
+</Note>
 
 <Note>
   Memcached clusters are not supported. `--db-image` overrides the client image, for example to match your MySQL
@@ -304,6 +314,11 @@ That relays the private endpoint to your machine and prints the connection detai
 ```
 
 ```
+  sqlcmd -S 127.0.0.1,1433 -U appuser -C
+  password: <the database password>
+```
+
+```
   redis-cli -h 127.0.0.1 -p 6379
 ```
 
@@ -324,7 +339,8 @@ ops proxy --env staging --svc api --dep app-db --local-port 15432
   Don't verify the database certificate's hostname through the tunnel. The certificate is issued for the database's real
   hostname, not your machine, so that check fails. For Postgres use SSL mode `require` rather than `verify-full` -
   `PGSSLMODE=require` for `psql`, which has no `sslmode` flag. For MySQL use `--ssl-mode=REQUIRED` rather than
-  `VERIFY_IDENTITY`.
+  `VERIFY_IDENTITY`. For SQL Server, trust the server certificate - `-C` in the `sqlcmd` command above, or **Trust
+  server certificate** in a GUI client.
 </Warning>
 
 <Warning>

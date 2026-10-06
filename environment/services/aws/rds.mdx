@@ -1,10 +1,10 @@
 ---
-title: RDS (Postgres & MySQL)
-description: Provision Amazon RDS databases - MySQL/Postgres
+title: RDS (Postgres, MySQL & SQL Server)
+description: Provision Amazon RDS databases - Postgres/MySQL/SQL Server
 ---
 
-Your service(s) may want to store/access data in Postgres/MySQL database. This guide will show you steps to create and
-access Amazon RDS databases that offer fully managed Postgres/MySQL databases.
+Your service(s) may want to store/access data in a Postgres, MySQL or SQL Server database. This guide will show you
+steps to create and access Amazon RDS databases that offer fully managed Postgres, MySQL and SQL Server databases.
 
 ## Declarative & Automatic using `ops.json`:
 
@@ -62,18 +62,22 @@ Arguments you can add in each instance object above:
    replace the original instance with new one.
 2. `prefix` - Alphanumeric string. Will be used as a prefix in the name of your instance. Changing this string will
    replace the original instance with new instance.
-3. `engine` - Provide either `postgres` or `mysql`. Default: `postgres`
-4. `version` - Pick a version for your postgres or mysql database. Ensure RDS supports it, by referring to AWS docs -
+3. `engine` - Provide one of `postgres`, `mysql`, `sqlserver-ex`, `sqlserver-web`, `sqlserver-se` or `sqlserver-ee`.
+   Default: `postgres`. The four `sqlserver-*` values are the SQL Server editions - see
+   [SQL Server](#sql-server) below.
+4. `version` - Pick a version for your database. Ensure RDS supports it, by referring to AWS docs -
    [Postgres](https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-versions.html) /
-   [MySQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Concepts.VersionMgmt.html). Default: `""` - so
-   it will provision latest version as decided by AWS.
+   [MySQL](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MySQL.Concepts.VersionMgmt.html) /
+   [SQL Server](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/SQLServer.Concepts.General.VersionSupport.html).
+   Default: `""` - so it will provision latest version as decided by AWS.
 5. `storage_gb` - Specify the amount of storage you need in GB. You can set one value and yet change this later.
-   Default: `10`
+   Default: `10`, or `20` for SQL Server, which also needs at least `20`.
 6. `instance_type` - Specify any class of instance in the following groups - "db.t4g._", "db.t3._", "db.m5.\*". Refer to
-   [AWS docs](https://aws.amazon.com/rds/instance-types/) for available sizes. Default: `db.t4g.small`
+   [AWS docs](https://aws.amazon.com/rds/instance-types/) for available sizes. Default: `db.t4g.small`, or `db.t3.small`
+   for `sqlserver-ex` and `sqlserver-web`. Required for `sqlserver-se` and `sqlserver-ee`.
 7. `publicly_accessible` - Set it to `true` if you need this database to be available publicly on the internet. You
    would want this to be `false` most of the time. Default: `false`
-8. `multi_az` - Specifies if the RDS instance is multi-AZ
+8. `multi_az` - Specifies if the RDS instance is multi-AZ. Not supported for `sqlserver-ex` and `sqlserver-web`.
 9. `maintenance_window` - The window to perform maintenance in. Syntax: "ddd:hh24:mi-ddd:hh24:mi". Eg:
    "Mon:00:00-Mon:03:00". See
    [RDS Maintenance Window docs](http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Maintenance.html#AdjustingTheMaintenanceWindow)
@@ -114,7 +118,7 @@ Available properties of the RDS instance to use in `exports`:
 3. `$endpoint` - The connection endpoint in `address:port` format.
 4. `$address` - Specifies the DNS address of the DB instance.
 5. `$dbName` - Specifies the database name created under the RDS instance. This is auto-created for you so you won't
-   specific this name explicitly anywhere in your config.
+   specific this name explicitly anywhere in your config. Not available for SQL Server, where RDS creates no database.
 6. `$username` - Specifics the username of the database user. You will typically use this in your code's Db connection
    string to access the database `$dbName`.
 7. `$passwordArn` - Password of the user `$username` is automatically generated, encrypted and maintained by RDS in AWS
@@ -123,9 +127,49 @@ Available properties of the RDS instance to use in `exports`:
    and injects it directly as an environment variable, so your code can use it without calling the Secrets Manager API.
    Treat this value as a secret.
 9. `$dsn` - Ready-to-use database connection string for the instance, in the standard URL form for the chosen engine
-   (e.g., `postgres://$username:$password@$address:5432/$dbName` for Postgres or
-   `mysql://$username:$password@$address:3306/$dbName` for MySQL). Convenient for libraries/ORMs that accept a single
-   connection URL. Treat this value as a secret since it embeds the password.
+   (e.g., `postgres://$username:$password@$address:5432/$dbName` for Postgres,
+   `mysql://$username:$password@$address:3306/$dbName` for MySQL or `sqlserver://$username:$password@$address:1433` for
+   SQL Server). Convenient for libraries/ORMs that accept a single connection URL. Treat this value as a secret since it
+   embeds the password.
+
+### SQL Server:
+
+Set `engine` to the SQL Server edition you need. RDS provisions it with the license included, so there is no license
+of your own to bring.
+
+| `engine`        | Edition    | Default `instance_type` | Multi-AZ | Encryption at rest |
+| --------------- | ---------- | ----------------------- | -------- | ------------------ |
+| `sqlserver-ex`  | Express    | `db.t3.small`           | No       | No                 |
+| `sqlserver-web` | Web        | `db.t3.small`           | No       | Yes                |
+| `sqlserver-se`  | Standard   | None - set it yourself  | Yes      | Yes                |
+| `sqlserver-ee`  | Enterprise | None - set it yourself  | Yes      | Yes                |
+
+```json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "ledger",
+          "prefix": "ledger",
+          "engine": "sqlserver-ex",
+          "storage_gb": 20,
+          "exports": {
+            "MSSQL_URL": "$dsn",
+            "MSSQL_HOST": "$address",
+            "MSSQL_USERNAME": "$username",
+            "MSSQL_PASSWORD": "$password"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+RDS creates no database on a SQL Server instance, so `$dbName` is not available and `$dsn` carries no database name -
+create the databases your service needs yourself, for example from an init job. Declaring `$dbName` in `exports`, or
+`multi_az` on an edition that does not support it, fails the deployment with an error naming the setting.
 
 ### Lifecycle:
 
@@ -150,7 +194,7 @@ are attached with following security group.
 Ingress:
 
 1. From source: `10.0.0.0/16` (Your environment's VPC CIDR IP range)
-2. At port: `5432` (for Postgres) or `3306` (for MySQL)
+2. At port: `5432` (for Postgres), `3306` (for MySQL) or `1433` (for SQL Server)
 3. Protocol: `TCP`
 
 So only workload/containers/servers from within your environment's VPC can access the RDS instance.
@@ -182,7 +226,8 @@ error, then retry the connection with the freshly fetched password.
 All RDS instances are pre-configured for production use.
 
 1. Daily backup is enabled. With 30-day retention for each backup.
-2. Encryption is enabled to safeguard data at rest.
+2. Encryption is enabled to safeguard data at rest. SQL Server Express (`sqlserver-ex`) is the exception, as RDS does
+   not support encryption for that edition.
 3. Backup is created automatically when the instance is about to get deleted.
 
 For speed and cost savings reasons, all the above are turned off in ephemeral services we create in the case of
@@ -213,7 +258,7 @@ You will use these in the next step while creating the RDS database.
 ### 2. Create RDS database
 
 Login to the same AWS account and region where you created the environment using LocalOps. And create new RDS database
-with appropriate engine - Postgres/MySQL.
+with appropriate engine - Postgres/MySQL/SQL Server.
 
 You will have to create a new subnet group first before creating the RDS instance. While creating the subnet group, use
 the VPC ID and private subnet IDs you copied above.
