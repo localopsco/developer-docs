@@ -4,6 +4,119 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 6, 2026">
+
+## SQL Server on RDS, and Grafana share links that work
+
+### SQL Server in `ops.json`
+
+[RDS](/environment/services/aws/rds) instances declared in `ops.json` now take SQL Server alongside Postgres and MySQL.
+Set `engine` to the edition you need - `sqlserver-ex` (Express), `sqlserver-web` (Web), `sqlserver-se` (Standard) or
+`sqlserver-ee` (Enterprise). RDS provisions it license included, so there is no license of your own to bring.
+
+```json
+{
+  "dependencies": {
+    "rds": {
+      "instances": [
+        {
+          "id": "ledger",
+          "prefix": "ledger",
+          "engine": "sqlserver-ex",
+          "storage_gb": 20,
+          "exports": {
+            "MSSQL_URL": "$dsn",
+            "MSSQL_HOST": "$address",
+            "MSSQL_USERNAME": "$username",
+            "MSSQL_PASSWORD": "$password"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+Deploy, and every container of the service gets those variables. `$dsn` comes out as
+`sqlserver://$username:$password@$address:1433`.
+
+A few things differ from Postgres and MySQL:
+
+- **No database is created.** RDS creates none on a SQL Server instance, so `$dbName` is not available and `$dsn` has no
+  database name. Create the databases your service needs yourself, for example from an init job.
+- **At least 20 GB of storage**, which is also the default.
+- **Standard and Enterprise need an `instance_type`.** Express and Web default to `db.t3.small`.
+- **Multi-AZ** is available on Standard and Enterprise only.
+- **Encryption at rest** is on for every edition except Express, which RDS does not support it for.
+
+**Private by default.** Like every RDS instance LocalOps provisions, the SQL Server instance is created in the private
+subnets of your environment's VPC, with no public endpoint. Its security group accepts TCP on port `1433` only from the
+VPC's own CIDR range, so your services reach it over the private network and nothing outside the environment can. The
+credentials go to your service as environment variables. No connection string to paste into a config file, no inbound
+rule to open.
+
+That covers your own access too - the CLI commands below reach the database from inside the cluster, so you never have
+to make it public to query it.
+
+See [Private only access](/environment/services/aws/rds#private-only-access) for the networking details.
+
+See [SQL Server](/environment/services/aws/rds#sql-server) for the full table of editions.
+
+### `ops connect` and `ops proxy` speak SQL Server
+
+As promised [last week](/changelogs/2026#september-29-2026), `--dep` now reaches SQL Server instances too. Open a prompt
+inside your environment:
+
+```sh
+ops connect --env us-prod --svc api --dep ledger
+```
+
+The client pod runs [usql](https://github.com/xo/usql) rather than `sqlcmd`, since Microsoft publishes no `sqlcmd` image
+that runs on ARM nodes. Its prompt works like `psql` - end each statement with `;` instead of `GO`, and type `\q` to
+quit. Exit the shell and the pod is deleted.
+
+Or relay the instance to a port on your machine:
+
+```sh
+ops proxy --env us-prod --svc api --dep ledger
+```
+
+```
+  sqlcmd -S 127.0.0.1,1433 -U appuser -C
+  password: <the database password>
+```
+
+While the proxy runs, point any GUI client at `127.0.0.1,1433` with those credentials - SQL Server Management Studio
+(SSMS), DataGrip, DBeaver, TablePlus or the VS Code MSSQL extension. Browse tables, run queries and inspect query plans
+on the private RDS instance as if it were running locally.
+
+Trust the server certificate through the tunnel - `-C` for `sqlcmd`, or **Trust server certificate** in a GUI client.
+The certificate is issued for the database's real hostname, not your machine.
+
+See [Connect to your databases or cache](/cli/usage#connect-to-your-databases-or-cache) for the details.
+
+### Fixed: Grafana share links
+
+Every environment ships with its own [Grafana](/environment/monitoring/logs), wired to the environment's logs, metrics
+and cloud provider monitoring out of the box. Query logs across services, slice metrics by pod or node, build your own
+dashboards and panels, and set alerts on any of it.
+
+And whatever you find, you can share. **Share → Link** on a dashboard, a panel or an Explore query - down to the exact
+log lines you filtered to - gives you a unique short URL that opens the same view, with the same time range and
+filters, for whoever you send it to. Paste it into an incident channel or a ticket instead of a screenshot.
+
+Until now these links carried the wrong host and didn't open. They now point at your environment's Grafana domain:
+
+```
+https://monitor.us-prod.example.com/goto/ef2k9xq7mzpgwd?orgId=1
+```
+
+Refresh an existing environment once to pick up the fix.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="September 30, 2026">
 
 ## Full size editors for ops.json and Helm values
