@@ -4,6 +4,59 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 9, 2026">
+
+## Health check timeouts, and resource tags that reach existing resources
+
+### Set a timeout on health checks
+
+[Health checks](/environment/services/ops-json#health-checks) in `ops.json` now take a `timeout` - how long, in seconds,
+a single check can run before it counts as a failure. Leave it out and it defaults to `10` seconds.
+
+```json
+{
+  "health": {
+    "cmd": ["/bin/sh", "-c", "celery -A app inspect ping"],
+    "delay": 180,
+    "interval": 30,
+    "timeout": 15,
+    "failure_threshold": 10
+  }
+}
+```
+
+Until now every check had to answer within 1 second. A check that is slow but healthy - a `celery inspect ping`, a
+script that opens a database connection, an endpoint that does real work - could miss that window, count as a failure
+and get the container restarted for no reason. The new 10 second default covers most of these. Raise `timeout` for
+anything slower.
+
+It works the same for shell, HTTP, TCP and gRPC checks, and in the Helm chart you export from LocalOps.
+
+<Note>
+  Every service with a health check picks up the new default on its next deploy, which rolls its containers once.
+  Nothing restarts until you deploy.
+</Note>
+
+### Fixed: account resource tags on existing environments
+
+[Account level resource tags](/changelogs/2026#feb-7-2026) - the key value pairs you add under **Account settings >
+Resource tags** - were only applied to environments created after you added them. Tags you added, changed or removed
+later never reached the cloud resources of environments that already existed.
+
+They do now. Refresh an existing environment and its resources pick up your current set of tags - added tags are
+attached, changed values are updated and removed tags are taken off. On AWS they land as tags, on GCP as labels.
+
+Look for the **Refresh environment** button in the top right corner of the environment dashboard.
+
+Cloud resources your services declare in `ops.json` - S3 buckets, RDS instances, SQS queues and the like - pick up the
+new tags on each service's next deploy.
+
+See [AWS resource tags](/environment/infra-resources/aws) for using tags to find your resources and analyze costs.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="October 6, 2026">
 
 ## SQL Server on RDS, and Grafana share links that work
