@@ -1,0 +1,174 @@
+---
+title: Environment for each developer
+description:
+  Give every developer their own full-stack environment in your cloud, and let them create, deploy, debug and tear it
+  down themselves.
+---
+
+Shared staging environments become a queue. One developer's half-finished migration breaks another's demo, QA can't tell
+whose change caused a bug, and someone has to ask the platform team before they can test anything that isn't merged yet.
+
+With LocalOps, every developer can have their own environment - a full copy of your stack, in your cloud, running the
+branch they're working on. Developers manage it themselves, without filing tickets or touching cloud consoles.
+
+### Why one environment per developer
+
+- **No waiting.** Developers test their work as soon as it's pushed, instead of waiting for a shared staging slot.
+- **No stepping on each other.** Each environment has its own network, cluster, databases and secrets. A bad migration
+  or a load test in one environment can't break anyone else's.
+- **Production-like.** It's the same kind of environment your production runs on - same cloud, same `ops.json`, same
+  security controls - so "works in my environment" means something.
+- **Easy hand-off.** Product managers, designers and QA get a stable URL to review a feature before it's merged.
+
+<Tip>
+  Need a throwaway copy for every pull request instead? See [Preview pull requests](/use-cases/ephemeral). Preview
+  services live inside an existing environment and go away when the PR closes. A developer environment belongs to one
+  developer and stays up as long as they need it.
+</Tip>
+
+## What every environment comes with
+
+Each developer environment is set up with the same building blocks as production, automatically. Nobody has to install
+or wire anything up.
+
+**Infrastructure**
+
+- A dedicated VPC with private and public subnets, and its own Kubernetes cluster
+- A load balancer and ingress, with a public HTTPS URL for every web service
+- SSL certificates, issued and renewed automatically
+- A static outbound IP, so third-party APIs can allowlist the environment
+- [Auto-scaling](/environment/services/autoscaling) for services that need it
+
+**Monitoring stack for fast debugging**
+
+- **Logs.** Every container's logs are collected into Loki, searchable in Grafana, and kept for 30 days. No log drains
+  to configure - just print to stdout. See [Logs](/environment/monitoring/logs).
+- **Metrics.** Prometheus collects CPU, memory, disk and network metrics for every node, pod and service, with pre-built
+  Grafana dashboards. See [Metrics](/environment/monitoring/metrics).
+- **Grafana.** Each environment gets its own Grafana, on its own HTTPS URL behind a login, opened from the environment's
+  Monitoring tab. Build your own dashboards and [alerts](/environment/monitoring/alerts) in it.
+- **CLI access.** Stream logs, open a shell or a database console, and forward ports with the
+  [LocalOps CLI](/cli/usage), without `kubectl` or cloud credentials.
+
+**Security**
+
+- Services, databases and caches in private subnets, with no public IPs
+- Encryption in transit and at rest
+- Keyless, least-privilege cloud access for your services - no access keys to manage
+- Secrets stored in your cloud account and injected only into the services that need them
+
+See [Environment security controls](/environment/security) for the full list.
+
+**Data and backups**
+
+- Databases, caches, queues and buckets you declare in [`ops.json`](/environment/services/ops-json), created fresh for
+  each environment
+- Backup tooling for the environment's volumes, and automated backups for the databases it creates
+
+## Set it up once
+
+An admin does this once. After that, developers serve themselves.
+
+1. **Connect a cloud account.** [Connect an AWS](/accounts/aws) or [GCP](/accounts/gcp) account for developer
+   environments. Keeping them in a separate account from production keeps their cost and blast radius separate too.
+2. **Create a project for developer environments.** Put them in their own project, so developers' access is scoped to
+   it.
+3. **Invite developers as Members.** Invite each developer to the project with the
+   [Member role](/team/understanding-roles). Members can create and manage environments and services inside their
+   project, but can't change project settings or see other projects - including production.
+4. **Describe your stack in `ops.json`.** Declare the databases, caches, queues, buckets, init jobs and health checks
+   your services need in [`ops.json`](/environment/services/ops-json) in each repo. Every new environment then gets its
+   own copies automatically, with no manual wiring.
+
+## What developers do themselves
+
+### Spin up their environment
+
+From the LocalOps console, a developer [creates an environment](/environment/create) - say `dev-alice` - in the cloud
+account connected for developer environments, in a region close to them. LocalOps provisions a dedicated network and
+Kubernetes cluster for it.
+
+<Tip>
+  **New to the team? Clone an environment.** Instead of adding every service by hand, a new developer can clone a
+  teammate's environment, or one set up earlier. The clone comes with all its services - including Helm chart services -
+  their secrets, IP allowlists and `ops.json` references, already pointing at the new environment. Then they switch the
+  services to their own branch and start pushing.
+</Tip>
+
+### Add services from their branch
+
+They [create a service](/environment/services/create) for each part of the app - web, API, workers, cron jobs - pointing
+at the repo and the branch they're working on. LocalOps builds each one and creates the cloud resources declared in its
+`ops.json`, like a fresh database just for this environment.
+
+### Deploy by pushing code
+
+Every push to that branch [deploys automatically](/environment/services/deploy). There's no pipeline to write and no one
+to ask. Developers can also redeploy or roll back from the console.
+
+### Manage config and secrets
+
+Developers set environment variables and [secrets](/environment/services/secrets) for their own environment, like a test
+API key for a payment provider, without affecting anyone else's.
+
+### Debug on their own
+
+With the [LocalOps CLI](/cli/usage), developers can work with their environment from the terminal:
+
+```sh
+ops logs --env dev-alice --svc api               # stream logs
+ops connect --env dev-alice --svc api            # open a shell in a running container
+ops connect --env dev-alice --svc api --dep main-db   # open a database shell
+ops proxy --env dev-alice --svc api               # forward a port to localhost
+```
+
+Each environment also has its own [logs](/environment/monitoring/logs) and [metrics](/environment/monitoring/metrics)
+dashboards in Grafana.
+
+### Share it
+
+Web services get a public HTTPS URL out of the box, so a developer can send a link to QA or a product manager for
+review. To keep a developer environment private, restrict it to your office or VPN IPs with the web service's IP
+allowlist.
+
+### Tear it down
+
+When the feature ships, the developer [deletes the environment](/environment/delete), and its cloud resources go with
+it. Spinning up a fresh one later takes the same few steps.
+
+<Note>
+  Creating a new environment takes about 20 minutes, since it provisions a dedicated network and cluster. Most teams
+  keep each developer's environment running and just point its services at new branches, instead of creating one per
+  feature.
+</Note>
+
+## Keep costs in check
+
+- **Right-size services.** Give developer environment services less CPU and memory, and fewer replicas, than production.
+- **Use spot capacity.** Run developer environment node groups on spot instances.
+- **Tear down idle environments.** Delete environments nobody is using, and recreate them when needed.
+- **Track cost per environment.** Use [resource tags](/environment/infra-resources/aws) to find each environment's
+  resources and their cost in your cloud bill.
+
+## Overall steps
+
+1. Admin connects a cloud account and a project for developer environments, and invites developers as Members
+2. Teams declare their dependencies in `ops.json`
+3. Each developer creates their own environment
+4. They add services from their branch and push to deploy
+5. They debug with the CLI and dashboards, and share the URL for review
+6. They delete the environment when they no longer need it
+
+### Get started now
+
+<CardGroup cols={3}>
+  <Card title="Sign up for free" icon="rocket" href="https://console.localops.co/signup">
+    Create your account and connect your cloud to get started.
+  </Card>
+  <Card title="Book a demo call" icon="calendar" href="https://go.localops.co/tour">
+    We'll walk you through the setup personally.
+  </Card>
+  <Card title="Email support" icon="envelope" href="mailto:support@localops.co">
+    Questions? Write to us at support@localops.co.
+  </Card>
+</CardGroup>

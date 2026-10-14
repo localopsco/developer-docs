@@ -32,7 +32,8 @@
               "use-cases/dedicated-infrastructure",
               "use-cases/byoc",
               "use-cases/self-hosted",
-              "use-cases/ephemeral"
+              "use-cases/ephemeral",
+              "use-cases/environment-per-developer"
             ]
           },
           {
