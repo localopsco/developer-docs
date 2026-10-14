@@ -21,7 +21,7 @@
               "howitworks",
               "support",
               "compatibility",
-              "security"
+              "environment/shared-responsibilities"
             ]
           },
           {
@@ -94,6 +94,13 @@
               "environment/inside",
               "environment/create",
               {
+                "group": "Environment security controls",
+                "pages": [
+                  "environment/security",
+                  "environment/security-gcp"
+                ]
+              },
+              {
                 "group": "Monitoring",
                 "pages": [
                   "environment/monitoring/logs",
@@ -114,8 +121,6 @@
                 ]
               },
               "environment/extend-with-iac",
-              "environment/security",
-              "environment/shared-responsibilities",
               "environment/delete",
               "environment/eject"
             ]
@@ -233,7 +238,8 @@
             "pages": [
               "terms",
               "privacy-policy",
-              "sub-processors"
+              "sub-processors",
+              "security"
             ]
           }
         ]

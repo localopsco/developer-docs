@@ -1,19 +1,599 @@
 ---
 title: Shared responsibilities
+description:
+  Who owns what in a LocalOps environment - your team, LocalOps, and your cloud provider - across apps, infrastructure
+  and security.
 ---
 
-<img
-  width="400"
-  height="700"
-  src="./images/shared-responsibilities.png"
-  alt="Shared responsibilities model"
-/>
+A LocalOps environment runs your services, on infrastructure LocalOps provisions and configures, inside a cloud account
+you own. Each of the three parties guards a different layer.
 
-With services deployed by developers (you), cloud resources provisioned by LocalOps in the environment and cloud infrastructure as such provided by
-cloud provider, it is essential to understand who manages what.
+<div style={{ border: '1px solid rgba(128,128,128,0.35)', borderRadius: '14px', overflow: 'hidden', margin: '24px 0' }}>
+  <div
+    className="dark:hidden"
+    style={{
+      background: 'rgba(124,58,237,0.10)',
+      padding: '16px 18px',
+      borderBottom: '1px solid rgba(128,128,128,0.35)',
+    }}
+  >
+    <div style={{ fontWeight: 600, color: 'rgb(124,58,237)' }}>Your team</div>
+    <div style={{ fontSize: '13px', opacity: 0.75, marginBottom: '10px' }}>Apps, data and account governance</div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Application code &amp; dependencies
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Container images
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Service uptime &amp; sizing
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Secret values
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Data, schema &amp; retention
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Domains, allowlists &amp; WAF
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Peering &amp; network links
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Cloud account guardrails &amp; CloudTrail
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        Team &amp; cloud access
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        LocalOps account governance
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(124,58,237,0.45)',
+          background: 'rgba(124,58,237,0.08)',
+        }}
+      >
+        GitHub / GitLab account
+      </span>
+    </div>
+  </div>
+  <div
+    className="hidden dark:block"
+    style={{
+      background: 'rgba(165,180,252,0.10)',
+      padding: '16px 18px',
+      borderBottom: '1px solid rgba(128,128,128,0.35)',
+    }}
+  >
+    <div style={{ fontWeight: 600, color: 'rgb(165,180,252)' }}>Your team</div>
+    <div style={{ fontSize: '13px', opacity: 0.75, marginBottom: '10px' }}>Apps, data and account governance</div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Application code &amp; dependencies
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Container images
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Service uptime &amp; sizing
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Secret values
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Data, schema &amp; retention
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Domains, allowlists &amp; WAF
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Peering &amp; network links
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Cloud account guardrails &amp; CloudTrail
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        Team &amp; cloud access
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        LocalOps account governance
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(165,180,252,0.45)',
+          background: 'rgba(165,180,252,0.08)',
+        }}
+      >
+        GitHub / GitLab account
+      </span>
+    </div>
+  </div>
+  <div
+    style={{
+      background: 'rgba(22,163,74,0.10)',
+      padding: '16px 18px',
+      borderBottom: '1px solid rgba(128,128,128,0.35)',
+    }}
+  >
+    <div style={{ fontWeight: 600, color: 'rgb(22,163,74)' }}>LocalOps platform</div>
+    <div style={{ fontSize: '13px', opacity: 0.75, marginBottom: '10px' }}>
+      Environment, configuration and pipelines
+    </div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Dedicated VPC &amp; cluster
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Network &amp; security groups
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Encryption at rest
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        SSL certificates
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Auto-scaling
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Least-privilege IAM
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Kubernetes RBAC
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Automated deployment pipelines
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Developer experience (DevEx)
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Secrets delivery
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Backups set-up
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(22,163,74,0.45)',
+          background: 'rgba(22,163,74,0.08)',
+        }}
+      >
+        Observability stack
+      </span>
+    </div>
+  </div>
+  <div style={{ background: 'rgba(234,140,0,0.10)', padding: '16px 18px' }}>
+    <div style={{ fontWeight: 600, color: 'rgb(234,140,0)' }}>Your cloud provider</div>
+    <div style={{ fontSize: '13px', opacity: 0.75, marginBottom: '10px' }}>AWS, GCP or Azure</div>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(234,140,0,0.45)',
+          background: 'rgba(234,140,0,0.08)',
+        }}
+      >
+        Data centers &amp; hardware
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(234,140,0,0.45)',
+          background: 'rgba(234,140,0,0.08)',
+        }}
+      >
+        Managed services (EKS, RDS, KMS…)
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(234,140,0,0.45)',
+          background: 'rgba(234,140,0,0.08)',
+        }}
+      >
+        Compute uptime
+      </span>
+      <span
+        style={{
+          fontSize: '13px',
+          padding: '4px 10px',
+          borderRadius: '999px',
+          border: '1px solid rgba(234,140,0,0.45)',
+          background: 'rgba(234,140,0,0.08)',
+        }}
+      >
+        Service uptime &amp; durability
+      </span>
+    </div>
+  </div>
+</div>
 
-- You, the developer bring your services and are responsible to manage its app-side issues.
-- LocalOps provisions cloud resources programmatically and is responsible to configure them to run your services.
-- Your cloud provider supplies the cloud resources and are responsible for availability of the underlying physical server
-  infrastructure.
+In short:
 
+- **Your team** owns your services and their uptime, and governs the cloud account they run in.
+- **LocalOps** provisions the environment, configures it securely, and keeps deployments and the observability stack
+  running.
+- **Your cloud provider** runs the physical infrastructure and the managed services everything is built on.
+
+## What your team owns
+
+### Your applications
+
+- **Code and dependencies.** Bugs, vulnerable libraries, and application-level authentication and authorization are
+  yours to fix. LocalOps controls who can reach a service over the network, not what the service does once a request
+  arrives.
+- **Container images.** What runs inside your container is defined by your Dockerfile - base image, OS packages, the
+  user it runs as, and which capabilities it needs. Keep base images patched, and run as a non-root user where you can.
+- **Uptime of your services.** Crashes, memory leaks, slow queries and failing health checks in your app are yours to
+  debug. LocalOps gives you the [logs](/environment/monitoring/logs), [metrics](/environment/monitoring/metrics) and
+  [alerts](/environment/monitoring/alerts) to do it.
+- **Health checks and resources.** You define [health checks](/environment/services/ops-json) and set CPU and memory for
+  each service, so Kubernetes knows when to restart a container and how much room it has.
+- **Data inside your services.** What you write to databases, caches, queues and buckets, its schema and migrations, and
+  how long you keep it.
+
+### Your secrets and configuration
+
+- **Secret values.** You decide what goes into [secrets](/environment/services/secrets) and when to rotate them, such as
+  third-party API keys. LocalOps stores and delivers them securely.
+- **Sharing between services.** A service only receives another service's secrets when you import them. Keep imports to
+  what each service needs.
+- **`ops.json` choices.** Settings that loosen defaults are your call: making a database publicly accessible,
+  [privileged containers](/environment/services/ops-json#privileged-containers), or
+  [SSL passthrough](/environment/services/ops-json#ssl-passthrough) (where your app then owns its own certificate).
+
+### Your cloud account
+
+The environment lives in your account, so account-level governance stays with you:
+
+- **Cloud account guardrails.** AWS Organizations, service control policies, GuardDuty, Security Hub, AWS Config and
+  budgets are yours to set up. Account-wide defaults, like EBS encryption by default, apply on top of what LocalOps
+  configures.
+- **CloudTrail.** Every action LocalOps takes in your account is recorded by CloudTrail. Keeping it enabled and retained
+  is up to you.
+- **The connection role.** You create the role LocalOps uses with CloudFormation, and you can revoke it at any time by
+  deleting the stack.
+- **Quotas and cost.** Service quotas, reserved capacity and the cloud bill for the resources in your environments.
+
+### Your network edge
+
+- **Domains and DNS.** You own your domains, and point [custom domains](/environment/services/custom-domain) at your
+  environment.
+- **Who can reach a web service.** Per-service IP allowlists, and a WAF like Cloudflare in front of your services, are
+  yours to configure. See
+  [Web application firewall with Cloudflare](/environment/security#web-application-firewall-with-cloudflare).
+- **Connecting other networks.** VPC peering, Transit Gateway or VPN links to other networks, along with the routes and
+  security group rules they need. Pick a custom CIDR when you create an environment if you plan to peer it.
+
+### Your people
+
+- **LocalOps account governance.** Who you invite to LocalOps, what [role](/team/understanding-roles) they get, and
+  removing people who leave.
+- **Cloud access.** Who in your organisation has direct access to your AWS account outside LocalOps.
+- **GitHub / GitLab account.** Who can push to the repositories and branches LocalOps deploys from, and which
+  repositories you give LocalOps access to when you connect [GitHub](/accounts/connect-github) or
+  [GitLab](/accounts/connect-gitlab).
+- **Privileged pod approval.** Allowing privileged containers on a cloud connection is an admin decision you make.
+
+## What LocalOps owns
+
+LocalOps provisions and configures everything between your code and the cloud provider, and keeps it working. See
+Environment security controls on [AWS](/environment/security) and [GCP](/environment/security-gcp) for the full list of
+what's enabled.
+
+- **Environment provisioning.** A dedicated VPC and Kubernetes cluster for every environment, with subnets, NAT, load
+  balancer, ingress, certificates, monitoring and backups set up from the start.
+- **Secure defaults.** Private subnets, VPC-only security groups for data services, TLS on every web service, encryption
+  at rest, a per-cluster KMS key, and control-plane audit logging.
+- **Least-privilege access.** Keyless, short-lived access to your account, and per-component IAM roles. Your services'
+  role starts empty and only gains access to the dependencies you declare.
+- **Cloud resources you declare.** Databases, caches, queues and buckets from `ops.json`, created with encryption,
+  backups and locked-down network access.
+- **Automated deployment pipelines.** Building your images on every push, rolling them out, and waiting for them to
+  become healthy - one service at a time, without touching the others.
+- **Developer experience.** The console, [CLI](/cli/usage), [preview environments](/use-cases/ephemeral) for pull
+  requests, and built-in logs and metrics, so your team ships without writing infrastructure code.
+- **Secrets delivery.** Storing secrets in your account and injecting them into the right containers, and only those.
+- **SSL certificates.** Issuing and renewing SSL/TLS certificates for every web service and custom domain.
+- **Auto-scaling.** Adding and removing replicas of your services on CPU, memory and schedules you set in
+  [`ops.json`](/environment/services/autoscaling).
+- **Observability stack.** Running and keeping available the logs, metrics, dashboards and alerts in each environment.
+- **Backups set-up.** Backup tooling in each environment, and automated backups for the databases and caches it creates.
+
+## What your cloud provider owns
+
+- **Physical infrastructure.** Data centers, hardware, networking and the virtualization layer.
+- **Compute uptime.** Availability of the virtual machines your nodes run on, and replacing failed underlying hosts.
+- **Managed services.** Availability and durability of the managed services your environment uses, such as EKS, EC2,
+  RDS, ElastiCache, S3, KMS and STS on AWS.
+- **Service-level guarantees.** Uptime and durability as defined in each service's SLA.
+
+## Who owns what, at a glance
+
+| Area                          | Your team                                         | LocalOps                                                                            | Cloud provider                         |
+| ----------------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------- |
+| Application                   | Code, dependencies, app-level auth, bugs          | -                                                                                   | -                                      |
+| Containers                    | Image contents, base image patching, runtime user | Running them on the cluster, privileged off by default                              | -                                      |
+| Image building and deployment | Dockerfile, pushing to the branch you deploy from | Build infrastructure, building images on every push, storing them, rolling them out | Container registry                     |
+| Service uptime                | Crashes, health checks, resource sizing           | Rollouts, restarts on failed health checks                                          | -                                      |
+| Scaling                       | Floors, ceilings and targets in `ops.json`        | Auto-scaling replicas to match load                                                 | Capacity for new nodes                 |
+| Kubernetes cluster            | -                                                 | Configuration, RBAC, namespaces, add-ons                                            | Managed control plane                  |
+| Network                       | Peering, IP allowlists, WAF, DNS for your domains | VPC, subnets, NAT, load balancer, security groups                                   | Underlying network                     |
+| Encryption                    | Your app's own TLS, if using SSL passthrough      | TLS certificates, encryption at rest, KMS keys                                      | Encryption services (KMS)              |
+| Identity and access           | Team members and roles, direct cloud access       | Keyless connection, per-component IAM roles                                         | IAM and STS                            |
+| Secrets                       | Values, rotation of your own keys                 | Storage in your account, delivery to the right containers                           | Parameter Store, Secrets Manager       |
+| Data                          | What you store, schema, retention                 | Encrypted, backed-up databases and caches                                           | Durability of storage                  |
+| Backups                       | Restores and deciding what to restore             | Backup tooling and automated database backups                                       | Snapshot and backup storage            |
+| Monitoring                    | Acting on alerts from your services               | Logs, metrics, dashboards and alerts stack                                          | CloudWatch, for control-plane logs     |
+| Audit                         | Keeping CloudTrail enabled and retained           | Every action under a named, auditable session                                       | Recording API calls                    |
+| Cloud account governance      | Guardrails, quotas, cost                          | -                                                                                   | -                                      |
+| LocalOps account governance   | Members, roles, cloud connections, offboarding    | -                                                                                   | -                                      |
+| GitHub / GitLab account       | Repo access, branch protection, who can push      | Deploying from the repos you connect                                                | -                                      |
+| Physical infrastructure       | -                                                 | -                                                                                   | Data centers, hardware, compute uptime |
