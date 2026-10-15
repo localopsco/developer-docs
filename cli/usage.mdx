@@ -46,6 +46,28 @@ instead:
 2. Set the Kubernetes context of `kubectl` to point at the environment's cluster with `ops update-kubeconfig`
 3. Then use `kubectl` to inspect the cluster
 
+### Who can run which command
+
+What you can do with the CLI depends on your [role](/team/understanding-roles) in the environment you point it at, your
+project role, or your environment role in a [protected environment](/environment/protected-environments).
+
+| Command                                  | Read-only | Maintainer | Member | Owner / Admin (unrestricted) |
+| ---------------------------------------- | --------- | ---------- | ------ | ---------------------------- |
+| `ops login`, `ops logout`, `ops project` | ✅        | ✅         | ✅     | ✅                           |
+| `ops logs`                               | ❌        | ✅         | ✅     | ✅                           |
+| `ops connect` (including `--dep`)        | ❌        | ❌         | ✅     | ✅                           |
+| `ops proxy` (including `--dep`)          | ❌        | ❌         | ✅     | ✅                           |
+| `ops update-kubeconfig`, `kubectl`, k9s  | ❌        | ❌         | ✅     | ✅                           |
+
+An owner or admin who is [restricted](/team/owner-admin-restrictions) in a project or environment gets the column of the
+role they are restricted to.
+
+Commands your role doesn't allow stop with a message such as:
+
+```
+Error: your role in this environment (maintainer) doesn't allow `ops connect`, it needs member or higher
+```
+
 ### Login to LocalOps
 
 ```sh
@@ -357,13 +379,18 @@ not one of your own services.
 
 ### Set kubernetes context
 
-Use this commnd updates your local current context to point at the environment's kubernetes cluster.
+<Note>
+  Needs the Member role or higher in the environment. See [who can run which command](#who-can-run-which-command).
+</Note>
+
+Use this command to point your local Kubernetes context at the environment's cluster.
 
 ```sh
 ops update-kubeconfig -e env-id
 ```
 
-To get `env-id`, visit your environment dashboard and see "Shell" tab.
+The `env-id` is in the address of the environment's page in the LocalOps console. The **CLI** button on that page shows
+this command with the ID filled in.
 
 ### Use Kubectl
 

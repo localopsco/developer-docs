@@ -4,6 +4,51 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 15, 2026">
+
+## Project roles, protected environments and Owner/Admin restrictions
+
+Until now everyone in a project could do everything in it. You can now decide exactly what each person can do, per
+project and per environment.
+
+### Project roles
+
+Organization Members now get a role in each project they belong to:
+
+- **Read-only** - view the project, environments, services and deployments. No secrets or CLI.
+- **Maintainer** - everything Read-only can, plus deploy, redeploy, promote, cancel and retry, change a service's git
+  branch, read logs, see secret names and use `ops logs`.
+- **Member** - full access to the project, including secret values, environment and service settings, backups, people
+  and the whole CLI.
+
+Pick roles when you [invite someone](/team/invite-users), add people from a project's **Settings** → **Members**, and
+change roles there at any time. See [project members](/team/project-members) and the full
+[permission tables](/team/understanding-roles#permissions-in-detail).
+
+<Note>
+  Everyone who was already in a project before this change has the **Member** role there, so nothing changes for them
+  until you change it.
+</Note>
+
+### Protected environments
+
+[Protect](/environment/protected-environments) an environment such as production to limit it to Owners and Admins with
+full access and the people you add to it. People you add get an environment role that replaces their project role there.
+Everyone else doesn't see the environment, its deployments or its operations at all.
+
+### Owner and Admin restrictions
+
+Owners and Admins still have full access to every project, but can now be [restricted](/team/owner-admin-restrictions)
+to Member, Maintainer or Read-only in a single project or protected environment, by themselves, or by someone with the
+Member role there. They can always lift their own restriction.
+
+### CLI follows your role
+
+`ops logs` needs the Maintainer role. `ops connect`, `ops proxy` and `ops update-kubeconfig` need Member. See [who can
+run which command](/cli/usage#who-can-run-which-command).
+
+</Update>
+
 <Update label="October 9, 2026">
 
 ## Health check timeouts, and resource tags that reach existing resources

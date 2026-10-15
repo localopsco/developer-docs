@@ -73,9 +73,11 @@ An admin does this once. After that, developers serve themselves.
    environments. Keeping them in a separate account from production keeps their cost and blast radius separate too.
 2. **Create a project for developer environments.** Put them in their own project, so developers' access is scoped to
    it.
-3. **Invite developers as Members.** Invite each developer to the project with the
+3. **Invite developers as Members.** [Invite](/team/invite-users) each developer to the project with the
    [Member role](/team/understanding-roles). Members can create and manage environments and services inside their
-   project, but can't change project settings or see other projects - including production.
+   project, but can't change project settings or see other projects - including production. If production shares a
+   project with developer environments, [protect it](/environment/protected-environments) so only the people you add
+   can see it.
 4. **Describe your stack in `ops.json`.** Declare the databases, caches, queues, buckets, init jobs and health checks
    your services need in [`ops.json`](/environment/services/ops-json) in each repo. Every new environment then gets its
    own copies automatically, with no manual wiring.

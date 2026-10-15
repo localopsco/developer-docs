@@ -58,7 +58,7 @@ the exact objects created in your projects, see
 
 You need:
 
-- A LocalOps account, signed in as a member of your organization.
+- A LocalOps account, signed in as an Owner or Admin of your organization. Only Owners and Admins can connect GitLab.
 - A **gitlab.com user account** that is a member of the projects you want to deploy.
 - That user must have at least the **Maintainer** role on each project you intend to deploy. See
   [What role does my GitLab user need?](#what-role-does-my-gitlab-user-need) below.
@@ -84,8 +84,8 @@ That's it. Your projects will now appear when you create a new service and choos
 
 - The connection is tied to **the GitLab user who authorized it**, not to a group. LocalOps sees exactly the projects
   that user is a member of — nothing more.
-- The connection is shared across your whole LocalOps organization. Any member of your org can create services from the
-  connected projects.
+- The connection is shared across your whole LocalOps organization. Owners, Admins and anyone with the Member role in a
+  project can create services there from the connected projects.
 - You can connect **more than one** GitLab account to the same LocalOps organization. Each is listed separately.
 - If you re-authorize with a GitLab account that's already connected, LocalOps refreshes the existing connection instead
   of creating a duplicate.

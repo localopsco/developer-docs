@@ -150,9 +150,12 @@ logins and data.
    passwords.
 2. **Two-Factor Authentication (2FA) & OAuth:** 2FA is the default sign in method for all users using email-based login.
    Otherwise, OAuth logins powered by Google or Github secure the login process.
-3. **Session Expiry:** All login sessions expire automatically in 24 hours.
-4. **Role-Based Access Control (RBAC):** Users can be assigned roles using our RBAC module to restrict them from
-   accessing all of the account and data.
+3. **Session Expiry:** Login sessions expire after 2 days without use, and every session ends after 7 days at most,
+   however active it is.
+4. **Role-Based Access Control (RBAC):** Organization roles (Owner, Admin, Member) control what people can do across
+   your account. Project roles (Member, Maintainer, Read-only) control what they can do in each project, and
+   [protected environments](/environment/protected-environments) limit sensitive environments such as production to the
+   people you choose. See [Understanding roles](/team/understanding-roles).
 5. **Audit Logging:** Audit logs record actions taken by users in your LocalOps account.
 
 ## Organization security

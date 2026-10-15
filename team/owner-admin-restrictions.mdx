@@ -1,0 +1,94 @@
+---
+title: Owner and Admin restrictions
+description: Lower an Owner's or Admin's access in a single project or environment, and lift it again
+---
+
+Owners and Admins have full access to every project. Sometimes that is more than they need. An Admin who looks after
+billing shouldn't be one click away from deleting production, and you may want to keep yourself from changing a project
+by accident.
+
+A **restriction** lowers an Owner's or Admin's access in one project, or in one
+[protected environment](/environment/protected-environments), to Member, Maintainer or Read-only. Everywhere else they
+keep full access, and they stay an Owner or Admin of the organization.
+
+While restricted, they can do exactly what that [project role](/team/understanding-roles#permissions-in-detail) can do.
+
+## Rules
+
+| Who                                                          | Can restrict                                     | Can lift             |
+| ------------------------------------------------------------ | ------------------------------------------------ | -------------------- |
+| An Owner or Admin, for **themselves**                        | Always, to any role - higher or lower than today | Always               |
+| Someone with the Member role in the project (or environment) | Other Owners and Admins                          | -                    |
+| An Owner or Admin with **full access** in the project        | Other Owners and Admins                          | Anyone's restriction |
+
+When restricting **someone else**:
+
+- The first time, any role can be picked.
+- If they are already restricted, the role can only be **lowered**. To raise it, an Owner or Admin with full access has
+  to lift the restriction - after which it can be set again.
+
+<Note>
+  A restriction can't be used to lock everyone out. The restricted person can always lift their own restriction, and any
+  Owner or Admin with full access in the project can lift it for them.
+</Note>
+
+Owners and Admins can't be removed from a project - restricting them is how you limit them there.
+
+## Restrict yourself in a project
+
+1. Open the project and go to **Settings** → **Members**.
+2. Click **⋯** on your own row and choose **Change role**.
+3. In **Restrict your access**, pick Member, Maintainer or Read-only and click **Update role**.
+
+To change it later, do the same - the dialog is called **Change your restriction**, and you can pick any role, higher or
+lower.
+
+## Restrict another Owner or Admin in a project
+
+You need the Member role in the project, or full access.
+
+1. Go to **Settings** → **Members**.
+2. Click **⋯** on their row and choose **Change role**.
+3. In **Restrict access**, pick their role and click **Update role**.
+
+If they're already restricted, only their current role and lower roles are offered.
+
+## Lift a restriction
+
+Click **⋯** on the restricted person's row and choose **Lift restriction**. It takes effect immediately, with no
+confirmation, and they have full access to the project again.
+
+**Lift restriction** works on your own row, and an Owner or Admin with full access can use it on anyone's row.
+
+Lifting a project restriction also removes the person's roles in that project's protected environments, so they get full
+access there too.
+
+## Restrictions in a protected environment
+
+The same rules apply inside a [protected environment](/environment/protected-environments), from the environment's
+**Members** tab:
+
+| Action                                 | Menu item                   |
+| -------------------------------------- | --------------------------- |
+| Restrict yourself                      | **Restrict your access**    |
+| Restrict another Owner or Admin        | **Restrict access**         |
+| Change your own restriction (any role) | **Change your restriction** |
+| Lower someone else's restriction       | **Lower restriction**       |
+| Lift a restriction                     | **Lift restriction**        |
+
+Restricting someone in a protected environment only changes their access in that environment. Unprotecting the
+environment removes every restriction in it.
+
+## How restrictions show up
+
+In **Settings** → **Members**, a restricted Owner or Admin shows their restricted role with an **Org owner** or **Org
+admin** badge and a **Restricted** badge. An unrestricted one shows **Full access**.
+
+## Restrictions and organization role changes
+
+- **Member → Admin or Owner:** their project roles and environment roles are cleared, so they start with full access
+  everywhere.
+- **Admin ↔ Owner:** their project restrictions are cleared. Restrictions in protected environments stay until lifted.
+- **Owner or Admin → Member:** they become a regular Member. You pick their project role in each project they're in, and
+  their environment roles are cleared - add them to protected environments again if they still need them. See
+  [change someone's organization role](/team/invite-users#change-someones-organization-role).

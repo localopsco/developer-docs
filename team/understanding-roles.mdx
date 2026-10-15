@@ -45,8 +45,11 @@ Pick an organization role when you [invite someone](/team/invite-users) to your 
 - What they can do in each project depends on their [project role](#project-roles).
 - Can't access projects they aren't part of.
 
-Organization-level pages - cloud connections, registries, Helm charts, the [audit log](/team/audit-logs), billing and
-organization settings - work the same as before, based on the organization role.
+Organization-level pages follow the organization role only - project roles and restrictions don't change them.
+Organization Members can see cloud connections, registries, license tokens, connected GitHub and GitLab accounts, the
+[audit log](/team/audit-logs) and who's in the organization, but only Owners and Admins can change them. Helm charts and integrations such as Slack are
+for Owners and Admins only, to view as well as to manage, because Helm charts carry configuration values. Billing is for
+the Owner.
 
 ## Project roles
 
@@ -96,6 +99,8 @@ Every organization Member in a project has one of three project roles.
 | Generate a Helm chart                                   | ✕      | ✕          | ✕         |
 | Environment CLI (kubeconfig)                            | ✅     | Hidden     | Hidden    |
 
+Generating a Helm chart is for Owners and Admins only, since a chart carries the environment's configuration values.
+
 #### Services
 
 | Action                                                                    | Member | Maintainer                      | Read-only |
@@ -116,10 +121,14 @@ Every organization Member in a project has one of three project roles.
 
 When an action is greyed out, LocalOps shows "Your role in this project doesn't allow this."
 
+The `ops` CLI follows the same roles: `ops logs` needs Maintainer, while `ops connect`, `ops proxy` and
+`ops update-kubeconfig` need Member. See [who can run which command](/cli/usage#who-can-run-which-command).
+
 ### Managing project members
 
 Project Members manage who else is in the project, from the project's **Settings → Members**: they add existing
-organization members, set or change their project role, and remove them. Anyone can leave a project on their own.
+organization members, set or change their project role, and remove them. Anyone can leave a project on their own. See
+[Project members](/team/project-members) for the steps.
 
 Inviting someone who isn't in your organization yet, and cancelling pending invites, is done by Owners and Admins. See
 [Invite team members](/team/invite-users).
@@ -143,7 +152,8 @@ organization-level abilities in that project:
 | Leave the project                           | ✕ Owners and Admins stay in every project                   |
 
 Restrictions can only be tightened afterwards. To restrict someone who is already restricted, pick a lower role. To give
-them more access, lift the restriction instead.
+them more access, lift the restriction instead. See [Owner and Admin restrictions](/team/owner-admin-restrictions) for
+the full rules, including restrictions on a single protected environment.
 
 <Note>
   A restricted Owner or Admin can lift their own restriction at any time. Restricting is a guard against mistakes, not a
@@ -188,16 +198,29 @@ applies.
 ### Protect an environment
 
 Anyone who can change an environment's settings - unrestricted Owners and Admins, project Members, and Owners or Admins
-restricted to Member - can protect it and manage its environment roles.
+restricted to Member - can protect it. If they don't have full access, they're added to it with their current role, so
+they keep access. Once it's protected, managing its members needs the Member role in that environment, or full access.
 
 1. Open the environment and click **Protect** at the top of the page, then confirm.
 2. Go to the environment's **Members** tab, which appears once it's protected.
 3. Add the people who need access to this environment, and pick an environment role for each.
 
-Unrestricted Owners and Admins always keep full access, on protected environments too.
+Unrestricted Owners and Admins keep full access to protected environments too, unless they've been
+[restricted in that environment](/team/owner-admin-restrictions#restrictions-in-a-protected-environment).
+
+<Warning>
+  Unprotecting an environment deletes every environment role in it, Owner and Admin restrictions included. Everyone goes
+  back to their project role.
+</Warning>
+
+See [Protected environments](/environment/protected-environments) for adding people, changing their roles and who can
+do what.
 
 ## Related
 
 - [Invite team members](/team/invite-users)
-- [Deactivate a user](/team/deactivate-user)
+- [Project members](/team/project-members)
+- [Owner and Admin restrictions](/team/owner-admin-restrictions)
+- [Protected environments](/environment/protected-environments)
+- [Remove a user](/team/remove-user)
 - [Audit log](/team/audit-logs)
