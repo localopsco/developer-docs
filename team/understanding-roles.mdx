@@ -82,7 +82,7 @@ Every organization Member in a project has one of three project roles.
 | Change your own role in this project       | ✅     | ✕          | ✕         |
 | Leave the project                          | ✅     | ✅         | ✅        |
 | Invite a new user to the organization      | ✕      | ✕          | ✕         |
-| Cancel a pending invite                    | ✕      | ✕          | ✕         |
+| Cancel a pending invite                    | Hidden | Hidden     | Hidden    |
 
 #### Environments
 
@@ -93,7 +93,7 @@ Every organization Member in a project has one of three project roles.
 | Change settings, refresh, import or delete              | ✅     | ✕          | ✕         |
 | Change node groups                                      | ✅     | ✕          | ✕         |
 | Protect an environment and manage its environment roles | ✅     | ✕          | ✕         |
-| Generate a Helm chart                                   | ✅     | ✕          | ✕         |
+| Generate a Helm chart                                   | ✕      | ✕          | ✕         |
 | Environment CLI (kubeconfig)                            | ✅     | Hidden     | Hidden    |
 
 #### Services
@@ -156,15 +156,18 @@ Some environments need tighter control than the rest of the project. Mark an env
 is the usual one - and you can give people an **environment role** on it: Member, Maintainer or Read-only.
 
 On a protected environment, a person's environment role **replaces** their project role, whether it's higher or lower.
-People without an environment role keep their project role there.
+People without an environment role can't see a protected environment at all - it's hidden from them - unless they're an
+unrestricted Owner or Admin.
 
 ```mermaid actions={false}
 flowchart TB
   start["Someone opens an environment"] --> oa{"Unrestricted<br/>Owner or Admin?"}
   oa -- "Yes" --> full["Full access"]
-  oa -- "No" --> prot{"Environment protected,<br/>and they have an<br/>environment role?"}
-  prot -- "Yes" --> envr["Their environment role applies"]
+  oa -- "No" --> prot{"Environment<br/>protected?"}
   prot -- "No" --> projr["Their project role applies<br/>(or their restricted role)"]
+  prot -- "Yes" --> role{"Do they have an<br/>environment role here?"}
+  role -- "Yes" --> envr["Their environment role applies"]
+  role -- "No" --> none["No access<br/>(environment is hidden)"]
   classDef default fill:transparent,stroke:#888,stroke-width:1px
 ```
 
@@ -176,19 +179,20 @@ In the project **Payments**, `production` is protected and `staging` isn't:
 | ------ | ------------ | -------------------------------- | ------------ | --------------- |
 | Priya  | Member       | Read-only                        | Member       | Read-only       |
 | Dev    | Maintainer   | Member (on-call lead)            | Maintainer   | Member          |
-| Sam    | Read-only    | -                                | Read-only    | Read-only       |
+| Sam    | Read-only    | -                                | Read-only    | No access       |
 
 Priya builds freely in staging but can only look at production. Dev normally deploys only, but owns production while on
-call. Sam has no environment role, so their project role applies everywhere.
+call. Sam has no environment role on production, so production is hidden from them; on staging their project role
+applies.
 
 ### Protect an environment
 
 Anyone who can change an environment's settings - unrestricted Owners and Admins, project Members, and Owners or Admins
 restricted to Member - can protect it and manage its environment roles.
 
-1. Open the environment and go to its settings.
-2. Mark the environment as **protected**.
-3. Add the people who need a different role on this environment, and pick an environment role for each.
+1. Open the environment and click **Protect** at the top of the page, then confirm.
+2. Go to the environment's **Members** tab, which appears once it's protected.
+3. Add the people who need access to this environment, and pick an environment role for each.
 
 Unrestricted Owners and Admins always keep full access, on protected environments too.
 
