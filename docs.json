@@ -97,7 +97,8 @@
               {
                 "group": "Environment security controls",
                 "pages": [
-                  "environment/security",
+                  "environment/protected-environments",
+              "environment/security",
                   "environment/security-gcp"
                 ]
               },
@@ -181,7 +182,9 @@
             "pages": [
               "team/understanding-roles",
               "team/invite-users",
-              "team/deactivate-user",
+              "team/project-members",
+              "team/owner-admin-restrictions",
+              "team/remove-user",
               "team/audit-logs"
             ]
           },
@@ -281,6 +284,10 @@
     }
   },
   "redirects": [
+    {
+      "source": "/team/deactivate-user",
+      "destination": "/team/remove-user"
+    },
     {
       "source": "/api-reference",
       "destination": "/api-reference/environments/get-environment"

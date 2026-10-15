@@ -1,0 +1,118 @@
+---
+title: Protected environments
+description: Limit an environment, such as production, to the people you choose, with a role of its own
+---
+
+By default an environment belongs to the whole project. Everyone in the project can see it, with their
+[project role](/team/understanding-roles#project-roles).
+
+**Protecting** an environment changes that. Only these people can see a protected environment:
+
+- Owners and Admins with full access to the project
+- The people you add to the environment
+
+Everyone else - including people with the Member role in the project - loses access to it until they're added. Use it
+for environments such as production, where only a few people should deploy or read secrets.
+
+## What changes for people who aren't added
+
+A protected environment is hidden from them completely:
+
+- It isn't listed under the project's environments.
+- Its deployments and operations aren't listed either.
+- Opening its link shows **Environment not found**.
+- They can't pick it as a source for **Import from environment**.
+- The CLI can't reach it.
+
+Owners and Admins who are [restricted](/team/owner-admin-restrictions) in the project are treated like everyone else
+here: they need to be added.
+
+## Environment roles
+
+Everyone you add gets an **environment role** - Read-only, Maintainer or Member. Inside that environment it replaces
+their project role, and it can be higher or lower than it. For example, a project Maintainer can be given Read-only on
+production, and a project Read-only can be given Maintainer on a protected staging environment.
+
+What each role can do there is the same as in the [roles tables](/team/understanding-roles#permissions-in-detail):
+deploying needs Maintainer, secret values need Member, and so on. The [CLI](/cli/usage#who-can-run-which-command) uses
+the environment role too.
+
+Only people who are already in the project can be added. To give someone access to a protected environment,
+[add them to the project](/team/project-members) first.
+
+## Protect an environment
+
+You need the Member role in the project, or full access.
+
+1. Open the environment.
+2. Click **Protect** in the header.
+3. Read the confirmation and click **Protect**.
+
+If you're not an Owner or Admin with full access, you're added to the environment with your current project role, so you
+keep access.
+
+Protected environments show a **Protected** badge, in the environment header and next to its name in the environments
+list.
+
+<Warning>
+  Everyone without full access loses the environment as soon as it's protected - their open pages stop working and the
+  CLI can no longer reach it. Add the people who need it right after protecting.
+</Warning>
+
+## Add people and set their role
+
+Open the environment's **Members** tab. It only appears on protected environments.
+
+The list shows everyone who could have access - the project's members and the organization's Owners and Admins:
+
+| Column               | What it shows                                                                                                                                            |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **User**             | Name and email, with an **Org owner** or **Org admin** badge for Owners and Admins                                                                       |
+| **Project role**     | Their role in the project                                                                                                                                |
+| **Environment role** | The role set for them in this environment, or a dash if they don't have one                                                                              |
+| **Access here**      | What they can do here, with where it comes from underneath: **Full access (owner/admin)**, **Set for this environment**, **Restricted** or **No access** |
+
+To add someone, click **⋯** on their row, choose **Add to environment**, pick a role and click **Add**.
+
+To change a role, choose **Change environment role**, pick the new role and click **Save**.
+
+To take someone out, choose **Remove from environment**. They can no longer see the environment.
+
+You need the Member role in the environment, or full access, to add, change or remove people.
+
+## Owners and Admins in a protected environment
+
+Owners and Admins with full access don't need adding. Setting an environment role on one of them is a **restriction** -
+it lowers their access in this environment only, following the [restriction rules](/team/owner-admin-restrictions):
+
+- Anyone can restrict themselves, to any role, and lift their own restriction.
+- Restricting another Owner or Admin needs the Member role in the environment, or full access. If they're already
+  restricted, their role can only be lowered.
+- Only the person themselves or an Owner or Admin with full access can lift a restriction, with **Lift restriction**.
+
+## Unprotect an environment
+
+You need the Member role in the environment, or full access.
+
+1. Open the environment.
+2. Click **Unprotect** in the header.
+3. Confirm with **Unprotect**.
+
+<Warning>
+  Unprotecting deletes every environment role in it, including Owner and Admin restrictions. Everyone goes back to their
+  project role. If you protect the environment again later, you have to add people again.
+</Warning>
+
+## Who can do what
+
+| Action                                          | Needs                                          |
+| ----------------------------------------------- | ---------------------------------------------- |
+| See a protected environment                     | Full access, or an environment role            |
+| Protect an environment                          | Member role in the project, or full access     |
+| Unprotect an environment                        | Member role in the environment, or full access |
+| Add, change or remove people                    | Member role in the environment, or full access |
+| Restrict yourself, or lift your own restriction | Any Owner or Admin                             |
+| Restrict another Owner or Admin                 | Member role in the environment, or full access |
+| Lift another Owner's or Admin's restriction     | Full access                                    |
+
+**Full access** means an Owner or Admin who isn't restricted in the project or the environment.

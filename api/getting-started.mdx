@@ -34,6 +34,12 @@ curl -H "Authorization: Bearer YOUR_API_TOKEN" \
 
 The token is issued per account. Owners and admins can read it from the LocalOps console.
 
+<Warning>
+  The API token isn't tied to a user, so [roles](/team/understanding-roles) and
+  [protected environments](/environment/protected-environments) don't limit it. It can act on every project and
+  environment in the account. Treat it like Owner or Admin access, and keep it in your CI's secret store.
+</Warning>
+
 A missing header, a non-`Bearer` header, a malformed token, or a token that matches no account are all rejected the same
 way:
 

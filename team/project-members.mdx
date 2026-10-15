@@ -1,0 +1,107 @@
+---
+title: Project members
+description: Add people to a project, set their project role, change it, and remove them
+---
+
+Each project has its own list of members. Organization Members only see and work in the projects they are added to, with
+the [project role](/team/understanding-roles#project-roles) they are given there. Owners and Admins don't need adding -
+they belong to every project.
+
+## Open the member list
+
+In the sidebar, under **Project**, go to **Settings** → **Members**. The page is titled **Project Members**.
+
+Everyone in the project can see this list. It shows:
+
+| Column       | What it shows                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| **User**     | The person's name and email                                                                              |
+| **Role**     | Their project role. Owners and Admins show **Full access** with an **Org owner** or **Org admin** badge. |
+| **Status**   | **Active**, or **Invited** / **Expired** for people who haven't accepted their invitation yet            |
+| **Added at** | When they joined the project                                                                             |
+
+An Owner or Admin who is [restricted](/team/owner-admin-restrictions) in the project shows their restricted role with a
+**Restricted** badge.
+
+<Tip>Owners and Admins can also see a project's members from **Projects** → the project → **People**.</Tip>
+
+## Add an existing organization member
+
+You need the Member role in the project, or to be an Owner or Admin.
+
+<Steps>
+  <Step title="Open the dialog">Go to **Settings** → **Members** and click **Add member**.</Step>
+  <Step title="Pick the person">
+    On the **Add existing org member** tab, choose them under **Select member**. Owners and Admins aren't listed - they
+    already have access.
+  </Step>
+  <Step title="Pick their role">Choose a **Project role**. It starts at **Read-only**.</Step>
+  <Step title="Add them">Click **Add to project**.</Step>
+</Steps>
+
+## Invite someone new into the project
+
+Owners and Admins can invite someone who isn't in the organization yet, straight into a project:
+
+1. Go to **Settings** → **Members** and click **Add member**.
+2. Open the **Invite new user** tab.
+3. Enter their **Email** and pick a **Project role**.
+4. Click **Send invite**.
+
+They join the organization as a Member, with that role in this project. To invite someone into several projects at once,
+or as an Admin, [invite them from organization settings](/team/invite-users) instead.
+
+## Change someone's project role
+
+You need the Member role in the project, or to be an Owner or Admin.
+
+1. Go to **Settings** → **Members**.
+2. Click **⋯** on their row and choose **Change role**.
+3. Pick the new role in **Change project role** and click **Update role**.
+
+The new role applies straight away, everywhere in the project except
+[protected environments](/environment/protected-environments) where they have an environment role.
+
+On an Owner's or Admin's row, **Change role** restricts them instead. See
+[Owner and Admin restrictions](/team/owner-admin-restrictions).
+
+## Remove someone from the project
+
+You need the Member role in the project, or to be an Owner or Admin.
+
+1. Go to **Settings** → **Members**.
+2. Click **⋯** on their row and choose **Remove member**.
+3. Confirm with **Continue**.
+
+They lose access to the project immediately, including any environment roles they had in it. Their organization
+membership is not affected.
+
+<Note>
+  Owners and Admins can't be removed from a project - the menu shows _"Owners and admins can be demoted but not
+  removed."_ To limit an Owner or Admin in one project, [restrict them](/team/owner-admin-restrictions). To take away
+  their access everywhere, change their organization role to Member.
+</Note>
+
+## Leave a project
+
+Anyone who is an organization Member can leave a project, whatever their project role: click **⋯** on your own row,
+choose **Remove member** and confirm.
+
+## Cancel a pending invitation
+
+Owners and Admins can click **⋯** on an invited person's row and choose **Cancel invitation**. This cancels their whole
+invitation to the organization, including every project it covers.
+
+## Who can do what here
+
+| Action                                      | Read-only | Maintainer | Member | Owner / Admin |
+| ------------------------------------------- | --------- | ---------- | ------ | ------------- |
+| See the member list                         | ✅        | ✅         | ✅     | ✅            |
+| Add an existing organization member         | -         | -          | ✅     | ✅            |
+| Change someone's project role               | -         | -          | ✅     | ✅            |
+| Remove someone from the project             | -         | -          | ✅     | ✅            |
+| Leave the project                           | ✅        | ✅         | ✅     | -             |
+| Invite someone new, or cancel an invitation | -         | -          | -      | ✅            |
+
+Owners and Admins who are restricted in the project can still invite people and cancel invitations. Adding, changing and
+removing members needs them to be restricted to Member or not restricted at all.
