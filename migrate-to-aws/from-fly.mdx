@@ -122,6 +122,13 @@ Convert Fly.io health checks to LocalOps format in `ops.json`:
 
 See [ops.json documentation](/environment/services/ops-json) for all health check options.
 
+### Clustered Elixir/Erlang apps
+
+On Fly.io, Elixir apps usually cluster over the private `.internal` network with `dns_cluster` or libcluster. On
+LocalOps, add `beam_cluster_id` to `ops.json` and point libcluster at the injected `LOPS_BEAM_CLUSTER_DNS`. If your Fly
+app clustered across regions, you can do the same with one environment per region connected by VPC peering. See
+[BEAM clustering](/environment/services/beam-clustering) for both setups.
+
 ## Step 3: Migrate Fly Postgres to Amazon RDS
 
 ### 3.1 Create a backup of your Fly Postgres database
@@ -375,6 +382,7 @@ custom dashboards to visualize application-specific metrics and logs.
 | Fly Postgres          | [Amazon RDS](/environment/services/aws/rds)                  |
 | Upstash Redis         | [Amazon ElastiCache](/environment/services/aws/elasti-cache) |
 | Tigris Object Storage | [Amazon S3](/environment/services/aws/s3)                    |
+| Elixir clustering     | [BEAM clustering](/environment/services/beam-clustering)     |
 | Fly Metrics           | [Built-in metrics](/environment/monitoring/metrics)          |
 | Fly Logs              | [Built-in logging](/environment/monitoring/logs)             |
 

@@ -79,7 +79,99 @@ environment can't see nodes in Ireland. To form a single mesh across regional en
 name in a private zone that every regional VPC can resolve, and let LocalOps keep that name pointed at the environment's
 pods.
 
+<Note>
+  The steps below use Mumbai (`ap-south-1`) and Ireland (`eu-west-1`) as example regions. Substitute the regions,
+  CIDRs, and names that fit your setup.
+</Note>
+
 <Steps>
+  <Step title="Spin up an environment in each region" icon="server">
+    In LocalOps, [create an environment](/environment/create) in every region the cluster should span — say one in
+    `ap-south-1` (Mumbai) and one in `eu-west-1` (Ireland) — and deploy the same services to each.
+
+    Every environment gets its own VPC, and by default every VPC uses `10.0.0.0/16`. Peered VPCs can't have overlapping
+    CIDRs, so open **Advanced options** on the Create environment page and give each environment its own block — for
+    example `10.10.0.0/16` for Mumbai and `10.20.0.0/16` for Ireland.
+
+    <Warning>
+      The CIDR is fixed once the environment is created. An existing environment on the default `10.0.0.0/16` can't be
+      peered with another one on the same range — create a new environment with a distinct CIDR instead.
+    </Warning>
+  </Step>
+
+  <Step title="Set up VPC peering between the regions (AWS)" icon="link">
+    DNS gets nodes to each other's addresses; peering is what gets packets there. For every pair of regions:
+
+    1. **Request the peering connection.** In the VPC console of the first region (Mumbai), go to **Peering
+       connections → Create peering connection**. Pick the Mumbai environment's VPC as the requester, choose **Another
+       Region** (and **Another account**, if the environments live in different AWS accounts), and enter the Ireland
+       environment's VPC ID.
+    2. **Accept it.** Switch the console to the other region (Ireland), open **Peering connections**, select the pending
+       request, and choose **Actions → Accept request**.
+    3. **Update the private subnets' route tables, on both sides.** Your pods run in the environment's private subnets,
+       so their route tables need a route to the peer VPC. In **Route tables**, filter by each environment's VPC and edit
+       every route table associated with a private subnet — LocalOps creates one per availability zone — adding:
+
+       | Environment | Destination              | Target                              |
+       | ----------- | ------------------------ | ----------------------------------- |
+       | Mumbai      | `10.20.0.0/16` (Ireland) | the peering connection (`pcx-...`) |
+       | Ireland     | `10.10.0.0/16` (Mumbai)  | the peering connection (`pcx-...`) |
+
+       Leave the public subnets' route tables alone — nodes never talk across regions from there.
+
+    Peering isn't transitive — with three regions you need three peering connections (Mumbai↔Ireland,
+    Mumbai↔Virginia, Ireland↔Virginia), each with routes on both sides. Past a handful of regions, a Transit Gateway
+    is simpler to manage than a full mesh of peerings.
+
+    You can do the same from the CLI:
+
+    ```bash
+    # In Mumbai: request
+    aws ec2 create-vpc-peering-connection --region ap-south-1 \
+      --vpc-id vpc-mumbai --peer-vpc-id vpc-ireland --peer-region eu-west-1
+
+    # In Ireland: accept
+    aws ec2 accept-vpc-peering-connection --region eu-west-1 --vpc-peering-connection-id pcx-0abc123
+
+    # Repeat for every private route table in each VPC
+    aws ec2 create-route --region ap-south-1 --route-table-id rtb-mumbai-private-a \
+      --destination-cidr-block 10.20.0.0/16 --vpc-peering-connection-id pcx-0abc123
+    aws ec2 create-route --region eu-west-1 --route-table-id rtb-ireland-private-a \
+      --destination-cidr-block 10.10.0.0/16 --vpc-peering-connection-id pcx-0abc123
+    ```
+  </Step>
+
+  <Step title="Open BEAM ports in the EKS cluster security groups" icon="shield">
+    With peering in place, packets reach the other VPC but are dropped at the pods unless the security group allows
+    them. Nodes need EPMD (TCP `4369`) plus the distribution ports open to the peer region.
+
+    Erlang picks a random distribution port by default, so first pin it to a fixed range in your release config:
+
+    ```elixir config/runtime.exs
+    config :kernel,
+      inet_dist_listen_min: 9000,
+      inet_dist_listen_max: 9010
+    ```
+
+    Then, in each region's VPC console, open **Security groups** and filter by the environment's VPC. LocalOps creates
+    a security group along with the EKS cluster, and its name contains `eks-cluster` — that's the group attached to
+    your pods. Add these inbound rules, with the **peer** region's CIDR as the source:
+
+    | Security group         | Type       | Port range  | Source                   |
+    | ---------------------- | ---------- | ----------- | ------------------------ |
+    | Mumbai `eks-cluster`   | Custom TCP | `4369`      | `10.20.0.0/16` (Ireland) |
+    | Mumbai `eks-cluster`   | Custom TCP | `9000-9010` | `10.20.0.0/16` (Ireland) |
+    | Ireland `eks-cluster`  | Custom TCP | `4369`      | `10.10.0.0/16` (Mumbai)  |
+    | Ireland `eks-cluster`  | Custom TCP | `9000-9010` | `10.10.0.0/16` (Mumbai)  |
+
+    With more regions, add the same pair of rules for each peer region's CIDR.
+
+    <Tip>
+      If nodes resolve each other's IPs but `Node.list()` stays empty, check these rules first — a missing rule shows
+      up as a connection timeout, not a DNS failure.
+    </Tip>
+  </Step>
+
   <Step title="Create one private zone shared by every regional VPC" icon="globe">
     On AWS, create a Route 53 **private hosted zone** — say `mesh.acmecorp.internal` — and associate it with the VPC of
     every regional environment you spin up. One zone, many VPC associations. If your environments live in different AWS
@@ -145,12 +237,32 @@ pods.
     The same config ships to every region — each node finds its local peers through `LOPS_BEAM_CLUSTER_DNS` and every
     remote region through that region's record. Nodes connect from both ends, and the mesh forms.
   </Step>
+
+  <Step title="Verify the mesh from one region" icon="circle-check">
+    Once the new build is deployed in every region, use [`ops connect`](/cli/usage#shell-into-a-service) to open a
+    shell on a pod in one region's environment:
+
+    ```sh
+    ops connect --env mumbai --svc web
+    ```
+
+    From that shell, attach a remote console to the running release and list the connected nodes:
+
+    ```sh
+    bin/b2bapp remote
+    ```
+
+    ```elixir
+    Node.list()
+    ```
+
+    You should see nodes from every region, not just this one — for example `b2bapp@10.10.x.x` alongside
+    `b2bapp@10.20.x.x`. If only local nodes show up, recheck the peering routes and the security group rules above.
+  </Step>
 </Steps>
 
 <Warning>
-  DNS gets nodes to each other's addresses; it doesn't get packets there. The regional VPCs still need routable
-  connectivity between them — VPC peering or a Transit Gateway — with EPMD (`4369`) and your distribution port range
-  open between them. And the `RELEASE_COOKIE` has to match across regions, not just across services in one region.
+  The `RELEASE_COOKIE` has to match across regions, not just across services in one region.
 </Warning>
 
 <Note>
@@ -190,7 +302,12 @@ the cluster, since it isn't running your app.
 
 ## Verify it worked
 
-Get a shell on a running pod (see [Shell into a pod](/cli/usage#shell-into-a-pod)), open a remote console, and run:
+Get a shell on a running pod with [`ops connect`](/cli/usage#shell-into-a-service), open a remote console, and run:
+
+```sh
+ops connect --env production --svc web
+bin/myapp remote
+```
 
 ```elixir
 Node.list()
