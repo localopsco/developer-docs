@@ -1,12 +1,11 @@
 ---
 title: Autoscaling
-description:
-  Scale a service's replicas on CPU, memory and time-of-day windows with the autoscaling block in ops.json
+description: Scale a service's replicas on CPU, memory and time-of-day windows with the autoscaling block in ops.json
 ---
 
 Most services don't need the same number of containers all day. Traffic peaks in business hours, a queue drains
 overnight, a batch job floods a worker every Monday morning. Declare an `autoscaling` block in `ops.json` and LocalOps
-adds and removes replicas for you, between a floor and a ceiling you set.
+adds and removes replicas for you, between your service's container count and a ceiling you set.
 
 This is **horizontal** autoscaling - LocalOps runs more copies of your container, it does not give any single container
 more CPU or memory. The CPU and memory each container gets stay exactly as you set them for the service, and are what
@@ -30,53 +29,54 @@ The smallest block that works needs a ceiling and one thing to scale on:
 }
 ```
 
-That holds average CPU utilization near 70% across your service's pods, adding replicas up to 10 and removing them
-again as load falls.
+That holds average CPU utilization near 70% across your service's pods, adding replicas up to 10 and removing them again
+as load falls.
 
 <Warning>
   `target_cpu` needs your service to have a **minimum CPU** set under the Scaling tab in the LocalOps console.
-  Utilization is measured as a percentage of what each pod requested, so without a minimum there is no denominator -
-  the autoscaler has nothing to compare against and never scales. The same applies to `target_memory` and minimum
-  memory. LocalOps refuses the block and tells you so in the deployment logs rather than installing something that
-  quietly does nothing.
+  Utilization is measured as a percentage of what each pod requested, so without a minimum there is no denominator - the
+  autoscaler has nothing to compare against and never scales. The same applies to `target_memory` and minimum memory.
+  LocalOps refuses the block and tells you so in the deployment logs rather than installing something that quietly does
+  nothing.
 </Warning>
 
 ## Autoscaling arguments
 
-| Key             | Required | Description                                                                                                                           |
-| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `min_replicas`  | No       | Resting replica count - where the service sits at zero load. Leave it out and your service's existing container count is used.         |
-| `max_replicas`  | Yes      | The ceiling. Never defaulted, because it is the only thing standing between a runaway request loop and a cloud bill you didn't expect. |
-| `target_cpu`    | No       | Average CPU utilization to hold, as a percentage of each pod's CPU request.                                                            |
-| `target_memory` | No       | Average memory utilization to hold, as a percentage of each pod's memory request.                                                      |
+| Key             | Required | Description                                                                                                                                 |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `max_replicas`  | Yes      | The ceiling. Never defaulted, because it is the only thing standing between a runaway request loop and a cloud bill you didn't expect.      |
+| `target_cpu`    | No       | Average CPU utilization to hold, as a percentage of each pod's CPU request.                                                                 |
+| `target_memory` | No       | Average memory utilization to hold, as a percentage of each pod's memory request.                                                           |
 | `schedules`     | No       | Time-of-day windows that hold the service at a floor. See [Time-of-day schedules](/environment/services/autoscaling#time-of-day-schedules). |
 
 You must declare at least one of `target_cpu`, `target_memory` or `schedules`. A replica range on its own has nothing
-driving it, so the service would sit at its floor forever - LocalOps treats that as a mistake rather than a valid way
-to say "off" and ignores the block.
+driving it, so the service would sit at its floor forever - LocalOps treats that as a mistake rather than a valid way to
+say "off" and ignores the block.
 
 ## Replica range
 
-`min_replicas` is where your service rests. Leave it out and LocalOps uses the container count already configured for
-the service, so switching autoscaling on never shrinks a running service by surprise.
+There is no `min_replicas` key. The floor is always your service's **number of containers** - the same count you set
+when [creating the service](/environment/services/create#number-of-containers) or later under its Scaling tab. That
+count exists whether or not the service autoscales, so there is exactly one place to set it, and switching autoscaling
+on never shrinks a running service by surprise. To raise or lower the floor, change the container count.
 
-Allowed range is `1` to `50`. A value below 1 is raised to 1, and a ceiling above 50 is capped at the platform limit.
-If `max_replicas` ends up below `min_replicas`, it is raised to match.
+`max_replicas` is capped at the platform limit of `50`. If it is below the service's container count, it is raised to
+match.
 
 <Note>
-  Scaling to zero is not supported. A service with no pods running has nothing to measure utilization on, so `1` is the
-  lowest floor available. To take a service down to zero, use the Stop button in the LocalOps console.
+  Scaling to zero is not supported. A service with no pods running has nothing to measure utilization on. If you stop a
+  service (container count `0`), autoscaling is **paused**, not removed - the configuration is kept and applies again
+  once the count is raised above zero.
 </Note>
 
 ## Utilization targets
 
-Both `target_cpu` and `target_memory` are percentages of each pod's **request** - the minimum CPU and memory you set
-for the service - not its limit, and not the capacity of the underlying node.
+Both `target_cpu` and `target_memory` are percentages of each pod's **request** - the minimum CPU and memory you set for
+the service - not its limit, and not the capacity of the underlying node.
 
 ```json ops.json
 {
   "autoscaling": {
-    "min_replicas": 2,
     "max_replicas": 12,
     "target_cpu": 70
   }
@@ -92,31 +92,32 @@ starved.
 
 <Warning>
   Prefer `target_cpu` where it works. Most runtimes - the JVM, Node, Go - never return freed heap to the operating
-  system, so memory utilization only ratchets upwards. A service scaling on `target_memory` may scale out under load
-  and never scale back in. LocalOps logs this warning on every deployment that uses `target_memory`.
+  system, so memory utilization only ratchets upwards. A service scaling on `target_memory` may scale out under load and
+  never scale back in. LocalOps logs this warning on every deployment that uses `target_memory`.
 </Warning>
 
 ## Time-of-day schedules
 
-Some load is predictable enough that waiting for a metric to move is too late. `schedules` holds your service at a
-floor for a window, so capacity is already there when traffic arrives:
+Some load is predictable enough that waiting for a metric to move is too late. `schedules` holds your service at a floor
+for a window, so capacity is already there when traffic arrives:
 
 ```json ops.json
 {
   "autoscaling": {
-    "min_replicas": 2,
     "max_replicas": 20,
     "target_cpu": 70,
     "schedules": [
       {
-        "start": "0 9 * * 1-5",
-        "end": "0 18 * * 1-5",
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "start_time": "09:00",
+        "end_time": "18:00",
         "timezone": "Asia/Kolkata",
         "replicas": 8
       },
       {
-        "start": "0 0 * * 6",
-        "end": "0 23 * * 6",
+        "days": ["saturday"],
+        "start_time": "00:00",
+        "end_time": "23:00",
         "timezone": "UTC",
         "replicas": 3
       }
@@ -127,22 +128,32 @@ floor for a window, so capacity is already there when traffic arrives:
 
 ### Schedule arguments
 
-| Key        | Required | Description                                                                                                       |
-| ---------- | -------- | ------------------------------------------------------------------------------------------------------------------- |
-| `start`    | Yes      | When the window opens, as a 5-field cron expression. [Refer here](https://crontab.guru/) on how to write one.       |
-| `end`      | Yes      | When the window closes, in the same format.                                                                        |
-| `timezone` | Yes      | IANA timezone name, such as `Asia/Kolkata` or `America/New_York`. Both cron expressions are evaluated in this zone. |
-| `replicas` | Yes      | The floor to hold for the duration of the window.                                                                  |
+| Key          | Required | Description                                                                                              |
+| ------------ | -------- | -------------------------------------------------------------------------------------------------------- |
+| `days`       | Yes      | Days the window opens on, as lowercase day names: `sunday` through `saturday`. Each day may appear once. |
+| `start_time` | Yes      | When the window opens, as a 24-hour zero-padded `HH:mm` time, such as `09:00`.                           |
+| `end_time`   | Yes      | When the window closes, in the same format. Must differ from `start_time`.                               |
+| `timezone`   | Yes      | IANA timezone name, such as `Asia/Kolkata` or `America/New_York`. Both times are read in this zone.      |
+| `replicas`   | Yes      | The floor to hold for the duration of the window.                                                        |
 
-`timezone` has no default on purpose. A business-hours window without one would silently mean UTC, which is almost
-never what was intended.
+Schedules are deliberately not raw cron expressions. One `days` list drives both the start and the end of a window, so a
+window can't open on weekdays and close every day by mistake.
+
+### Overnight windows
+
+If `end_time` is at or before `start_time`, the window runs overnight and closes on the following day. For example,
+`"days": ["friday"]` with `"start_time": "22:00"` and `"end_time": "06:00"` holds the floor from Friday 22:00 until
+Saturday 06:00. LocalOps handles the day shift for you.
+
+`timezone` has no default on purpose. A business-hours window without one would silently mean UTC, which is almost never
+what was intended.
 
 A schedule sets a floor, not a fixed count. Your utilization targets keep working inside the window and can take the
 service above the scheduled number, up to `max_replicas`.
 
-You can declare up to 12 windows per service. Beyond that, only the first 12 are kept. A window asking for more
-replicas than `max_replicas` is capped at the ceiling, and one asking for fewer than `min_replicas` is raised to the
-floor.
+You can declare up to 12 windows per service. Beyond that, only the first 12 are kept. A window asking for more replicas
+than `max_replicas` is capped at the ceiling, and one asking for fewer than the service's container count is raised to
+that count.
 
 ## Proactive and reactive scaling
 
@@ -151,9 +162,9 @@ The two kinds of trigger behave differently, and most services want both.
 `schedules` are **proactive**. The window opens on a clock, so capacity is in place before the traffic it was meant for
 arrives. Use them for load you can predict - business hours, a nightly batch, a weekly report run.
 
-`target_cpu` and `target_memory` are **reactive**. Nothing moves until utilization has already risen, so there is
-always a short lag between load arriving and replicas appearing. Use them for load you can't predict, and as the safety
-net above whatever your schedules reserved.
+`target_cpu` and `target_memory` are **reactive**. Nothing moves until utilization has already risen, so there is always
+a short lag between load arriving and replicas appearing. Use them for load you can't predict, and as the safety net
+above whatever your schedules reserved.
 
 A common shape is a schedule that covers the working day and a CPU target that handles the spikes within it.
 
@@ -179,7 +190,7 @@ minimum.
 </Warning>
 
 A service runs only on the node group it is assigned to. It can't spill over onto another node group's spare capacity,
-so it is the max of *that* node group that bounds how far your service can scale. If you run several autoscaling
+so it is the max of _that_ node group that bounds how far your service can scale. If you run several autoscaling
 services on one node group, size it for all of them peaking together.
 
 <Note>
@@ -203,24 +214,25 @@ than merging with it field by field. This keeps things predictable - your servic
   through the console. If you move autoscaling into `ops.json`, move all of it.
 </Warning>
 
-If your `ops.json` block can't be used - a missing `max_replicas`, say - LocalOps falls back to the configuration
-stored through the console rather than leaving the service unscaled, and says so in the deployment logs. A malformed
-push never silently strips a service of autoscaling it already had.
+If your `ops.json` block can't be used - a missing `max_replicas`, say - LocalOps falls back to the configuration stored
+through the console rather than leaving the service unscaled, and says so in the deployment logs. A malformed push never
+silently strips a service of autoscaling it already had.
 
 ## When a service can't autoscale
 
-Some services are refused outright, whichever way the configuration was set. The deployment continues, and the reason
-is logged.
+Some services are refused outright, whichever way the configuration was set. The deployment continues, and the reason is
+logged.
 
 - **Preview services never autoscale.** A preview's `ops.json` comes off a pull request branch, so any PR author could
   otherwise raise your bill, and one stored ceiling would multiply across every open PR. Previews exist to validate a
-  change, not to serve load. See [ephemeral environments](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews).
-- **Helm chart services** are scaled by their own chart values at install time. `autoscaling` isn't an accepted key in
-  a helm service's `ops.json` at all.
+  change, not to serve load. See
+  [ephemeral environments](/environment/services/ops-json#ephemeral-databases-and-services-for-pull-request-previews).
+- **Helm chart services** are scaled by their own chart values at install time. `autoscaling` isn't an accepted key in a
+  helm service's `ops.json` at all.
 - **Only web, worker and internal services** can autoscale. Cron and job services aren't long-running workloads, so
   there is nothing to scale on load.
-- **Services with a `disk` volume** can't autoscale. Durable storage means each replica owns its own volume, so
-  replicas can't be added on demand. Scratch space (`mem`) and mounted secrets are fine. See
+- **Services with a `disk` volume** can't autoscale. Durable storage means each replica owns its own volume, so replicas
+  can't be added on demand. Scratch space (`mem`) and mounted secrets are fine. See
   [volumes](/environment/services/ops-json#volumes).
 
 ## Nothing here fails a deployment
@@ -228,15 +240,17 @@ is logged.
 Like [`deploy_timeout`](/environment/services/ops-json#deploy-timeout), a value outside the allowed range is corrected
 rather than treated as a broken deployment. Every correction is logged.
 
-| Declared                            | What happens                                   |
-| ----------------------------------- | ------------------------------------------------ |
-| `min_replicas` below `1`            | Raised to `1`                                  |
-| `max_replicas` above `50`           | Capped at `50`                                 |
-| `max_replicas` below `min_replicas` | Raised to match `min_replicas`                 |
-| `target_cpu` or `target_memory` below `1`   | That trigger is ignored                |
-| `target_cpu` or `target_memory` above `500` | Capped at `500`                        |
-| More than 12 schedules              | Only the first 12 are kept                     |
-| A schedule with a bad cron or timezone | That window is dropped, the others still apply |
+| Declared                                                                 | What happens                                         |
+| ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `max_replicas` above `50`                                                | Capped at `50`                                       |
+| `max_replicas` below the service's container count                       | Raised to match the container count                  |
+| `target_cpu` or `target_memory` below `1`                                | That trigger is ignored                              |
+| `target_cpu` or `target_memory` above `500`                              | Capped at `500`                                      |
+| More than 12 schedules                                                   | Only the first 12 are kept                           |
+| A schedule's `replicas` above `max_replicas`                             | Capped at `max_replicas`                             |
+| A schedule's `replicas` below the container count                        | Raised to the container count                        |
+| A schedule with missing or invalid `days`, times, timezone or `replicas` | That window is dropped, the others still apply       |
+| Service stopped (container count `0`)                                    | Autoscaling paused, resumes when the count is raised |
 
 A block that couldn't work at all - no `max_replicas`, no trigger, or a utilization target with no matching resource
 request - is ignored entirely, with the reason in your deployment logs.

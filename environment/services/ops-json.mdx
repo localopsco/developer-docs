@@ -412,15 +412,14 @@ day. Scale on CPU or memory utilization, on time-of-day windows, or both:
 ```json
 {
   "autoscaling": {
-    "min_replicas": 2,
     "max_replicas": 10,
     "target_cpu": 70
   }
 }
 ```
 
-`max_replicas` is required and is never defaulted - it is the ceiling on what this service can cost. `min_replicas` is
-optional and falls back to your service's existing container count. `target_cpu` and `target_memory` are percentages of
+`max_replicas` is required and is never defaulted - it is the ceiling on what this service can cost. There is no
+`min_replicas` - the floor is always your service's container count. `target_cpu` and `target_memory` are percentages of
 each pod's CPU and memory request, so the service needs a minimum CPU or memory set under the Scaling tab for them to
 work.
 
@@ -1248,10 +1247,17 @@ Here's a comprehensive `ops.json` example:
   "beam_cluster_id": "myapp",
   "deploy_timeout": 900,
   "autoscaling": {
-    "min_replicas": 2,
     "max_replicas": 10,
     "target_cpu": 70,
-    "schedules": [{ "start": "0 9 * * 1-5", "end": "0 18 * * 1-5", "timezone": "Asia/Kolkata", "replicas": 6 }]
+    "schedules": [
+      {
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "start_time": "09:00",
+        "end_time": "18:00",
+        "timezone": "Asia/Kolkata",
+        "replicas": 6
+      }
+    ]
   },
   "volumes": [
     { "name": "tmp", "mount_path": "/tmp", "kind": "mem" },
