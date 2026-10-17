@@ -97,8 +97,7 @@
               {
                 "group": "Environment security controls",
                 "pages": [
-                  "environment/protected-environments",
-              "environment/security",
+                  "environment/security",
                   "environment/security-gcp"
                 ]
               },
@@ -183,6 +182,7 @@
               "team/understanding-roles",
               "team/invite-users",
               "team/project-members",
+              "environment/protected-environments",
               "team/owner-admin-restrictions",
               "team/remove-user",
               "team/audit-logs"
