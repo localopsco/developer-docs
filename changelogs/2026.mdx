@@ -4,12 +4,15 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
-<Update label="October 15, 2026">
+<Update label="October 16, 2026">
 
-## Project roles, protected environments and Owner/Admin restrictions
+## Granular project & environment roles: Safeguard environments
 
-Until now everyone in a project could do everything in it. You can now decide exactly what each person can do, per
-project and per environment.
+![Change project role](./images/2026/project-roles-oct-16-26.png)
+
+Until now everyone in a project could do everything in it - edit secrets, add and delete services, and make
+deployments to any environment, including production. You can now decide exactly what each person can do, per project
+and per environment.
 
 ### Project roles
 
@@ -33,8 +36,17 @@ change roles there at any time. See [project members](/team/project-members) and
 ### Protected environments
 
 [Protect](/environment/protected-environments) an environment such as production to limit it to Owners and Admins with
-full access and the people you add to it. People you add get an environment role that replaces their project role there.
-Everyone else doesn't see the environment, its deployments or its operations at all.
+full access and the people you add to it. Everyone else doesn't see the environment, its deployments or its operations
+at all.
+
+People you add get one of these environment roles:
+
+- **Read-only**
+- **Maintainer**
+- **Member**
+
+The environment role overrides their project role inside that environment, and it can be higher or lower. For example,
+a project Maintainer can be Read-only in production, and a project Read-only can be a Member in staging.
 
 ### Owner and Admin restrictions
 
@@ -46,6 +58,20 @@ Member role there. They can always lift their own restriction.
 
 `ops logs` needs the Maintainer role. `ops connect`, `ops proxy` and `ops update-kubeconfig` need Member. See [who can
 run which command](/cli/usage#who-can-run-which-command).
+
+### Security controls and shared responsibilities
+
+New guides show what "production grade" means in a LocalOps environment - isolation, keyless access, network,
+encryption, least-privilege IAM, secrets, backups and audit logging, all on by default. See how production-ready your
+environments are from day one:
+
+- [Environment security controls on AWS](/environment/security)
+- [Environment security controls on GCP](/environment/security-gcp)
+
+The new [shared responsibilities](/environment/shared-responsibilities) page explains who owns what in an environment -
+your team, LocalOps and your cloud provider - across apps, infrastructure and security.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
 </Update>
 
