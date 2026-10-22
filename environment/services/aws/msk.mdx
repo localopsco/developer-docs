@@ -1,0 +1,434 @@
+---
+title: MSK (Kafka)
+description: Provision Amazon MSK Kafka clusters - provisioned or serverless
+---
+
+Your service(s) may want to publish and consume events through Apache Kafka. This guide will show you how to create and
+access Amazon MSK (Managed Streaming for Apache Kafka) clusters, either **provisioned** clusters with brokers you size
+yourself, or **serverless** clusters that scale on their own.
+
+## Declarative & Automatic using `ops.json`:
+
+For your service, if you need one or more MSK clusters, you can add `ops.json` in the root directory of Github repo.
+
+<Tip>Learn more about configuring dependencies using `ops.json` [here](/environment/services/ops-json).</Tip>
+
+And add MSK clusters as a dependency, like below.
+
+### Provisioned cluster
+
+```json
+{
+  "dependencies": {
+    "msk": {
+      "clusters": [
+        {
+          "id": "events",
+          "type": "provisioned",
+          "version": "3.9.x",
+          "instance_type": "kafka.t3.small",
+          "broker_count": 2,
+          "storage_gb": 20,
+          "parameters": [{ "name": "auto.create.topics.enable", "value": "false" }],
+          "exports": {
+            "KAFKA_NAME": "$name",
+            "KAFKA_ARN": "$arn",
+            "KAFKA_BROKERS": "$bootstrapBrokers",
+            "KAFKA_PORT": "$port",
+            "KAFKA_REGION": "$region",
+            "KAFKA_SASL_MECHANISM": "$saslMechanism",
+            "KAFKA_SECURITY_PROTOCOL": "$securityProtocol",
+            "KAFKA_USERNAME": "$username",
+            "KAFKA_PASSWORD": "$password",
+            "KAFKA_PASSWORD_ARN": "$passwordArn"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+### Serverless cluster
+
+```json
+{
+  "dependencies": {
+    "msk": {
+      "clusters": [
+        {
+          "id": "events",
+          "type": "serverless",
+          "exports": {
+            "KAFKA_NAME": "$name",
+            "KAFKA_ARN": "$arn",
+            "KAFKA_BROKERS": "$bootstrapBrokers",
+            "KAFKA_PORT": "$port",
+            "KAFKA_REGION": "$region",
+            "KAFKA_SASL_MECHANISM": "$saslMechanism",
+            "KAFKA_SECURITY_PROTOCOL": "$securityProtocol"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+You can add as many clusters as you want.
+
+Arguments you can add in each cluster object above:
+
+1. `id` - Alphanumeric string. Must be unique amongst the clusters you've declared above. Changing this string will
+   replace the original cluster with new one.
+2. `type` - `provisioned` or `serverless`. Default: `provisioned`.
+3. `version` - Provisioned only, required. A Kafka version MSK supports for new clusters, eg., `3.8.x` or `3.9.x`.
+   Recent MSK versions use the `x` form - write it exactly like that. Run `aws kafka list-kafka-versions` or refer to
+   [AWS docs](https://docs.aws.amazon.com/msk/latest/developerguide/supported-kafka-versions.html) for the list. Older
+   versions may be rejected for new clusters, eg., MSK no longer accepts `3.6.0` for standard brokers such as
+   `kafka.t3.small`.
+4. `instance_type` - Provisioned only. Broker instance type, must start with `kafka.`, eg., `kafka.t3.small`,
+   `kafka.m5.large`. Refer to
+   [AWS docs](https://docs.aws.amazon.com/msk/latest/developerguide/broker-instance-sizes.html) for available sizes.
+   Default: `kafka.t3.small`.
+5. `broker_count` - Provisioned only. Total number of brokers. Brokers are spread evenly over 2 or 3 availability zones,
+   so this must be 2 or more and a multiple of 2 or 3 (2, 3, 4, 6, 8, 9, ...). Default: `2`. Once the cluster exists,
+   its brokers stay in the same availability zones: a new `broker_count` must still spread evenly over them, or the
+   deployment fails with an error.
+6. `storage_gb` - Provisioned only. EBS storage per broker, in GB. Between `1` and `16384`. Default: `20`. MSK can only
+   increase storage on an existing cluster, never reduce it.
+7. `parameters` - Provisioned only. Optional list of Kafka broker settings (`server.properties`). Each entry is an
+   object with the following keys:
+   - `name` - Name of the setting (eg., `auto.create.topics.enable`). Refer to
+     [AWS docs](https://docs.aws.amazon.com/msk/latest/developerguide/msk-configuration-properties.html) for the
+     settings MSK allows.
+   - `value` - Value to set. Always specified as a string.
+
+   When `parameters` is provided, LocalOps creates an MSK configuration for the cluster and attaches it.
+
+8. `skip_preview` - Set to `true` to not create this cluster for ephemeral preview services. Default: `false`.
+9. `preview_only` - Set to `true` to create this cluster _only_ for ephemeral preview services. Default: `false`.
+10. `exports` - Set of key value pairs. Keys are the ENVIRONMENT VARS we will pass to your code / containers. Values are
+    the properties of the MSK cluster provisioned. See below for available properties.
+
+Serverless clusters have no brokers to size: setting `version`, `instance_type`, `broker_count`, `storage_gb` or
+`parameters` on a `serverless` cluster fails the deployment with an error, instead of being ignored.
+
+<Warning>
+  Changing `id` will delete & replace the original MSK cluster with a new, empty one. `type` cannot be changed on an
+  existing cluster at all - the deployment fails with an error, since switching would replace the cluster and lose its
+  data. To move between provisioned and serverless, declare a new cluster with a new `id`.
+</Warning>
+
+Available properties of the MSK cluster to use in `exports`:
+
+1. `$name` - Name of the MSK cluster
+2. `$arn` - Amazon resource name of the MSK cluster
+3. `$bootstrapBrokers` - Comma separated list of bootstrap brokers in `host:port` format. Pass this to your Kafka client
+   as its brokers list.
+4. `$port` - Port the brokers listen on: `9096` for provisioned, `9098` for serverless.
+5. `$region` - AWS region of the cluster
+6. `$saslMechanism` - `SCRAM-SHA-512` for provisioned, `OAUTHBEARER` for serverless.
+7. `$securityProtocol` - Always `SASL_SSL`.
+8. `$username` - Provisioned only. SASL/SCRAM username, derived from `id`.
+9. `$password` - Provisioned only. SASL/SCRAM password.
+10. `$passwordArn` - Provisioned only. ARN of the AWS Secrets Manager secret holding the username and password.
+
+<Warning>
+  Serverless clusters have no username or password. Exporting `$username`, `$password` or `$passwordArn` from a
+  `serverless` cluster fails the deployment with an error - remove those exports.
+</Warning>
+
+### Lifecycle:
+
+If you have provided `ops.json` at the root of the git repository, it will be processed if a corresponding service in
+any of your active environment points at the same repository as source and when a deployment is triggered.
+
+- When the service is spinned up first time or when a new deployment is triggered, `ops.json` is parsed for processing.
+  Resources declared in the `dependencies` object will be provisioned before your code starts to run.
+- Resources with same `id` are provisioned only once for the life of the service. And updated when there is a change in
+  one of the properties above, within the limits MSK allows for an existing cluster (see `broker_count` and `storage_gb`
+  above).
+- Keys in `exports` object will be passed as enviroment variables to your service.
+- When the service is deleted, the provisioned MSK clusters are deleted from the cloud account.
+
+<Warning>
+  MSK has no backups or snapshots, so unlike RDS and ElastiCache, no final snapshot is taken before a cluster is
+  deleted. Deleting the service, changing the cluster's `id` or removing it from `ops.json` deletes the cluster and all
+  its topic data permanently. If you need the data to outlive the cluster, copy it out continuously, eg., to S3 with
+  [MSK Connect](https://aws.amazon.com/blogs/big-data/back-up-and-restore-kafka-topic-data-using-amazon-msk-connect/).
+</Warning>
+
+### Authentication:
+
+Both cluster types accept only authenticated, TLS encrypted connections (`SASL_SSL`). How your code authenticates
+depends on the `type`.
+
+#### Provisioned: username & password (SASL/SCRAM)
+
+LocalOps generates a username and password for the cluster, stores them in an AWS Secrets Manager secret encrypted with
+a dedicated KMS key, and associates the secret with the cluster. Export `$username` and `$password` and pass them to
+your Kafka client with the `SCRAM-SHA-512` mechanism.
+
+#### Serverless: IAM (no keys)
+
+Serverless clusters authenticate with IAM only. You don't pass any username, password or AWS secret key - your
+containers authenticate with the IAM role LocalOps attaches to all the services in your environment. We provision a
+policy like below on that role for every serverless cluster, covering all topics, consumer groups and transactional ids
+on that cluster.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["kafka-cluster:Connect", "kafka-cluster:DescribeCluster", "kafka-cluster:WriteDataIdempotently"],
+      "Resource": "your-cluster"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kafka-cluster:*Topic*", "kafka-cluster:ReadData", "kafka-cluster:WriteData"],
+      "Resource": "your-cluster's topics"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kafka-cluster:AlterGroup", "kafka-cluster:DescribeGroup", "kafka-cluster:DeleteGroup"],
+      "Resource": "your-cluster's consumer groups"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kafka-cluster:AlterTransactionalId", "kafka-cluster:DescribeTransactionalId"],
+      "Resource": "your-cluster's transactional ids"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["kafka:DescribeClusterV2", "kafka:GetBootstrapBrokers"],
+      "Resource": "your-cluster"
+    }
+  ]
+}
+```
+
+Your Kafka client signs a token with that role and sends it using the `OAUTHBEARER` mechanism. Use AWS's signer library
+for your language:
+
+- Node.js - [`aws-msk-iam-sasl-signer-js`](https://github.com/aws/aws-msk-iam-sasl-signer-js)
+- Python - [`aws-msk-iam-sasl-signer-python`](https://github.com/aws/aws-msk-iam-sasl-signer-python)
+- Go - [`aws-msk-iam-sasl-signer-go`](https://github.com/aws/aws-msk-iam-sasl-signer-go)
+- Java - [`aws-msk-iam-auth`](https://github.com/aws/aws-msk-iam-auth)
+
+<Note>
+  Some examples online use the mechanism name `AWS_MSK_IAM`. Only the Java `aws-msk-iam-auth` plugin registers that
+  name, and other clients don't recognise it. That's why `$saslMechanism` exports `OAUTHBEARER`.
+</Note>
+
+Curious to know the IAM role that is used? Visit your environment's main dashboard in LocalOps console to see the role.
+
+### Connecting from your code:
+
+Below are Node.js and Java examples, with the exports declared in the `ops.json` examples above. Each works for both
+cluster types. Topics are not created automatically on serverless clusters, nor on the provisioned example above
+(`auto.create.topics.enable` is `false`), so each creates the topic first if it's missing.
+
+#### Node.js
+
+Using [`kafkajs`](https://kafka.js.org):
+
+```js
+const { Kafka } = require('kafkajs');
+const { generateAuthToken } = require('aws-msk-iam-sasl-signer-js'); // serverless only
+
+const sasl =
+  process.env.KAFKA_SASL_MECHANISM === 'OAUTHBEARER'
+    ? {
+        // Serverless: sign a token with the service's IAM role
+        mechanism: 'oauthbearer',
+        oauthBearerProvider: async () => {
+          const { token } = await generateAuthToken({ region: process.env.KAFKA_REGION });
+          return { value: token };
+        },
+      }
+    : {
+        // Provisioned: username & password
+        mechanism: 'scram-sha-512',
+        username: process.env.KAFKA_USERNAME,
+        password: process.env.KAFKA_PASSWORD,
+      };
+
+const kafka = new Kafka({
+  clientId: 'my-service',
+  brokers: process.env.KAFKA_BROKERS.split(','),
+  ssl: true,
+  sasl,
+});
+
+async function main() {
+  const admin = kafka.admin();
+  await admin.connect();
+  if (!(await admin.listTopics()).includes('events')) {
+    // -1 uses the cluster's default replication; serverless only accepts that.
+    await admin.createTopics({
+      topics: [{ topic: 'events', numPartitions: 3, replicationFactor: -1 }],
+      waitForLeaders: true,
+    });
+  }
+  await admin.disconnect();
+
+  const producer = kafka.producer();
+  await producer.connect();
+  await producer.send({ topic: 'events', messages: [{ value: 'hello' }] });
+  await producer.disconnect();
+}
+
+main();
+```
+
+To consume, use the same `kafka` client with a consumer group:
+
+```js
+async function consume() {
+  const consumer = kafka.consumer({ groupId: 'my-service' });
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'events', fromBeginning: true });
+  await consumer.run({
+    eachMessage: async ({ partition, message }) => {
+      console.log(`partition ${partition} offset ${message.offset}: ${message.value.toString()}`);
+    },
+  });
+}
+
+consume();
+```
+
+#### Java
+
+Using the official [`kafka-clients`](https://kafka.apache.org/documentation/#api) library, with AWS's
+[`aws-msk-iam-auth`](https://github.com/aws/aws-msk-iam-auth) plugin for serverless clusters. Add both to your
+`pom.xml`:
+
+```xml
+<dependency>
+  <groupId>org.apache.kafka</groupId>
+  <artifactId>kafka-clients</artifactId>
+  <version>3.9.1</version>
+</dependency>
+<!-- serverless only -->
+<dependency>
+  <groupId>software.amazon.msk</groupId>
+  <artifactId>aws-msk-iam-auth</artifactId>
+  <version>2.3.9</version>
+</dependency>
+```
+
+```java
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+
+public class Events {
+    static Properties kafkaProperties() {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", System.getenv("KAFKA_BROKERS"));
+        props.put("security.protocol", "SASL_SSL");
+
+        if ("OAUTHBEARER".equals(System.getenv("KAFKA_SASL_MECHANISM"))) {
+            // Serverless: sign a token with the service's IAM role
+            System.setProperty("aws.region", System.getenv("KAFKA_REGION"));
+            String handler = "software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler";
+            props.put("sasl.mechanism", "OAUTHBEARER");
+            props.put("sasl.jaas.config", "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;");
+            props.put("sasl.login.callback.handler.class", handler);
+            props.put("sasl.client.callback.handler.class", handler);
+        } else {
+            // Provisioned: username & password
+            props.put("sasl.mechanism", "SCRAM-SHA-512");
+            props.put("sasl.jaas.config", String.format(
+                "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";",
+                System.getenv("KAFKA_USERNAME"), System.getenv("KAFKA_PASSWORD")));
+        }
+        return props;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Properties props = kafkaProperties();
+
+        try (Admin admin = Admin.create(props)) {
+            if (!admin.listTopics().names().get().contains("events")) {
+                // Optional.empty() uses the cluster's default replication; serverless only accepts that.
+                admin.createTopics(List.of(new NewTopic("events", Optional.of(3), Optional.empty()))).all().get();
+            }
+        }
+
+        props.put("key.serializer", StringSerializer.class.getName());
+        props.put("value.serializer", StringSerializer.class.getName());
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
+            producer.send(new ProducerRecord<>("events", "hello")).get();
+        }
+    }
+}
+```
+
+To consume, reuse `kafkaProperties()` from above and add a consumer group and deserializers:
+
+```java
+import java.time.Duration;
+import java.util.List;
+import java.util.Properties;
+
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+public class EventsConsumer {
+    public static void main(String[] args) {
+        Properties props = Events.kafkaProperties();
+        props.put("group.id", "my-service");
+        props.put("auto.offset.reset", "earliest");
+        props.put("key.deserializer", StringDeserializer.class.getName());
+        props.put("value.deserializer", StringDeserializer.class.getName());
+
+        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
+            consumer.subscribe(List.of("events"));
+            while (true) {
+                for (ConsumerRecord<String, String> record : consumer.poll(Duration.ofSeconds(1))) {
+                    System.out.printf("partition %d offset %d: %s%n", record.partition(), record.offset(), record.value());
+                }
+            }
+        }
+    }
+}
+```
+
+### Private only access:
+
+All MSK clusters are created only in the private subnets of the same VPC where your environment is running. And they are
+attached with following security group.
+
+Ingress:
+
+1. From source: Your environment's VPC CIDR IP range
+2. At port: `9096` (provisioned) or `9098` (serverless)
+3. Protocol: `TCP`
+
+So only workload/containers/servers from within your environment's VPC can access the MSK cluster.
+
+Provisioned brokers are spread over 2 or 3 of your environment's private subnets, depending on `broker_count`.
+Serverless clusters need private subnets in at least 2 availability zones.
+
+### Encryption:
+
+1. Traffic between your code and the brokers, and between brokers, is encrypted with TLS.
+2. MSK encrypts data at rest by default.
+
+### Ephemeral preview environments:
+
+Every preview service created for [pull request previews](/use-cases/ephemeral) gets its **own cluster**, which bills
+for as long as the preview exists. If that isn't worth it, set `skip_preview: true` and point previews at a shared
+cluster using regular [environment variables](/environment/services/secrets).
