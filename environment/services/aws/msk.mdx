@@ -152,6 +152,13 @@ any of your active environment points at the same repository as source and when 
 - Keys in `exports` object will be passed as enviroment variables to your service.
 - When the service is deleted, the provisioned MSK clusters are deleted from the cloud account.
 
+<Warning>
+  MSK has no backups or snapshots, so unlike RDS and ElastiCache, no final snapshot is taken before a cluster is
+  deleted. Deleting the service, changing the cluster's `id` or removing it from `ops.json` deletes the cluster and all
+  its topic data permanently. If you need the data to outlive the cluster, copy it out continuously, eg., to S3 with
+  [MSK Connect](https://aws.amazon.com/blogs/big-data/back-up-and-restore-kafka-topic-data-using-amazon-msk-connect/).
+</Warning>
+
 ### Authentication:
 
 Both cluster types accept only authenticated, TLS encrypted connections (`SASL_SSL`). How your code authenticates
@@ -220,9 +227,13 @@ Curious to know the IAM role that is used? Visit your environment's main dashboa
 
 ### Connecting from your code:
 
-Below is a Node.js example using [`kafkajs`](https://kafka.js.org), with the exports declared in the `ops.json` examples
-above. It works for both cluster types. Topics are not created automatically on serverless clusters, nor on the
-provisioned example above (`auto.create.topics.enable` is `false`), so it creates the topic first if it's missing.
+Below are Node.js and Java examples, with the exports declared in the `ops.json` examples above. Each works for both
+cluster types. Topics are not created automatically on serverless clusters, nor on the provisioned example above
+(`auto.create.topics.enable` is `false`), so each creates the topic first if it's missing.
+
+#### Node.js
+
+Using [`kafkajs`](https://kafka.js.org):
 
 ```js
 const { Kafka } = require('kafkajs');
@@ -267,9 +278,132 @@ async function main() {
   const producer = kafka.producer();
   await producer.connect();
   await producer.send({ topic: 'events', messages: [{ value: 'hello' }] });
+  await producer.disconnect();
 }
 
 main();
+```
+
+To consume, use the same `kafka` client with a consumer group:
+
+```js
+async function consume() {
+  const consumer = kafka.consumer({ groupId: 'my-service' });
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'events', fromBeginning: true });
+  await consumer.run({
+    eachMessage: async ({ partition, message }) => {
+      console.log(`partition ${partition} offset ${message.offset}: ${message.value.toString()}`);
+    },
+  });
+}
+
+consume();
+```
+
+#### Java
+
+Using the official [`kafka-clients`](https://kafka.apache.org/documentation/#api) library, with AWS's
+[`aws-msk-iam-auth`](https://github.com/aws/aws-msk-iam-auth) plugin for serverless clusters. Add both to your
+`pom.xml`:
+
+```xml
+<dependency>
+  <groupId>org.apache.kafka</groupId>
+  <artifactId>kafka-clients</artifactId>
+  <version>3.9.1</version>
+</dependency>
+<!-- serverless only -->
+<dependency>
+  <groupId>software.amazon.msk</groupId>
+  <artifactId>aws-msk-iam-auth</artifactId>
+  <version>2.3.9</version>
+</dependency>
+```
+
+```java
+import java.util.List;
+import java.util.Optional;
+import java.util.Properties;
+
+import org.apache.kafka.clients.admin.Admin;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+
+public class Events {
+    static Properties kafkaProperties() {
+        Properties props = new Properties();
+        props.put("bootstrap.servers", System.getenv("KAFKA_BROKERS"));
+        props.put("security.protocol", "SASL_SSL");
+
+        if ("OAUTHBEARER".equals(System.getenv("KAFKA_SASL_MECHANISM"))) {
+            // Serverless: sign a token with the service's IAM role
+            System.setProperty("aws.region", System.getenv("KAFKA_REGION"));
+            String handler = "software.amazon.msk.auth.iam.IAMOAuthBearerLoginCallbackHandler";
+            props.put("sasl.mechanism", "OAUTHBEARER");
+            props.put("sasl.jaas.config", "org.apache.kafka.common.security.oauthbearer.OAuthBearerLoginModule required;");
+            props.put("sasl.login.callback.handler.class", handler);
+            props.put("sasl.client.callback.handler.class", handler);
+        } else {
+            // Provisioned: username & password
+            props.put("sasl.mechanism", "SCRAM-SHA-512");
+            props.put("sasl.jaas.config", String.format(
+                "org.apache.kafka.common.security.scram.ScramLoginModule required username=\"%s\" password=\"%s\";",
+                System.getenv("KAFKA_USERNAME"), System.getenv("KAFKA_PASSWORD")));
+        }
+        return props;
+    }
+
+    public static void main(String[] args) throws Exception {
+        Properties props = kafkaProperties();
+
+        try (Admin admin = Admin.create(props)) {
+            if (!admin.listTopics().names().get().contains("events")) {
+                // Optional.empty() uses the cluster's default replication; serverless only accepts that.
+                admin.createTopics(List.of(new NewTopic("events", Optional.of(3), Optional.empty()))).all().get();
+            }
+        }
+
+        props.put("key.serializer", StringSerializer.class.getName());
+        props.put("value.serializer", StringSerializer.class.getName());
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(props)) {
+            producer.send(new ProducerRecord<>("events", "hello")).get();
+        }
+    }
+}
+```
+
+To consume, reuse `kafkaProperties()` from above and add a consumer group and deserializers:
+
+```java
+import java.time.Duration;
+import java.util.List;
+import java.util.Properties;
+
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+public class EventsConsumer {
+    public static void main(String[] args) {
+        Properties props = Events.kafkaProperties();
+        props.put("group.id", "my-service");
+        props.put("auto.offset.reset", "earliest");
+        props.put("key.deserializer", StringDeserializer.class.getName());
+        props.put("value.deserializer", StringDeserializer.class.getName());
+
+        try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
+            consumer.subscribe(List.of("events"));
+            while (true) {
+                for (ConsumerRecord<String, String> record : consumer.poll(Duration.ofSeconds(1))) {
+                    System.out.printf("partition %d offset %d: %s%n", record.partition(), record.offset(), record.value());
+                }
+            }
+        }
+    }
+}
 ```
 
 ### Private only access:
