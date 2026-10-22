@@ -149,7 +149,8 @@
                   "environment/services/aws/elasti-cache",
                   "environment/services/aws/opensearch",
                   "environment/services/aws/sqs",
-                  "environment/services/aws/sns"
+                  "environment/services/aws/sns",
+                  "environment/services/aws/msk"
                 ]
               },
               "environment/services/docker",
