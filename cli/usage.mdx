@@ -196,20 +196,24 @@ ops proxy --env staging --svc api --remote-port 9090 --local-port 9000
 
 ## Connect to your databases or cache
 
-Resources provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds) and
-[ElastiCache clusters](/environment/services/aws/elasti-cache) - live in the private subnets of your environment's VPC
-and only accept connections from inside it. There is no public endpoint to point a database client at from your laptop,
-by design. So you connect from a throwaway pod inside the cluster instead.
+Resources provisioned through `ops.json` - [RDS instances](/environment/services/aws/rds),
+[ElastiCache clusters](/environment/services/aws/elasti-cache) and [MSK clusters](/environment/services/aws/msk) - live
+in the private subnets of your environment's VPC and only accept connections from inside it. There is no public endpoint
+to point a client at from your laptop, by design. So you connect from a throwaway pod inside the cluster instead.
 
 `ops connect --dep` and `ops proxy --dep` do that for you: they start a short-lived pod in your environment, connect it
-to the database or cache, and clean it up when you exit. They work with:
+to the database, cache or Kafka cluster, and clean it up when you exit. They work with:
 
-| Dependency  | Engine        | Shell client | Client image         |
-| ----------- | ------------- | ------------ | -------------------- |
-| RDS         | Postgres      | `psql`       | `postgres:17-alpine` |
-| RDS         | MySQL         | `mysql`      | `mysql:8.4`          |
-| RDS         | SQL Server    | `usql`       | `usql/usql:0.21.6`   |
-| ElastiCache | Redis, Valkey | `redis-cli`  | `redis:7-alpine`     |
+| Dependency  | Engine                           | Shell client                                 | Client image         |
+| ----------- | -------------------------------- | -------------------------------------------- | -------------------- |
+| RDS         | Postgres                         | `psql`                                       | `postgres:17-alpine` |
+| RDS         | MySQL                            | `mysql`                                      | `mysql:8.4`          |
+| RDS         | SQL Server                       | `usql`                                       | `usql/usql:0.21.6`   |
+| ElastiCache | Redis, Valkey                    | `redis-cli`                                  | `redis:7-alpine`     |
+| MSK         | Kafka, provisioned or serverless | Kafka's own scripts (`kafka-topics.sh`, ...) | `apache/kafka:3.9.1` |
+
+MSK clusters work with `ops connect --dep` only, not `ops proxy --dep`: Kafka clients reach every broker by its private
+hostname, so a tunnel to one address on your machine cannot serve them.
 
 <Note>
   These commands only reach resources you provisioned through `ops.json` - for example an [RDS
@@ -274,6 +278,32 @@ address is all `--dep` needs:
 }
 ```
 
+**For an MSK cluster, export `$bootstrapBrokers`.** A provisioned cluster also needs its `$username` and `$password`
+exported, since it authenticates with them. A serverless cluster authenticates with your service's IAM role and needs
+nothing else. Export `$saslMechanism` too, so the client knows which of the two to use:
+
+```json ops.json
+{
+  "dependencies": {
+    "msk": {
+      "clusters": [
+        {
+          "id": "events",
+          "type": "provisioned",
+          "version": "3.9.x",
+          "exports": {
+            "KAFKA_BROKERS": "$bootstrapBrokers",
+            "KAFKA_USERNAME": "$username",
+            "KAFKA_PASSWORD": "$password",
+            "KAFKA_SASL_MECHANISM": "$saslMechanism"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
 Deploy once, and every container of that service has those variables in its environment.
 
 <Warning>
@@ -292,12 +322,13 @@ ops connect --env staging --svc api --dep
 That starts a client pod in your environment and drops you at the engine's own prompt - `psql`, `mysql`, `usql` or
 `redis-cli` from the table above. Exit the shell and the pod is deleted.
 
-Bare `--dep` picks the dependency for you when the service has exactly one database or cache. Name it when there are
-several - either by its `ops.json` id or by the variable it exports:
+Bare `--dep` picks the dependency for you when the service has exactly one database, cache or MSK cluster. Name it when
+there are several - either by its `ops.json` id or by the variable it exports:
 
 ```sh
 ops connect --env staging --svc api --dep app-db
 ops connect --env staging --svc api --dep sessions
+ops connect --env staging --svc api --dep events
 ```
 
 <Note>
@@ -315,6 +346,59 @@ ops connect --env staging --svc api --dep sessions
   A database password is never read by the CLI or printed to your terminal. The client pod is given the same Kubernetes
   Secret reference your service has, so the password is injected by the cluster. It stays out of your shell history and
   out of your scrollback.
+</Tip>
+
+### Open a Kafka shell
+
+```sh
+ops connect --env staging --svc api --dep events
+```
+
+For an MSK cluster, the client pod runs Apache Kafka's own command-line scripts. You land in a shell in
+`/opt/kafka/bin`, already set up to reach the cluster:
+
+```
+Connected to events (SCRAM-SHA-512). The Kafka CLI is in /opt/kafka/bin, set up with:
+  $BOOTSTRAP_SERVERS  b-1.events.xxxxxx.c2.kafka.ap-south-1.amazonaws.com:9096,...
+  $CLIENT_CONFIG      /tmp/ops-kafka/client.properties
+
+kafka:events:/opt/kafka/bin>
+```
+
+`$BOOTSTRAP_SERVERS` holds the cluster's brokers and `$CLIENT_CONFIG` a client configuration with its authentication, so
+every script works with the same two flags:
+
+```sh
+# list and create topics
+./kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --command-config $CLIENT_CONFIG --list
+./kafka-topics.sh --bootstrap-server $BOOTSTRAP_SERVERS --command-config $CLIENT_CONFIG --create --topic orders --partitions 3
+
+# publish: one message per line, Ctrl-D to stop
+./kafka-console-producer.sh --bootstrap-server $BOOTSTRAP_SERVERS --producer.config $CLIENT_CONFIG --topic orders
+
+# read everything on the topic, Ctrl-C to stop
+./kafka-console-consumer.sh --bootstrap-server $BOOTSTRAP_SERVERS --consumer.config $CLIENT_CONFIG --topic orders --from-beginning
+
+# consumer groups and their lag
+./kafka-consumer-groups.sh --bootstrap-server $BOOTSTRAP_SERVERS --command-config $CLIENT_CONFIG --list
+./kafka-consumer-groups.sh --bootstrap-server $BOOTSTRAP_SERVERS --command-config $CLIENT_CONFIG --describe --group my-service
+```
+
+Exit the shell and the pod is deleted. Serverless clusters create no topics on their own, so create one before you
+produce to it.
+
+<Note>
+  A serverless cluster has no password: the client pod runs with your service's IAM role, the same role your service
+  uses to reach the cluster. It also needs AWS's IAM library for Kafka, which the pod downloads from Maven Central (or
+  GitHub, as a fallback) when the shell opens and checks against a pinned checksum. The first connect therefore needs
+  outbound internet access from your environment. If that isn't available, pass `--db-image` with an image based on
+  `apache/kafka:3.9.1` that already has `aws-msk-iam-auth-2.3.9-all.jar` in `/opt/kafka/libs`.
+</Note>
+
+<Tip>
+  Each Kafka script starts a Java process, so a command takes a second or two to begin. The client pod is sized for
+  that: it reserves 100m CPU and 128 MiB of memory, and can use up to 1 CPU and 512 MiB, enough for a consumer and a
+  producer running side by side.
 </Tip>
 
 ### Use a local GUI client (TablePlus, DataGrip, DBeaver, RedisInsight)

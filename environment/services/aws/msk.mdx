@@ -406,6 +406,16 @@ public class EventsConsumer {
 }
 ```
 
+### Connecting from your terminal:
+
+To list topics, publish test messages or watch a topic by hand, run `ops connect --dep` from the
+[LocalOps CLI](/cli/usage#open-a-kafka-shell). It opens a shell inside your environment with Kafka's command-line
+scripts already set up for the cluster, provisioned or serverless.
+
+```sh
+ops connect --env staging --svc api --dep events
+```
+
 ### Private only access:
 
 All MSK clusters are created only in the private subnets of the same VPC where your environment is running. And they are
