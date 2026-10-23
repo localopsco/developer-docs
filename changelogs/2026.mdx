@@ -4,6 +4,116 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 23, 2026">
+
+## Autoscaling is live on AWS and GCP
+
+![Autoscaling is live on AWS and GCP](./images/2026/autoscaling-oct-23-26.gif)
+
+A fixed replica count means paying for peak capacity around the clock. Declare an
+[`autoscaling`](/environment/services/autoscaling) block in `ops.json` and LocalOps scales replicas and nodes with
+demand, so you stop paying for idle nodes.
+
+Underlying nodes scale up and down seamlessly. When new replicas don't fit, the node group your service runs on adds
+nodes, and when load falls, nodes no longer needed are released. Set the node group's maximum under **Node Groups** in
+your environment before relying on autoscaling.
+
+### Autoscale based on load
+
+Set `target_cpu` and/or `target_memory` to hold average utilization near a percentage of each pod's request. Replicas
+are added as load rises and removed as it falls.
+
+```json ops.json
+{
+  "autoscaling": {
+    "max_replicas": 10,
+    "target_cpu": 70
+  }
+}
+```
+
+### Autoscale based on schedule
+
+Add `schedules` to hold the service at a floor during time-of-day windows, so capacity is in place before predictable
+traffic arrives. Each window takes `days`, `start_time`, `end_time`, `timezone` and `replicas`. Load-based targets keep
+working inside the window and can scale above the floor, up to `max_replicas`.
+
+```json ops.json
+{
+  "autoscaling": {
+    "max_replicas": 20,
+    "schedules": [
+      {
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "start_time": "09:00",
+        "end_time": "18:00",
+        "timezone": "America/New_York",
+        "replicas": 8
+      },
+      {
+        "days": ["saturday", "sunday"],
+        "start_time": "10:00",
+        "end_time": "16:00",
+        "timezone": "America/New_York",
+        "replicas": 4
+      },
+      {
+        "days": ["monday"],
+        "start_time": "22:00",
+        "end_time": "02:00",
+        "timezone": "America/New_York",
+        "replicas": 12
+      }
+    ]
+  }
+}
+```
+
+### Change it from the console
+
+Prefer the console? Set the same autoscaling settings under your service's **Scaling** tab. If both exist, `ops.json`
+wins.
+
+### Scale to zero
+
+Custom node groups can now scale to zero when no service is running on them. A node group you set aside for a batch
+worker or a staging service no longer keeps nodes running - and billing - while there is nothing scheduled on it.
+
+### Amazon MSK (Kafka) clusters
+
+Services on AWS can now declare [MSK clusters](/environment/services/aws/msk) as a dependency in `ops.json` - either
+**provisioned** clusters with brokers you size yourself, or **serverless** clusters that scale on their own. Broker
+endpoints, auth settings and the rest are exported to your service as environment variables.
+
+```json ops.json
+{
+  "dependencies": {
+    "msk": {
+      "clusters": [
+        {
+          "id": "events",
+          "type": "serverless",
+          "exports": {
+            "KAFKA_BROKERS": "$bootstrapBrokers",
+            "KAFKA_SASL_MECHANISM": "$saslMechanism",
+            "KAFKA_SECURITY_PROTOCOL": "$securityProtocol"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+<Note>
+  Refresh existing environments once to start using autoscaling and MSK. Look for the **Refresh environment** button in
+  the top right corner of the environment dashboard. New environments have both out of the box.
+</Note>
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="October 16, 2026">
 
 ## Granular project & environment roles: Safeguard environments
