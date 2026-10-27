@@ -6,7 +6,7 @@ mode: center
 
 <Update label="October 27, 2026">
 
-## AWS Cape Town region, CLI v3.4.0 with Kafka shell for MSK, and a new Logs tab
+## AWS Cape Town region, CLI v3.4.0 with Kafka shell for MSK, a new Logs tab and per-developer environments guide
 
 ![Logs tab](./images/2026/logs-tab-oct-27-26.png)
 
@@ -52,6 +52,17 @@ ops logs --env us-prod --svc api
 
 For historical logs, metrics, dashboards and alerts, the tab links straight to **Monitoring**. See
 [Tail logs from your terminal](/environment/monitoring/logs#tail-logs-from-your-terminal).
+
+### New guide: an environment for each developer
+
+![Each developer pushes their branch to GitHub, and it deploys to their own environment in your cloud account](/images/use-cases/environment-per-developer.svg)
+
+Shared staging turns into a queue. Our new [Environment for each developer](/use-cases/environment-per-developer) guide
+shows how to give every developer their own full-stack environment in your cloud - own network, cluster, databases and
+secrets - that they create, deploy, debug and tear down themselves, without filing tickets.
+
+It covers the one-time admin setup (cloud account, project, Member roles, `ops.json`), what developers do on their own,
+and how to keep costs in check with right-sized services, spot capacity and per-environment cost tracking.
 
 Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
 
