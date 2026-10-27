@@ -406,6 +406,18 @@ public class EventsConsumer {
 }
 ```
 
+### Connecting from your terminal:
+
+To list topics, produce a test message or inspect consumer groups by hand, use the [LocalOps CLI](/cli/usage). It
+starts a short-lived pod inside your environment with the Kafka CLI already pointed at your cluster and authenticated:
+
+```sh
+ops connect --env staging --svc api --dep events
+```
+
+It needs `$bootstrapBrokers` in the cluster's `exports`. See
+[Open a Kafka shell](/cli/usage#open-a-kafka-shell) for details.
+
 ### Private only access:
 
 All MSK clusters are created only in the private subnets of the same VPC where your environment is running. And they are

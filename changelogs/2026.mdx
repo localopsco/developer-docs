@@ -4,6 +4,59 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 27, 2026">
+
+## AWS Cape Town region, CLI v3.4.0 with Kafka shell for MSK, and a new Logs tab
+
+![Logs tab](./images/2026/logs-tab-oct-27-26.png)
+
+### New AWS region: Africa (Cape Town)
+
+You can now create environments in AWS Africa (Cape Town), `af-south-1`. It gets the same full support as every other
+region LocalOps runs in - deployments, `ops.json` dependencies, autoscaling, monitoring, logs and the `ops` CLI all work
+the same way. Run your app closer to customers in Africa, or keep their data in-region.
+
+Pick **Africa (Cape Town)** as the region when you [create a new environment](/environment/create).
+
+<Note>
+  Cape Town is an opt-in region in AWS. Enable it under **Account > AWS Regions** in the AWS console of the connected
+  account before creating an environment there.
+</Note>
+
+### CLI v3.4.0: `ops connect` opens a Kafka shell for MSK clusters
+
+`ops connect --dep` now works with [MSK clusters](/environment/services/aws/msk). It starts a short-lived pod inside your
+environment with the Apache Kafka CLI, authenticated against your cluster - SASL/SCRAM for provisioned clusters, your
+service's IAM role for serverless ones - so you can list topics, produce test messages and inspect consumer groups
+without a public endpoint.
+
+```sh
+ops connect --env us-prod --svc api --dep events
+```
+
+The cluster needs `$bootstrapBrokers` in its `exports`. See [Open a Kafka shell](/cli/usage#open-a-kafka-shell).
+
+<Note>
+  Upgrade with `brew upgrade localopsco/tap/ops`, or re-run the [install script](/cli/install-linux). Run `ops version`
+  to check you're on v3.4.0.
+</Note>
+
+### Stream logs from the new Logs tab
+
+Every service now has a **Logs** tab. It walks you through installing the CLI and logging in, then hands you an
+`ops logs` command already scoped to that environment and service:
+
+```sh
+ops logs --env us-prod --svc api
+```
+
+For historical logs, metrics, dashboards and alerts, the tab links straight to **Monitoring**. See
+[Tail logs from your terminal](/environment/monitoring/logs#tail-logs-from-your-terminal).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="October 23, 2026">
 
 ## Autoscaling is live on AWS and GCP
