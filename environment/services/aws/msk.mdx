@@ -408,15 +408,15 @@ public class EventsConsumer {
 
 ### Connecting from your terminal:
 
-To list topics, produce a test message or inspect consumer groups by hand, use the [LocalOps CLI](/cli/usage). It
-starts a short-lived pod inside your environment with the Kafka CLI already pointed at your cluster and authenticated:
+To list topics, publish test messages or watch a topic by hand, run `ops connect --dep` from the
+[LocalOps CLI](/cli/usage#open-a-kafka-shell). It opens a shell inside your environment with Kafka's command-line
+scripts already set up for the cluster, provisioned or serverless.
 
 ```sh
 ops connect --env staging --svc api --dep events
 ```
 
-It needs `$bootstrapBrokers` in the cluster's `exports`. See
-[Open a Kafka shell](/cli/usage#open-a-kafka-shell) for details.
+It needs `$bootstrapBrokers` in the cluster's `exports`.
 
 ### Private only access:
 
