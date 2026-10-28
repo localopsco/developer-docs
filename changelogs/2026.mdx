@@ -4,6 +4,180 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="October 27, 2026">
+
+## AWS Cape Town region, CLI v3.4.0 with Kafka shell for MSK, a new Logs tab and per-developer environments guide
+
+![Logs tab](./images/2026/logs-tab-oct-27-26.png)
+
+### New AWS region: Africa (Cape Town)
+
+You can now create environments in AWS Africa (Cape Town), `af-south-1`. It gets the same full support as every other
+region LocalOps runs in - deployments, `ops.json` dependencies, autoscaling, monitoring, logs and the `ops` CLI all work
+the same way. Run your app closer to customers in Africa, or keep their data in-region.
+
+Pick **Africa (Cape Town)** as the region when you [create a new environment](/environment/create).
+
+<Note>
+  Cape Town is an opt-in region in AWS. Enable it under **Account > AWS Regions** in the AWS console of the connected
+  account before creating an environment there.
+</Note>
+
+### CLI v3.4.0: `ops connect` opens a Kafka shell for MSK clusters
+
+`ops connect --dep` now works with [MSK clusters](/environment/services/aws/msk). It starts a short-lived pod inside your
+environment with the Apache Kafka CLI, authenticated against your cluster - SASL/SCRAM for provisioned clusters, your
+service's IAM role for serverless ones - so you can list topics, produce test messages and inspect consumer groups
+without a public endpoint.
+
+```sh
+ops connect --env us-prod --svc api --dep events
+```
+
+The cluster needs `$bootstrapBrokers` in its `exports`. See [Open a Kafka shell](/cli/usage#open-a-kafka-shell).
+
+<Note>
+  Upgrade with `brew upgrade localopsco/tap/ops`, or re-run the [install script](/cli/install-linux). Run `ops version`
+  to check you're on v3.4.0.
+</Note>
+
+### Stream logs from the new Logs tab
+
+Every service now has a **Logs** tab. It walks you through installing the CLI and logging in, then hands you an
+`ops logs` command already scoped to that environment and service:
+
+```sh
+ops logs --env us-prod --svc api
+```
+
+For historical logs, metrics, dashboards and alerts, the tab links straight to **Monitoring**. See
+[Tail logs from your terminal](/environment/monitoring/logs#tail-logs-from-your-terminal).
+
+### New guide: an environment for each developer
+
+![Each developer pushes their branch to GitHub, and it deploys to their own environment in your cloud account](/images/use-cases/environment-per-developer.svg)
+
+Shared staging turns into a queue. Our new [Environment for each developer](/use-cases/environment-per-developer) guide
+shows how to give every developer their own full-stack environment in your cloud - own network, cluster, databases and
+secrets - that they create, deploy, debug and tear down themselves, without filing tickets.
+
+It covers the one-time admin setup (cloud account, project, Member roles, `ops.json`), what developers do on their own,
+and how to keep costs in check with right-sized services, spot capacity and per-environment cost tracking.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
+<Update label="October 23, 2026">
+
+## Autoscaling is live on AWS and GCP
+
+![Autoscaling is live on AWS and GCP](./images/2026/autoscaling-oct-23-26.gif)
+
+A fixed replica count means paying for peak capacity around the clock. Declare an
+[`autoscaling`](/environment/services/autoscaling) block in `ops.json` and LocalOps scales replicas and nodes with
+demand, so you stop paying for idle nodes.
+
+Underlying nodes scale up and down seamlessly. When new replicas don't fit, the node group your service runs on adds
+nodes, and when load falls, nodes no longer needed are released. Set the node group's maximum under **Node Groups** in
+your environment before relying on autoscaling.
+
+### Autoscale based on load
+
+Set `target_cpu` and/or `target_memory` to hold average utilization near a percentage of each pod's request. Replicas
+are added as load rises and removed as it falls.
+
+```json ops.json
+{
+  "autoscaling": {
+    "max_replicas": 10,
+    "target_cpu": 70
+  }
+}
+```
+
+### Autoscale based on schedule
+
+Add `schedules` to hold the service at a floor during time-of-day windows, so capacity is in place before predictable
+traffic arrives. Each window takes `days`, `start_time`, `end_time`, `timezone` and `replicas`. Load-based targets keep
+working inside the window and can scale above the floor, up to `max_replicas`.
+
+```json ops.json
+{
+  "autoscaling": {
+    "max_replicas": 20,
+    "schedules": [
+      {
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "start_time": "09:00",
+        "end_time": "18:00",
+        "timezone": "America/New_York",
+        "replicas": 8
+      },
+      {
+        "days": ["saturday", "sunday"],
+        "start_time": "10:00",
+        "end_time": "16:00",
+        "timezone": "America/New_York",
+        "replicas": 4
+      },
+      {
+        "days": ["monday"],
+        "start_time": "22:00",
+        "end_time": "02:00",
+        "timezone": "America/New_York",
+        "replicas": 12
+      }
+    ]
+  }
+}
+```
+
+### Change it from the console
+
+Prefer the console? Set the same autoscaling settings under your service's **Scaling** tab. If both exist, `ops.json`
+wins.
+
+### Scale to zero
+
+Custom node groups can now scale to zero when no service is running on them. A node group you set aside for a batch
+worker or a staging service no longer keeps nodes running - and billing - while there is nothing scheduled on it.
+
+### Amazon MSK (Kafka) clusters
+
+Services on AWS can now declare [MSK clusters](/environment/services/aws/msk) as a dependency in `ops.json` - either
+**provisioned** clusters with brokers you size yourself, or **serverless** clusters that scale on their own. Broker
+endpoints, auth settings and the rest are exported to your service as environment variables.
+
+```json ops.json
+{
+  "dependencies": {
+    "msk": {
+      "clusters": [
+        {
+          "id": "events",
+          "type": "serverless",
+          "exports": {
+            "KAFKA_BROKERS": "$bootstrapBrokers",
+            "KAFKA_SASL_MECHANISM": "$saslMechanism",
+            "KAFKA_SECURITY_PROTOCOL": "$securityProtocol"
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+<Note>
+  Refresh existing environments once to start using autoscaling and MSK. Look for the **Refresh environment** button in
+  the top right corner of the environment dashboard. New environments have both out of the box.
+</Note>
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="October 16, 2026">
 
 ## Granular project & environment roles: Safeguard environments

@@ -320,7 +320,7 @@ ops connect --env staging --svc api --dep
 ```
 
 That starts a client pod in your environment and drops you at the engine's own prompt - `psql`, `mysql`, `usql` or
-`redis-cli` from the table above. Exit the shell and the pod is deleted.
+`redis-cli` from the table above, or a shell with the Kafka CLI for MSK. Exit the shell and the pod is deleted.
 
 Bare `--dep` picks the dependency for you when the service has exactly one database, cache or MSK cluster. Name it when
 there are several - either by its `ops.json` id or by the variable it exports:

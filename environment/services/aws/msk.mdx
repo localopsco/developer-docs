@@ -416,6 +416,8 @@ scripts already set up for the cluster, provisioned or serverless.
 ops connect --env staging --svc api --dep events
 ```
 
+It needs `$bootstrapBrokers` in the cluster's `exports`.
+
 ### Private only access:
 
 All MSK clusters are created only in the private subnets of the same VPC where your environment is running. And they are
