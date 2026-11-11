@@ -4,6 +4,77 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="November 11, 2026">
+
+## New UX updates to ship fast
+
+We've redesigned the parts of the LocalOps console you use most. Launching a new service takes a few clicks instead of a
+long form, and the service and environment overviews now show what's running, how it's scaling and what changed
+recently, all on one screen. You spend less time hunting for details and more time shipping. 🚀
+
+### Launch services faster than ever
+
+![Create a service in three steps: Source, Type and Configure](./images/2026/create-service-nov-11-26.png)
+
+Creating a service is now a short, three-step flow - **Source**, **Type** and **Configure**. Pick what to deploy, pick
+what kind of service it is, set the basics and launch. You don't have to decide advanced details up front. Tune them
+from the service's tabs after it's running.
+
+- **Source** - pick the repo and branch to deploy from.
+- **Type** - choose what you're running: a [web service](/environment/services/web) on a public domain, an
+  [internal service](/environment/services/internal) reachable only inside the environment, an always-running
+  [worker](/environment/services/workers), a [cron](/environment/services/cronjob) on a schedule, or a
+  [job](/environment/services/job) that runs once. The type can't be changed later.
+- **Configure** - fill in only what's needed to get the service running.
+
+A summary card next to the steps shows the service name, type, repository, branch and port as you go, so you can check
+them before you launch.
+
+### See service and environment details faster than ever
+
+The **Overview** tabs of services and environments have a new design. Everything you usually check sits on one screen, so
+you can tell how a service or an environment is doing at a glance.
+
+### Service overview
+
+![New service overview](./images/2026/service-overview-nov-11-26.png)
+
+Pods running right now, autoscaling headroom, recent deployments, secrets, security settings and more:
+
+- **Service status and replicas** - current state and how many replicas are running. With autoscaling on, a visual grid
+  shows running replicas against your min/max, so you can see how much room the service has left to scale.
+- **Resources** - vCPU and memory range per replica, and the node group the service runs on with its instance type and
+  capacity type (On Demand or Spot).
+- **Kind and endpoint** - service type and port, its URL with copy and open buttons, and the service alias to reference
+  it from other services.
+- **Source and deployments** - connected repo, branch, commit ref and whether auto deploy is on, plus the most recent
+  deployments with who triggered them.
+- **Security** - encryption at rest and in transit, the service's IAM role, and its IP whitelist.
+- **Secrets** - count of user and managed secrets, with the names of their secret stores ready to copy.
+
+Quick actions to stop, monitor, open the CLI or deploy now stay pinned at the top.
+
+### Environment overview
+
+![New environment overview](./images/2026/environment-overview-nov-11-26.png)
+
+Service health, deployments in flight, compute, network, cloud account and security for the whole environment:
+
+- **Services** - how many services the environment runs and how many of them are healthy.
+- **Deployments and ops** - what's deploying now, ops currently running, when the environment was last deployed, and the
+  most recent deployments across services.
+- **Compute** - each node group with its instance type, capacity type, node range and how many nodes are healthy.
+- **Network** - VPC ID and CIDR, private and public subnets, NAT IPs to allowlist on third-party systems, and the load
+  balancer hostname, all ready to copy.
+- **Cloud account** - the cloud connection, region, and who created the environment and when.
+- **Security** - encryption at rest and in transit, and the environment's IAM role.
+
+Monitor, CLI and Create service are one click away at the top.
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="October 27, 2026">
 
 ## AWS Cape Town region, CLI v3.4.0 with Kafka shell for MSK, a new Logs tab and per-developer environments guide
