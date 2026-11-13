@@ -4,6 +4,46 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="November 13, 2026">
+
+## Dedicated IAM role for each service
+
+![Cloud Resource Access with a dedicated IAM role for the service](./images/2026/service-iam-role-nov-13-26.png)
+
+You can now give a service its own IAM role instead of sharing the environment's role with every other service. Each
+service then gets only the cloud access it needs, and nothing more.
+
+### Cloud Resource Access
+
+Services access cloud resources through an assumed IAM role, with no keys or credentials stored or injected. The new
+**Cloud Resource Access** section on a service shows whether this access is turned on, which IAM role the service uses
+and its ARN, ready to copy.
+
+### Pick a role for each service
+
+Under **Role for this service**, choose one of:
+
+- **Shared role** - the environment's role, used by every service in it.
+- **Dedicated role** - the service's own role, used only by this service.
+
+Pick one and click **Save changes**. Then attach IAM policies to the role to grant it access to the resources the
+service uses.
+
+### Why use a dedicated role
+
+- **Better isolation** - each service gets only the permissions it needs. If one service needs to write to an S3 bucket
+  or read from a queue, only that service gets the permission, not every service in the environment. A bug or a
+  compromised service can't reach resources that belong to other services.
+- **Better auditability** - every cloud API call a service makes is recorded in your cloud provider's audit logs, such
+  as AWS CloudTrail, under that service's own role. You can tell exactly which service accessed which resource, and
+  review each service's permissions on their own.
+
+See [Least-privilege IAM](/environment/security#least-privilege-iam).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="November 11, 2026">
 
 ## New UX updates to ship fast
