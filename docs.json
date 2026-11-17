@@ -186,6 +186,7 @@
               "environment/protected-environments",
               "team/owner-admin-restrictions",
               "team/remove-user",
+              "team/single-sign-on",
               "team/audit-logs"
             ]
           },
