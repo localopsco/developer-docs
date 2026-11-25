@@ -39,11 +39,13 @@ before it can use that organization.
 
 The agent follows the same billing rules as the console.
 
-| Billing state      | Owners and Admins                     | Members                               |
-| ------------------ | ------------------------------------- | ------------------------------------- |
-| Needs subscription | Can't create environments or services | Can't create environments or services |
-| Cancelled          | Read only                             | Read only                             |
-| Payment overdue    | Read only                             | No access to the organization         |
+| Billing state      | Owners and Admins                                          | Members                                                    |
+| ------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Needs subscription | Can't create environments or services. Deploys still work. | Can't create environments or services. Deploys still work. |
+| Cancelled          | Read only                                                  | Read only                                                  |
+| Payment overdue    | Read only                                                  | No access to the organization                              |
+
+In Needs subscription, the organization can make up to 10 deploys until a subscription is created.
 
 Plan limits apply too, such as the number of environments and services on your plan. When the agent is refused, it tells
 you why and links you to the console.
