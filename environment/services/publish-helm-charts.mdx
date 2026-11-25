@@ -1,0 +1,112 @@
+---
+title: Publish Helm charts with license tokens
+description: Generate a portable Helm chart from your environment and distribute it to customers with license tokens
+---
+
+Turn the services running in a LocalOps environment into a portable Helm chart, then let each customer install it with
+their own license token. Customers run the chart in their own Kubernetes cluster, in any cloud, on-prem or on bare
+metal, and upgrade on their own schedule. See [Self-hosted delivery](/use-cases/self-hosted) for how this compares to
+BYOC.
+
+<Note>
+  Generating charts, creating license tokens and setting the account's custom domain are done by an organization Owner
+  or Admin. See [Understanding roles](/team/understanding-roles#organization-roles).
+</Note>
+
+## How it works
+
+1. You deploy and test your services in a LocalOps environment.
+2. You generate a versioned Helm chart from that environment.
+3. You create a license token for each customer.
+4. You turn on the chart's installation page and share its URL and the token with the customer.
+5. The customer installs the chart. The token authenticates every pull of the chart and its private images.
+
+## Before you generate
+
+The chart is built from what's running in the environment, so get the environment right first:
+
+- **Deploy and test every service** that is part of your app. Using a dedicated Git branch, such as `self-hosted`, keeps
+  the self-hosted version's code separate.
+- **Decide which secrets the customer sets.** Secrets you expose in the chart appear in `values.yaml` with their
+  description as a comment above them, so the customer knows what each value means. Secrets marked **sensitive** are
+  never written into the chart. See
+  [Expressions in generated Helm charts](/environment/services/secrets#expressions-in-generated-helm-charts).
+- **Expose volume settings, if needed.** Volumes marked `expose: true` in `ops.json` appear under `persistence` in
+  `values.yaml`, so the customer can size disks or point at their own Kubernetes secret. See
+  [Volumes in the generated Helm chart](/environment/services/ops-json#volumes-in-the-generated-helm-chart).
+
+## Generate a chart
+
+<Steps>
+  <Step title="Open the environment dashboard">
+    Go to the environment that runs the version you want to ship.
+  </Step>
+  <Step title="Generate the chart">
+    At the top right, open the menu and click **Generate Helm Chart**.
+  </Step>
+  <Step title="Name and version it">
+    Give the chart a name and a version number. Optionally add a changelog in Markdown describing what changed. It
+    appears against the version under **Available Versions**, so the teams installing your chart can see what each
+    version brings.
+  </Step>
+</Steps>
+
+The generated chart includes your services, health checks, exposed secrets and volumes in `values.yaml`, and pod and
+container security settings (`podSecurityContext`, `securityContext`) that let it run under the `restricted` Pod
+Security Standard.
+
+## Create license tokens
+
+<Steps>
+  <Step title="Open License tokens">
+    In the LocalOps console, open the **License tokens** section.
+  </Step>
+  <Step title="Create a token per customer">
+    Create a new token and name it after the customer. Use a separate token for each customer, so each one has their
+    own access and their own usage numbers.
+  </Step>
+</Steps>
+
+A license token:
+
+- **Authenticates pulls.** The chart and its Docker images won't download with an invalid token.
+- **Tracks installations.** The License tokens section shows total and active installations for each token, and the
+  same numbers appear next to each chart version.
+- **Can be validated from your app.** The token is available to your services as the `BYOC_LICENSE_TOKEN` environment
+  variable. Call the [validation API](/api/no-access-delivery/license-tokens#validation-api) at startup or from a
+  background job, and stop services for a customer whose token is no longer valid.
+
+## Share the installation page
+
+<Steps>
+  <Step title="Set a custom domain">
+    In account settings, set a custom domain, such as `byoc.yourcompany.com`. The installation page and the license
+    validation API are served from it.
+  </Step>
+  <Step title="Turn on the installation page">
+    Open the **Helm charts** section from the left sidebar, click your chart and turn on **Installation page url**.
+  </Step>
+  <Step title="Hand over the URL and token">
+    Send the customer the installation page URL and their license token. The installation URL is public and has all
+    instructions for installing and operating the chart, including the commands and `values.yaml`, so the customer's IT
+    team can follow it on their own.
+  </Step>
+</Steps>
+
+From here, the customer's team runs the chart. See
+[Day-1 and day-2 for helm chart operators](/use-cases/self-hosted#day-1-and-day-2-for-helm-chart-operators) for what
+they do to install and upgrade.
+
+## Release new versions
+
+When your code changes, deploy and test it in the same environment, then generate the chart again with a new version
+number and changelog. Customers pick up the new version with `helm repo update` and `helm upgrade`.
+
+Each Helm install of your chart gets a unique `LOPS_INSTANCE_ID` (also available as `DEPLOYMENT_ID`), which you can use
+to tag logs, metrics or external resources by installation. See
+[Built in secrets](/environment/services/secrets#built-in-secrets).
+
+## Deprecate or delete charts
+
+From the **Helm charts** section, you can mark a chart as deprecated or delete it at any time, to control which charts
+you offer and support.
