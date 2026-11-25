@@ -1,0 +1,60 @@
+---
+title: Tools
+description: Every tool the LocalOps MCP server offers, and the project role each one needs.
+---
+
+Your agent picks the right tool from your request, so you don't need to name them. The **Minimum role** column is the
+lowest [project role](/team/understanding-roles#project-roles) needed, or your role in that environment if it's a
+[protected environment](/environment/protected-environments). Organization Owners and Admins can use every tool unless
+they've been [restricted](/team/owner-admin-restrictions) in that project or environment.
+
+## Read tools
+
+These never change anything.
+
+| Tool                     | What it does                                                                              | Minimum role |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ------------ |
+| `get_context`            | Who you are, and the organizations, projects and environments you can use                 | Any          |
+| `list_projects`          | Projects you're a member of                                                               | Any          |
+| `list_envs`              | Environments you can see in an organization or project                                    | Any          |
+| `get_env`                | Details of one environment, including its state, region, URL, ingress host and egress IPs | Read-only    |
+| `list_node_groups`       | The machines services run on in an environment                                            | Read-only    |
+| `list_services`          | Services in an environment, with status                                                   | Read-only    |
+| `get_service`            | Details of one service, including its source, resources, status and autoscaling           | Read-only    |
+| `list_deployments`       | Recent deployments you can see, newest first                                              | Any          |
+| `get_deployment`         | Details of one deployment, including the steps it ran                                     | Read-only    |
+| `wait_for_deployment`    | Waits for a deployment to finish                                                          | Read-only    |
+| `diagnose_deployment`    | Why a deployment failed, with its error and log lines                                     | Read-only    |
+| `list_secret_names`      | Names of an environment's or service's secrets, never their values                        | Maintainer   |
+| `list_cloud_connections` | Cloud accounts and regions you can create environments in                                 | Any          |
+| `list_git_repos`         | Repositories your GitHub and GitLab connections can reach                                 | Any          |
+| `list_git_branches`      | Branches of one of those repositories                                                     | Any          |
+
+List tools only return what you can see: environments in your projects, minus protected environments you aren't part of.
+`diagnose_deployment` shows the deployment's log lines only to Maintainers and above.
+
+## Write tools
+
+Your client asks you to confirm before it runs these.
+
+| Tool                   | What it does                                                                | Minimum role |
+| ---------------------- | --------------------------------------------------------------------------- | ------------ |
+| `create_env`           | Creates an environment in your cloud account, billed by your cloud provider | Member       |
+| `create_service`       | Creates a service from a GitHub or GitLab repo or a Docker image            | Member       |
+| `update_service`       | Changes a service's config, such as replicas, CPU, memory, branch or image  | Maintainer   |
+| `set_autoscaling`      | Sets or removes a service's autoscaling                                     | Member       |
+| `set_secrets`          | Adds or changes secrets on an environment or service                        | Member       |
+| `add_custom_domain`    | Adds a custom domain and returns the DNS records to create                  | Member       |
+| `verify_custom_domain` | Checks those DNS records and switches traffic to the domain                 | Member       |
+| `deploy_service`       | Deploys a commit, image tag or chart version, or rolls back                 | Maintainer   |
+| `cancel_deployment`    | Cancels a deployment that hasn't started yet (queued or pending)            | Maintainer   |
+
+## Good to know
+
+- **Secret values are never returned.** The agent can see secret names, but not their values.
+- **`set_secrets` only adds or changes secrets.** It never deletes one. Delete secrets in the console.
+- **Most changes apply on the next deploy.** That includes secrets, service config and autoscaling.
+- **New services aren't deployed.** `create_service` creates the service; deploy it with `deploy_service` when you're
+  ready.
+- **The environment must be available.** You can't create or deploy services while an environment is still being
+  created.

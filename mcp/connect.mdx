@@ -1,0 +1,94 @@
+---
+title: Connect your client
+description: Add the LocalOps MCP server to Claude, Cursor, VS Code or Codex and sign in.
+---
+
+## Server URL
+
+```
+https://console.localops.co/mcp
+```
+
+There are no API keys to copy. The first time your client connects, it opens your browser. Sign in to LocalOps, approve
+the client, and you're connected.
+
+## Set up your client
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add --transport http localops https://console.localops.co/mcp
+    ```
+
+    Then run `/mcp` in Claude Code, pick **localops** and sign in.
+
+  </Tab>
+  <Tab title="Claude.ai and Claude Desktop">
+    Open **Connectors** in Claude's settings (**Customize → Connectors** in newer versions), choose **Add custom
+    connector**, enter the server URL above and add it. Then click **Connect** and sign in.
+
+    On Team and Enterprise plans, an Owner adds the connector first. Everyone then connects with their own LocalOps
+    account.
+
+  </Tab>
+  <Tab title="Cursor">
+    [![Add to Cursor](https://img.shields.io/badge/Cursor-Add_LocalOps-000000?logo=cursor&logoColor=white)](https://cursor.com/en/install-mcp?name=localops&config=eyJ1cmwiOiJodHRwczovL2NvbnNvbGUubG9jYWxvcHMuY28vbWNwIn0%3D)
+
+    Or add this to `~/.cursor/mcp.json`:
+
+    ```json
+    {
+      "mcpServers": {
+        "localops": { "url": "https://console.localops.co/mcp" }
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab title="VS Code">
+    [![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_LocalOps-0098FF?logo=visualstudiocode&logoColor=white)](https://vscode.dev/redirect?url=vscode%3Amcp%2Finstall%3F%257B%2522name%2522%253A%2522localops%2522%252C%2522type%2522%253A%2522http%2522%252C%2522url%2522%253A%2522https%253A%252F%252Fconsole.localops.co%252Fmcp%2522%257D)
+
+    Or add this to `.vscode/mcp.json` in your project, or to your user settings:
+
+    ```json
+    {
+      "servers": {
+        "localops": { "type": "http", "url": "https://console.localops.co/mcp" }
+      }
+    }
+    ```
+
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add localops --url https://console.localops.co/mcp
+    codex mcp login localops
+    ```
+
+    Or add this to `~/.codex/config.toml`, then run `codex mcp login localops`:
+
+    ```toml
+    [mcp_servers.localops]
+    url = "https://console.localops.co/mcp"
+    ```
+
+  </Tab>
+</Tabs>
+
+## Staying signed in
+
+Your client refreshes its access on its own. You only sign in again if you haven't used it for **30 days**, or after you
+disconnect it.
+
+Each client on each machine is a separate connection. Claude Code on your laptop and Cursor on the same laptop are two
+connections, each with its own sign-in.
+
+## Manage and disconnect clients
+
+See your connected clients under **Profile → AI clients** in the console. Disconnecting a client removes its access
+immediately.
+
+<Note>
+  Disconnecting only removes that connection. You can connect again by signing in. To stop someone using LocalOps
+  through any client, [remove them from the organization](/team/remove-user).
+</Note>

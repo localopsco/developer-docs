@@ -1,0 +1,35 @@
+---
+title: Security
+description: How the LocalOps MCP server protects your account, and how to use agents safely.
+---
+
+## How access works
+
+- **You sign in with your LocalOps account.** Clients never see your password or an API key. Each client gets its own
+  access, which you can [disconnect](/mcp/connect#manage-and-disconnect-clients) at any time.
+- **The agent acts as you.** Every request is checked against your organization and project roles, SSO and billing,
+  exactly as in the console.
+- **An agent can't have less access than you.** There's no separate permission setting for agents: a connected client
+  can do everything you can do in the console. To limit what an agent can do, lower your
+  [project role](/team/understanding-roles#project-roles), or, as an Owner or Admin,
+  [restrict yourself](/team/owner-admin-restrictions) in that project or environment.
+- **Stored secret values never leave LocalOps.** The agent can see secret names, but no tool returns their values.
+- **What the agent reads is sent to your AI provider.** Tool results, such as environment details and deployment log
+  lines, go to the AI model your client uses. That includes anything your app prints to its deployment logs.
+- **Nothing is deleted.** No tool deletes services, environments or secrets.
+- **Actions are recorded as yours.** Deployments and changes made through an agent show your name, the same as in the
+  console.
+
+## Use agents safely
+
+- **Keep confirmations on.** Write tools are marked so your client asks before running them. Read what the agent is
+  about to do, especially in production.
+- **Watch out for untrusted content.** An agent that also reads web pages, emails or files from other tools can be
+  tricked by instructions hidden in them (prompt injection). Be careful when it can act on LocalOps at the same time.
+- **Keep sensitive secret values out of the chat.** Values you give the agent pass through the AI model and your chat
+  history. For production keys, have the agent create the secret with a placeholder value, then set the real value in
+  the console.
+- **Disconnect clients you no longer use**, and any client on a lost or shared machine, from **Profile → AI clients**.
+- **Only connect to the official URL**, `https://console.localops.co/mcp`.
+- **Use roles to limit reach.** Give people the lowest [project role](/team/understanding-roles#project-roles) they
+  need. The agent can't do more than they can.
