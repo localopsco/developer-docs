@@ -59,7 +59,7 @@ Kubernetes cluster, with no access from you or LocalOps.
   </Card>
 </CardGroup>
 
-### Steps to deliver via helm charts
+### Steps for software publishers/vendors
 
 1. Sign up for LocalOps account
 2. Create and connect your AWS/other cloud account
@@ -114,6 +114,7 @@ Kubernetes cluster, with no access from you or LocalOps.
     This will generate a Kubernetes helm chart for you and it can be used by your customers to install your service in
     their Kubernetes cluster.
 
+    For the full walkthrough, see [Publish Helm charts with license tokens](/environment/services/publish-helm-charts).
     Chat with us from below or email us at support@localops.co and we will guide you here.
   </Step>
   <Step title="Generate a license token">
@@ -135,6 +136,50 @@ Kubernetes cluster, with no access from you or LocalOps.
 
 Voila! You just offered your service as a self-hosted version. They can consume the chart and its updates in their
 cadence from now.
+
+### Day-1 and day-2 for helm chart operators
+
+Once you hand over the installation URL and license token, your customer's team runs the chart. Their work splits into a
+one-time install (day-1) and routine upgrades (day-2). The installation page has the exact commands and the
+`values.yaml` for your chart.
+
+#### Day-1: first install
+
+1. **Update the helm repo** so the chart and its versions are available locally:
+
+   ```sh
+   helm repo update
+   ```
+
+2. **Authenticate with the license token**, as described on the installation page. The token authorizes pulls of the
+   chart and its private images.
+3. **Set secrets.** Create the Kubernetes secrets the chart expects. Each secret is listed in `values.yaml` with a
+   description of what it holds.
+4. **Install with `values.yaml`.** Adjust `values.yaml` for their cluster (networking, storage, sizing, security
+   context) and install:
+
+   ```sh
+   helm install <release-name> <repo>/<chart> --version <version> -n <namespace> -f values.yaml
+   ```
+
+#### Day-2: upgrades
+
+When you release a new chart version, upgrading is a short routine they run on their own schedule:
+
+1. **Update the helm repo** to fetch the new version:
+
+   ```sh
+   helm repo update
+   ```
+
+2. **Add new secrets, if any.** Only needed when the new version introduces a secret that isn't set yet.
+3. **Upgrade** with the same `values.yaml`:
+
+   ```sh
+   helm upgrade <release-name> <repo>/<chart> --version <new-version> -n <namespace> -f values.yaml
+   ```
+
+If something goes wrong, `helm rollback <release-name>` returns to the previous version.
 
 ### Get started now
 
