@@ -155,6 +155,7 @@
               },
               "environment/services/docker",
               "environment/services/helm-charts",
+              "environment/services/publish-helm-charts",
               "environment/services/micro-services",
               "environment/services/beam-clustering",
               "environment/services/secrets",
