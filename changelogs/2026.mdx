@@ -4,6 +4,65 @@ description: Updates and improvements of year 2026
 mode: center
 ---
 
+<Update label="November 26, 2026">
+
+## Announcing LocalOps MCP: AI agents ship to production
+
+Claude, Cursor, VS Code and Codex can now launch environments, deploy services and fix failed deploys in any cloud
+account you've connected to LocalOps. 🚀 Just ask.
+
+### Get started
+
+Add the server and sign in when your browser opens. No API keys needed.
+
+<CodeGroup>
+
+```bash Claude Code
+claude mcp add --transport http localops https://console.localops.co/mcp
+```
+
+```bash Codex
+codex mcp add localops --url https://console.localops.co/mcp
+codex mcp login localops
+```
+
+</CodeGroup>
+
+Using Claude Desktop, Cursor or VS Code? See [Connect your client](/mcp/connect).
+
+Then try: _"Why did last night's deploy of api fail?"_ or _"Roll back web in production."_
+
+### Safe deployments through guardrails
+
+Agents never touch your cloud account directly. They talk to LocalOps, and LocalOps talks to your cloud:
+
+![AI agents talk to LocalOps over MCP, and LocalOps runs pre-defined actions in your AWS, GCP or Azure account with short-lived credentials. Agents have no direct cloud access.](/images/mcp-guardrails.svg)
+
+- **No cloud keys for agents** - the agent never holds AWS or GCP credentials. There's nothing to paste into a chat or
+  leak from one.
+- **Keyless, short-lived access** - LocalOps itself holds no static keys either. Each run gets temporary credentials on
+  the role you created when connecting the account, and you can revoke it any time.
+- **No adhoc cloud calls** - agents can only do what LocalOps does, like launch environments and deploy services. They
+  can't make arbitrary calls to your cloud's APIs.
+- **Production-grade by default** - everything they launch gets the same setup as the console: its own VPC and cluster,
+  encryption, least-privilege IAM and secrets kept in your cloud. See [Environment security](/environment/security).
+- **Acts as you** - same roles, SSO and billing rules as in the console. Keep production in a
+  [protected environment](/environment/protected-environments) and only the people you add, and their agents, can touch
+  it.
+- **Never sees secret values** - only their names.
+
+### Compliance and governance
+
+Every change an agent makes lands in the [audit log](/team/audit-logs), under your name and tagged with the AI client
+that made it, such as Claude Code. You always know who changed what, and through which agent. Entries can't be edited or
+deleted, so the trail holds up in compliance reviews.
+
+More in the [MCP docs](/mcp/overview).
+
+Questions? Email us at support@localops.co or ping us in your Slack Connect support channel.
+
+</Update>
+
 <Update label="November 13, 2026">
 
 ## Dedicated IAM role for each service
