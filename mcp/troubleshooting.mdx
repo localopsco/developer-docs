@@ -1,0 +1,18 @@
+---
+title: Troubleshooting
+description: Common errors from the LocalOps MCP server and how to fix them.
+---
+
+| What you see                                                             | What to do                                                                                                                                      |
+| ------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| The client asks you to sign in again                                     | Your connection expired or was disconnected. Sign in again from your client.                                                                    |
+| "Enterprise Single Sign-On (SSO) required"                               | Open the verification link the agent gives you. See [SSO](/mcp/access#single-sign-on-sso).                                                      |
+| The SSO link says it's invalid                                           | It's older than 15 minutes, or you're signed in to the console as someone else. Ask the agent for a new link.                                   |
+| "billing_required"                                                       | Your organization's billing blocks this action. See [billing](/mcp/access#billing) and check the console.                                       |
+| "Billing needs attention in the console"                                 | Your organization's payment is overdue. Ask an Owner to fix it.                                                                                 |
+| "Environment not found" or "Project not found"                           | You're not a member of that project or protected environment, or it doesn't exist. Ask someone with the Member role or higher there to add you. |
+| "Environment is still being created"                                     | Wait until the environment is available, then try again.                                                                                        |
+| "Only queued or pending deployments can be cancelled"                    | The deployment has already started. Let it finish, then deploy the version you want.                                                            |
+| "Your role in this project doesn't allow this", or "in this environment" | Your role there doesn't allow this. See [tools](/mcp/tools) for the minimum role each tool needs.                                               |
+
+Still stuck? [Contact support](/support).

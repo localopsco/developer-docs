@@ -73,6 +73,18 @@
             ]
           },
           {
+            "group": "MCP server",
+            "icon": "/images/icons/mcp.png",
+            "pages": [
+              "mcp/overview",
+              "mcp/connect",
+              "mcp/tools",
+              "mcp/access",
+              "mcp/security",
+              "mcp/troubleshooting"
+            ]
+          },
+          {
             "group": "Connections",
             "icon": "cloud",
             "pages": [

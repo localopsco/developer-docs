@@ -1,0 +1,3 @@
+.dark .sidebar-group-icon[src="/images/icons/mcp.png"] {
+  filter: invert(1);
+}

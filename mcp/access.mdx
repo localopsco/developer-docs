@@ -1,0 +1,51 @@
+---
+title: Access, SSO and billing
+description: What the agent can reach, how SSO verification works, and how billing affects it.
+---
+
+The agent has exactly your access: the same organizations, projects, environments and [roles](/team/understanding-roles)
+as you have in the console. If you can't see or change something in the console, the agent can't either.
+
+## Roles
+
+- Organization Owners and Admins can reach every project, unless they've been
+  [restricted](/team/owner-admin-restrictions) in a project or environment.
+- Members only see projects they've been added to, and [protected environments](/environment/protected-environments)
+  they're part of.
+- What the agent can change depends on your project role. See the [minimum role for each tool](/mcp/tools).
+
+## Single sign-on (SSO)
+
+If an organization uses [SSO](/team/single-sign-on), each connected client has to verify through your identity provider
+before it can use that organization.
+
+- **The agent gives you a link.** When you ask about an SSO organization, the agent replies with a verification link.
+  Open it in the browser where you're signed in to LocalOps and complete the SSO sign-in.
+- **The link is valid for 15 minutes.** If it expires, ask the agent for a new one.
+- **Verification lasts until your SSO sign-in expires**, up to 24 hours. That's counted from when you signed in through
+  SSO, not from when you opened the link.
+- **You may not see your IdP.** If you're already signed in to your identity provider, verification can finish straight
+  away without a prompt.
+- **Each client verifies on its own.** Verifying in Claude doesn't verify Cursor. Reconnecting a client means verifying
+  again.
+
+<Warning>
+  Removing someone from the LocalOps app in your identity provider stops new verifications, but doesn't end one that's
+  already active. To remove access straight away, disconnect their client or [remove them from the
+  organization](/team/remove-user).
+</Warning>
+
+## Billing
+
+The agent follows the same billing rules as the console.
+
+| Billing state      | Owners and Admins                                          | Members                                                    |
+| ------------------ | ---------------------------------------------------------- | ---------------------------------------------------------- |
+| Needs subscription | Can't create environments or services. Deploys still work. | Can't create environments or services. Deploys still work. |
+| Cancelled          | Read only                                                  | Read only                                                  |
+| Payment overdue    | Read only                                                  | No access to the organization                              |
+
+In Needs subscription, the organization can make up to 10 deploys until a subscription is created.
+
+Plan limits apply too, such as the number of environments and services on your plan. When the agent is refused, it tells
+you why and links you to the console.
