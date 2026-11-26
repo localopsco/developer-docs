@@ -41,7 +41,7 @@ Your client asks you to confirm before it runs these.
 | ---------------------- | --------------------------------------------------------------------------- | ------------ |
 | `create_env`           | Creates an environment in your cloud account, billed by your cloud provider | Member       |
 | `create_service`       | Creates a service from a GitHub or GitLab repo or a Docker image            | Member       |
-| `update_service`       | Changes a service's config, such as replicas, CPU, memory, branch or image  | Maintainer   |
+| `update_service`       | Changes a service's config, such as replicas, CPU, memory, branch or image  | Member       |
 | `set_autoscaling`      | Sets or removes a service's autoscaling                                     | Member       |
 | `set_secrets`          | Adds or changes secrets on an environment or service                        | Member       |
 | `add_custom_domain`    | Adds a custom domain and returns the DNS records to create                  | Member       |
@@ -51,6 +51,7 @@ Your client asks you to confirm before it runs these.
 
 ## Good to know
 
+- **Maintainers can change only a service's branch.** `update_service` needs the Member role for any other change.
 - **Secret values are never returned.** The agent can see secret names, but not their values.
 - **`set_secrets` only adds or changes secrets.** It never deletes one. Delete secrets in the console.
 - **Most changes apply on the next deploy.** That includes secrets, service config and autoscaling.

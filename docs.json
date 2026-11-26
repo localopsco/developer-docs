@@ -74,7 +74,7 @@
           },
           {
             "group": "MCP server",
-            "icon": "robot",
+            "icon": "/images/icons/mcp.png",
             "pages": [
               "mcp/overview",
               "mcp/connect",
