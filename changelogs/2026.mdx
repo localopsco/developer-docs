@@ -6,10 +6,15 @@ mode: center
 
 <Update label="November 26, 2026">
 
-## Announcing LocalOps MCP: AI agents ship to production
+## Announcing LocalOps MCP: Your AI agents can now deploy too
 
-Claude, Cursor, VS Code and Codex can now launch environments, deploy services and fix failed deploys in any cloud
-account you've connected to LocalOps. 🚀 Just ask.
+Claude, Cursor, VS Code and Codex can now launch environments, deploy services and fix failed deploys in your
+AWS, GCP or Azure accounts connected to LocalOps. 🚀 Just ask.
+
+- **CTOs** - _"Which production deployments failed this week, and why?"_
+- **DevOps** - _"Create a staging environment in our AWS account in us-east-1, and autoscale api between 2 and 10
+  replicas."_
+- **Developers** - _"Deploy my branch feature/checkout to staging and tell me why if it fails."_
 
 ### Get started
 
@@ -34,28 +39,29 @@ Then try: _"Why did last night's deploy of api fail?"_ or _"Roll back web in pro
 
 ### Safe deployments through guardrails
 
-Agents never touch your cloud account directly. They talk to LocalOps, and LocalOps talks to your cloud:
+Agents never touch your AWS, GCP or Azure account directly. They talk to LocalOps, and LocalOps talks to your cloud:
 
 ![AI agents talk to LocalOps over MCP, and LocalOps runs pre-defined actions in your AWS, GCP or Azure account with short-lived credentials. Agents have no direct cloud access.](/images/mcp-guardrails.svg)
 
-- **No cloud keys for agents** - the agent never holds AWS or GCP credentials. There's nothing to paste into a chat or
-  leak from one.
+- **No cloud keys for agents** - the agent never holds AWS, GCP or Azure credentials. There's nothing to paste into a
+  chat or leak from one.
 - **Keyless, short-lived access** - LocalOps itself holds no static keys either. Each run gets temporary credentials on
   the role you created when connecting the account, and you can revoke it any time.
 - **No adhoc cloud calls** - agents can only do what LocalOps does, like launch environments and deploy services. They
-  can't make arbitrary calls to your cloud's APIs.
+  can't make arbitrary calls to AWS, GCP or Azure APIs.
 - **Production-grade by default** - everything they launch gets the same setup as the console: its own VPC and cluster,
   encryption, least-privilege IAM and secrets kept in your cloud. See [Environment security](/environment/security).
 - **Acts as you** - same roles, SSO and billing rules as in the console. Keep production in a
   [protected environment](/environment/protected-environments) and only the people you add, and their agents, can touch
   it.
-- **Never sees secret values** - only their names.
 
 ### Compliance and governance
 
-Every change an agent makes lands in the [audit log](/team/audit-logs), under your name and tagged with the AI client
-that made it, such as Claude Code. You always know who changed what, and through which agent. Entries can't be edited or
-deleted, so the trail holds up in compliance reviews.
+Every change an agent makes is recorded in the platform [audit log](/team/audit-logs), under your name and tagged with
+the AI client that made it, such as Claude Code. You always know who changed what, and through which agent. Entries
+can't be edited or deleted, so the trail holds up in compliance reviews.
+
+![Audit log entries for a deployment and a secrets change, each tagged with the AI client that made it: Claude Code (localops).](/images/mcp-audit-log.png)
 
 More in the [MCP docs](/mcp/overview).
 
